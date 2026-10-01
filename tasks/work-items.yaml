@@ -240,7 +240,7 @@ items:
     title: itos 0.4.0
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-021]
     kind: task
     refs: [tasks/phase-1.yaml]
@@ -263,6 +263,19 @@ items:
       commit that moves the feature files with their root passes; itos's footer rules read the
       working tree's root instead, and find a moved commit's scenarios only by falling back to the
       working tree. If an itos release ships the rule as a built-in range check, the script goes.
+
+  - id: p1-actionlint-at-commit
+    title: actionlint where the commit-msg hook runs it
+    phase: 1
+    owner: null
+    status: todo
+    depends_on: [T-022]
+    kind: idea
+    why: >
+      From itos 0.3.0 a commit naming T-008 or T-009, both done, runs actionlint in the commit-msg
+      hook, and a session without it installed has that commit rejected. CI installs it, pinned;
+      the README's first steps do not ask for it locally. Either they say so, or the check moves
+      behind a command the project installs.
 
   # ---- phase 2 ----------------------------------------------------------------
   - id: T-023

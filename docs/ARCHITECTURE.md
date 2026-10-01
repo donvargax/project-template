@@ -83,19 +83,20 @@ the commands, `itos <command> --help` each one).
   templates are how CI reads a task check as a selection of tests and merges
   every selection into one command; nothing else knows Gherkin or
   Playwright.
-- **What the project adds to itos.** Two pieces the config names and the
-  package does not ship, kept as the project's own:
-  - the scenario moving rule (`tools/scenario-moves.ts`, with its unit
-    test), the scenario kind's range check. It reads each tree with the
-    scenario kind of that tree's own `itos.yaml`, so a commit that moves the
-    feature files to a new root along with the root moves every scenario
-    unchanged; in a range it skips the check's `except_types` and leaves out
-    `commits.since` and its ancestors, as `itos verify` does.
-  - the footer rules inside commitlint (`commitlint.config.ts`). commitlint is
-    the header lint (`commits.header_lint`), and with one set itos runs only
-    it; so commitlint carries one `<key>-footer` rule per footer of
-    `commits.footers`, each asking `itos commit check-message` under a copy
-    of the policy with no header lint, written for the run.
+- **What the project adds to itos.** One piece the config names and the
+  package does not ship, kept as the project's own: the scenario moving rule
+  (`tools/scenario-moves.ts`, with its unit test), the scenario kind's range
+  check. It reads each tree with the scenario kind of that tree's own
+  `itos.yaml`, so a commit that moves the feature files to a new root along
+  with the root moves every scenario unchanged; in a range it skips the
+  check's `except_types` and leaves out `commits.since` and its ancestors, as
+  `itos verify` does.
+- **The header lint** (`commits.header_lint`) is commitlint
+  (`commitlint.config.ts`, `config-conventional` alone), judging the header
+  and the body. itos runs the footer rules itself after it, wherever it runs
+  it: the commit-msg hook, `itos commit check-message -` (which is how a
+  ledger check proves a footer rejected) and `itos verify`. Both report, so a
+  header problem does not hide a footer problem.
 - **The footers** (`commits.footers`): which types need each footer, which
   IDs must exist, and `read_at: commit`, which reads the IDs that exist (the
   ledger's tasks, the live scenarios) at the commit being checked.
@@ -137,9 +138,14 @@ the commands, `itos <command> --help` each one).
     index, so a file broken as it is staged is rejected though its copy on
     disk is sound; then it applies the type's path rules (`commits.scopes`), then
     outside `feat` and `fix` the scenario moving rule
-    (`tools/scenario-moves.ts`), then the header lint: commitlint
-    (`commitlint.config.ts`, `config-conventional` plus one `<key>-footer`
-    rule per footer of `commits.footers`), stopping at the first that fails.
+    (`tools/scenario-moves.ts`), then the header lint and the footer rules,
+    both reported; then the static checks of each task the `Task:` footer
+    names, read from the staged ledger and run in the working tree, in
+    written order up to the task's first late check (CI's cost rule), each
+    capped at 60 seconds (`hooks.commit_msg.check_timeout`). A failing check
+    rejects the commit when the task's work item is `done`, since a finished
+    task that fails has regressed, and is only printed otherwise. It stops at
+    the first rule that fails.
   - **pre-push** runs `hooks.pre_push`: `vp test run --changed <remote sha>`
     for each pushed ref, or the whole unit suite when there is no remote
     commit to compare with. Nothing else: the scenarios and the task checks

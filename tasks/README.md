@@ -74,8 +74,9 @@ is `commits.scopes`; the footers are `commits.footers` (a `Task:` or
 scenario kind's range check (`tests.scenario.range_checks`). The commit-msg
 hook (`tools/bin/itos hook commit-msg`) applies the path rules, then the
 moving rule to HEAD and the index, then the header lint
-(`commits.header_lint`: commitlint, `config-conventional` plus the footer
-rules). CI re-checks every pushed commit the same way with
+(`commits.header_lint`: commitlint, `config-conventional`) and itos's footer
+rules, then the static checks of the tasks the `Task:` footer names (see
+"Commands"). CI re-checks every pushed commit the same way with
 `tools/bin/itos verify <from> <to>`. `tools/bin/itos commit check-paths --type
 <type> <path>…` applies the path rules to any list of files, to plan a split
 before committing.
@@ -106,11 +107,15 @@ Keys:
 - `timeout` (optional): seconds.
 - `prose: true` (optional): the check reads Markdown or `docs/**`, so a
   prose-only push runs it though it is not static.
-- `cost: static | late` (optional): its cost class in CI. Without it, a
-  check is static when a pattern of `ci.cost.static` in `itos.yaml` matches
-  its command, else late. The patterns name only commands static by what they
-  are and never match a `sh -c`, which may wrap anything: a `sh -c` that
-  needs nothing built, no browser and no network says `cost: static`.
+- `cost: static | late` (optional): its cost class, in CI and in the
+  commit-msg hook, which runs a named task's checks up to its first late one.
+  Without it, a check is static when a pattern of `ci.cost.static` in
+  `itos.yaml` matches its command, else late. The patterns name only commands
+  static by what they are and never match a `sh -c`, which may wrap anything:
+  a `sh -c` that needs nothing built, no browser and no network says
+  `cost: static`. A check the patterns make static that is slow, or that
+  tells a commit nothing, says `cost: late` (T-008's verify of the whole
+  history, which grows with it).
 
 **Written order.** A task's checks never run before the ones written above
 them (`ci.cost.keep_written_order`), so a static check may not follow a late
@@ -131,7 +136,11 @@ tools/bin/itos ci plan <from> <to>          # what CI would run for a range, run
 
 CI's plan is `ci` in `itos.yaml`. It runs the checks of every task referenced
 by a `Task:` footer in the pushed commits; the pre-push hook does not, to keep
-pushes quick. CI does not replay what it has just done: a check the scenario
+pushes quick. The commit-msg hook runs each named task's static checks, those
+above its first late one, each capped at 60 seconds: a failure rejects the
+commit when the task is `done` in `tasks/work-items.yaml`, since a finished
+task that fails has regressed, and is printed otherwise, the commit going
+through for CI to judge. CI does not replay what it has just done: a check the scenario
 kind's `recognize` reads as an E2E run (`vp run e2e`, with or without one
 `--grep`, or `tools/bin/itos tests smoke run scenario`) joins CI's one Playwright run; a check that
 is one of `ci.steps`, or that `ci.covers` says a step has done (`vp test
