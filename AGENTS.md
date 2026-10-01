@@ -108,7 +108,7 @@ the same thing waste both. Take one by setting its `owner` and
   rules are `commits.scopes` in `itos.yaml`, and `tasks/README.md` has them
   as a table. The ones that catch people out:
   - `build` and `ci` may touch only config: root `*.json`, `*.yaml`, `*.yml`,
-    `*.ts` and `*.toml` files, `.gitignore`, `.editorconfig`,
+    `*.ts` and `*.toml` files, `.gitignore`, `.editorconfig`, `.node-version`,
     `.vite-hooks/**`, `.github/**`, `tools/**`, `.claude/settings.json`,
     `index.html` and `src/main.ts` — **not** `tasks/**`. A ledger edit that
     accompanies a config change is its own `docs` commit.

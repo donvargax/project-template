@@ -282,7 +282,7 @@ items:
     title: The Node version pinned in the repository
     phase: 2
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-022]
     kind: task
     refs: [tasks/phase-2.yaml]
@@ -398,3 +398,16 @@ items:
       set commits.since to step past them. A project should start fresh, so a generator that writes
       a new project from the template's current rules and tooling may replace the GitHub template.
       To be discussed before it is specified.
+
+  - id: p2-node-types-follow-runtime
+    title: "@types/node moving with .node-version"
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-026]
+    kind: idea
+    why: >
+      .node-version holds Node 24, and package.json's @types/node (^24) says the same major again,
+      so a move to Node 26 that leaves the types behind type-checks against an API the runtime no
+      longer matches. The update bot should move both together, grouped as one update, or a check
+      should hold the types' major to the file's.

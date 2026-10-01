@@ -59,7 +59,9 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
 
 ## First steps in the new project
 
-1. **Install.** `vp install` installs the dependencies and, through
+1. **Install.** Node is the version `.node-version` holds (24), which Vite+
+   picks up on its own and CI installs from the same file. `vp install`
+   installs the dependencies and, through
    `prepare`, the git hooks (`vp config`). Install the browser for the
    scenarios once: `vp exec playwright install chromium`.
 2. **Start verification after GitHub's commit, in the first commit.** GitHub

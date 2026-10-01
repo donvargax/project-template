@@ -150,6 +150,10 @@ the commands, `itos <command> --help` each one).
     for each pushed ref, or the whole unit suite when there is no remote
     commit to compare with. Nothing else: the scenarios and the task checks
     are CI's.
+- **The Node version** is written once, in `.node-version`: Vite+ reads it
+  first when it resolves a project's Node, and both workflows hand it to
+  setup-vp (`node-version-file`), which runs `vp env use` with it and keys
+  the dependency cache on it. No workflow names a version of its own.
 - **CI** (`.github/workflows/ci.yml`) is one job, a thin wrapper around
   `itos ci run`, so everything it does runs locally too. A newer push
   replaces a run still waiting for the runner; a running one finishes, and
