@@ -118,6 +118,13 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
    them, each with its reason.
 9. **Check.** `tools/bin/itos task --phase 0` runs every setup task's checks; push to
    `main` and CI runs on GitHub Actions with no secrets to configure.
+10. **Dependency updates.** Install the [Renovate](https://github.com/apps/renovate)
+    GitHub app on the repository (its owner does, once). From then on it lands
+    the week's updates on `main` by itself, each as one `build` commit once CI
+    is green on its branch (`.github/renovate.json5`, explained in
+    `docs/ARCHITECTURE.md`). It pushes to `main` as everyone else does, so
+    `main` must not require pull requests. Until it is installed, nothing
+    moves the dependencies.
 
 ## itos, pinned
 
@@ -139,6 +146,8 @@ vp add -D "$url"
 
 Then follow the release notes' upgrading steps, and run
 `tools/bin/itos version --check` and `tools/bin/itos config check`.
+Renovate leaves it alone (`ignoreDeps` in `.github/renovate.json5`), so a
+move is always this one.
 
 ## Licence
 

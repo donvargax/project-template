@@ -166,6 +166,24 @@ the commands, `itos <command> --help` each one).
   (`raw.githubusercontent.com/rhysd/actionlint/<sha>/…`, `1.7.12`), and the
   nightly's GitHub CLI comes from its release tarball, checked against the
   release's SHA-256.
+- **Dependency updates** arrive through Renovate (`.github/renovate.json5`),
+  weekly, early on Monday (UTC), for the npm dependencies, `packageManager`,
+  the catalog in `pnpm-workspace.yaml` and the workflows' `uses:` pins,
+  which it moves SHA and comment together. One branch holds the npm updates
+  and one the actions, with majors on a branch of their own in each
+  (`renovate/npm-dependencies`, `renovate/major-npm-dependencies`, and the
+  same for `workflow-actions`). It lands them by branch automerge: CI runs
+  on `renovate/**` pushes too, and once it is green there Renovate
+  fast-forwards `main` to the branch, so an update is one commit on `main`
+  with no pull request and no merge commit; it opens a pull request only
+  when CI is red. Each commit is written for the rules `itos verify`
+  re-checks: `build: update <group>` (`semanticCommitType`, scope off), a
+  body listing what moved from which version (`commitBody`), and
+  `Task: T-026` as a trailer (`commitTrailers`). Left out: the itos tarball
+  (`ignoreDeps`), which moves by hand ("itos, pinned" in the README);
+  `.node-version` (only the `npm` and `github-actions` managers are on);
+  `@types/node`'s majors, held to the runtime's; and the versions pinned
+  inside `run:` steps. Its Dependency Dashboard issue lists what is pending.
 - **The type check** is `vp check`'s, over one `tsconfig.json` that covers
   `src/`, `e2e/`, `tools/` and the root `*.config.ts` alike. Beside `strict`
   it turns on `noUncheckedIndexedAccess` (an index may be undefined, so it is
@@ -177,7 +195,9 @@ the commands, `itos <command> --help` each one).
   replaces a run still waiting for the runner; a running one finishes, and
   the newest run checks every commit since the last green one. The range starts at the last
   green run on `main` (`itos ci range`, the `ci.range` provider), or at a pull
-  request's base; empty means run everything. It is written to the job's
+  request's base; empty means run everything. On a Renovate branch it is
+  still `main`'s last green run, an ancestor of a branch built on `main`, so
+  the branch is checked for what it would add. It is written to the job's
   environment once, so the scope, the commit re-check and the plan read the
   same range. `itos verify` re-checks every commit of the range with the
   commit-msg rules, so a commit made with the hooks bypassed fails CI.
