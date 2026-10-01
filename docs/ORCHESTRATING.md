@@ -171,6 +171,11 @@ teaches you a new one, stated as the rule and its reason.
   while the current one runs. When a slice mixes a cheap job with an
   expensive one, split it before an agent starts: a smaller slice pushes
   sooner and risks less if it is interrupted.
+- **Specify a task as `todo`, and let the agent take it.** A spec commit
+  that names the task in its `Task:` footer while the registry has it
+  `doing` makes CI run the task's checks at once, before any of the work, so
+  `main` is red until the agent lands. With the item `todo`, CI waits on it
+  (`ci.wait_on_status`), and the agent's first `docs` commit takes it.
 - **Check a spec's words against the product.** A scenario that names a label
   the product does not use, compares more than the behaviour it is about, or
   sets things up so the outcome holds either way, sends an agent after the
