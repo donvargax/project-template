@@ -225,7 +225,7 @@ items:
     title: itos 0.2.0
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-017]
     kind: task
     refs: [tasks/phase-1.yaml]

@@ -9,7 +9,7 @@ on it starts. Its tasks stay in `tasks/phase-<n>.yaml` and its scenarios in
 | Phase | What                                    | State | Owner                     | Issue |
 | ----- | --------------------------------------- | ----- | ------------------------- | ----- |
 | 0     | Scaffold, gates, hooks, task runner, CI | done  | Jorge Vargas (@donvargax) | —     |
-| 1     | itos pinned, features at the root, gaps | doing | Jorge Vargas (@donvargax) | —     |
+| 1     | itos pinned, features at the root, gaps | done  | Jorge Vargas (@donvargax) | —     |
 
 ## Routing work items
 
