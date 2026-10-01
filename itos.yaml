@@ -91,6 +91,8 @@ ci:
   env: { CI: "1" }
   steps: # every step of CI, in order; each states its cost
     - { run: vp check, cost: static }
+    # The code design rules lint cannot hold; a step, not a task check, so every push runs it.
+    - { run: node tools/code-design.ts, cost: static }
     - { run: tools/bin/itos tests smoke check scenario, cost: static }
     - { run: tools/bin/itos config check, cost: static } # the config, the ledger, the registry, the smoke set
     - { run: vp run test:coverage, cost: late }

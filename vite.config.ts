@@ -15,9 +15,20 @@ const lint: NonNullable<UserConfig["lint"]> = {
 		"docs/changelog/**",
 		".claude/**",
 	],
-	jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
+	jsPlugins: [
+		{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" },
+		// The code design rules lint can decide (AGENTS.md, "Code design").
+		"./tools/lint/code-design.ts",
+	],
 	rules: { "vite-plus/prefer-vite-plus-imports": "error" },
 	overrides: [
+		{
+			// A slice reaches another only through that slice's feature file,
+			// src/<slice>/<slice>.ts; src/main.ts is held to the same. A file
+			// directly under src/ is tools/code-design.ts's, which lint cannot see.
+			files: ["src/**/*.ts"],
+			rules: { "code-design/slice-boundary": "error" },
+		},
 		{
 			// E2E tests drive the browser, never the production modules.
 			files: ["e2e/**/*.ts"],
@@ -58,7 +69,7 @@ const test = {
 	coverage: {
 		provider: "v8" as const,
 		reporter: ["text", "html", "json"],
-		// The application's own modules; src/main.ts only wires them to the page,
+		// The slices (src/<slice>/); src/main.ts only wires them to the page,
 		// and the scenarios cover it.
 		include: ["src/**/*.ts"],
 		exclude: ["**/*.test.ts", "src/main.ts"],
