@@ -1,7 +1,8 @@
 # Phase 1: the task tool as a pinned release, the feature files at the root,
 # the work registry beside the ledger, and the gaps a project made from the
 # template met in its first pushes: the squashed first commit GitHub makes, the
-# pre-commit hook that checked no ledger, and setup checks tied to the demo.
+# pre-commit hook that checked no ledger, and setup checks tied to the demo;
+# then each itos release as it comes, by its notes' "Upgrading" steps.
 # No scenario changes: the behaviour a user observes is phase 0's.
 
 - id: T-014
@@ -157,3 +158,36 @@
     - run: tools/bin/itos config check
     - fails: vp run task T-020
     - run: node tools/selftest/e2e-scope.ts
+
+- id: T-021
+  type: build
+  title: itos 0.2.0
+  why: >
+    itos 0.2.0 checks its own data in its commit-msg hook: when a commit
+    stages itos.yaml, a ledger file, the work registry or the smoke set, the
+    hook runs config check's problems over the index and rejects the commit
+    with them. That is what T-017 put in the pre-commit hook until itos did
+    it, and better, since the pre-commit copies read the working tree, so a
+    broken file staged and then fixed on disk got through. The pin moves to
+    the v0.2.0 tarball, checked against its checksums.txt, as the README's
+    "itos, pinned" says, and the release notes' "Upgrading" steps that apply
+    here are made: the pre-commit hook's config check and work check go, and
+    its early exit stays the one the notes give; itos.yaml leaves
+    work.registry out, since tasks/work-items.yaml is now itos's default,
+    and requires ">=0.2.0", which that default needs. The rest of the notes
+    asks nothing of this project: the commit-msg shim already calls itos hook
+    commit-msg, shell is the default, stop_at_first_failure is true and CI
+    has a tests step. The gates self-test proves the release's hook in place
+    of the copies: a staged ledger with a duplicate task ID and a staged
+    registry item waiting on an unknown one are rejected at commit-msg, the
+    ledger even when the working tree's copy has been fixed, and a commit of
+    docs/ and tasks/ still runs no unit test and no audit. The docs that
+    said the pre-commit hook runs these checks say the commit-msg hook does.
+  done_when:
+    - run: tools/bin/itos version --check
+      cost: static
+    - run: tools/bin/itos config check
+    - fails: grep -Eq 'itos (config|work) check' .vite-hooks/pre-commit
+    - run: vp install --frozen-lockfile
+    - run: tools/bin/itos task T-014
+    - run: node tools/selftest/gates.ts

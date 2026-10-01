@@ -221,18 +221,19 @@ items:
     kind: task
     refs: [tasks/phase-1.yaml]
 
-  - id: p1-hook-checks-in-itos
-    title: "The pre-commit hook's config and work checks, run by itos's commit-msg hook"
+  - id: T-021
+    title: itos 0.2.0
     phase: 1
-    owner: null
-    status: todo
+    owner: donvargax
+    status: doing
     depends_on: [T-017]
-    kind: idea
+    kind: task
+    refs: [tasks/phase-1.yaml]
     why: >
       The pre-commit hook runs itos config check and itos work check when what they read is staged,
-      because itos's own hooks check neither yet; both read the working tree, not the index. When an
-      itos release checks them in its commit-msg hook, against what is staged, the hook's copies go
-      and the gates self-test's cases prove the release's hook instead.
+      because itos 0.1.0's hooks check neither; both read the working tree, not the index. itos
+      0.2.0 checks them in its commit-msg hook, against what is staged, so the hook's copies go and
+      the gates self-test's cases prove the release's hook instead.
 
   - id: p1-footer-rules-in-itos
     title: "commitlint's footer rules, run by itos beside the header lint"
