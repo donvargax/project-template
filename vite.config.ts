@@ -7,6 +7,15 @@ const staged = {
 	"{docs,tasks,.github}/**/*.{md,yml,yaml,json5}": "vp check --fix",
 };
 
+// The files under src/ and tools/ allowed vitest's mocks, spies and stubs,
+// which code-design/no-mocks refuses everywhere else: each a true outer
+// boundary no fake handed in at the edge can stand for, with a comment
+// saying which, as in
+//   "src/sync/sync.test.ts", // the network: the service's client cannot be handed in
+// A fake handed in at the edge needs no entry: it is plain code. Empty in the
+// template.
+const mockBoundaries: string[] = [];
+
 const lint: NonNullable<UserConfig["lint"]> = {
 	ignorePatterns: [
 		"dist/**",
@@ -29,6 +38,17 @@ const lint: NonNullable<UserConfig["lint"]> = {
 			files: ["src/**/*.ts"],
 			rules: { "code-design/slice-boundary": "error" },
 		},
+		{
+			// A test drives the real code: no module mocks, spies or stubs on
+			// vitest's `vi`, the clock's controls aside. Every module, not only the
+			// test files, so a helper a test imports is held too. e2e/ drives the
+			// built page in a browser, where no module can be mocked, and its fakes
+			// (Playwright's page.route, page.clock) sit at the network's and the
+			// clock's edge, the outer boundaries the rule allows.
+			files: ["src/**/*.ts", "tools/**/*.ts"],
+			rules: { "code-design/no-mocks": "error" },
+		},
+		{ files: mockBoundaries, rules: { "code-design/no-mocks": "off" } },
 		{
 			// E2E tests drive the browser, never the production modules.
 			files: ["e2e/**/*.ts"],
