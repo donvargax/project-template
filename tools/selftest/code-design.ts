@@ -455,29 +455,29 @@ const cases: Case[] = [
 		name: "a test beside its file in a slice, at commit",
 		gate: "pre-commit",
 		files: {
-			"src/greeting/shout.ts":
-				"export const shout = (text: string): string => `${text.toUpperCase()}!`;\n",
-			"src/greeting/shout.test.ts":
-				'import { expect, it } from "vite-plus/test";\nimport { shout } from "./shout.ts";\n\nit("shouts", () => {\n\texpect(shout("hi")).toBe("HI!");\n});\n',
+			"src/alpha/alpha.ts":
+				"export const alpha = (text: string): string => `${text.toUpperCase()}!`;\n",
+			"src/alpha/alpha.test.ts":
+				'import { expect, it } from "vite-plus/test";\nimport { alpha } from "./alpha.ts";\n\nit("shouts", () => {\n\texpect(alpha("hi")).toBe("HI!");\n});\n',
 		},
 	},
 	{
 		name: "a test with no file beside it, at commit",
 		gate: "pre-commit",
-		files: { "src/greeting/farewell.test.ts": unitTest },
-		says: `${beside}: src/greeting/farewell.test.ts has no farewell.ts beside it`,
+		files: { ...slice("alpha"), "src/alpha/beta.test.ts": unitTest },
+		says: `${beside}: src/alpha/beta.test.ts has no beta.ts beside it`,
 	},
 	{
 		name: "a test in a __tests__/ folder, at commit",
 		gate: "pre-commit",
-		files: { "src/greeting/__tests__/greeting.test.ts": unitTest },
-		says: `${beside}: src/greeting/__tests__/greeting.test.ts is in a __tests__/ folder`,
+		files: { ...slice("alpha"), "src/alpha/__tests__/alpha.test.ts": unitTest },
+		says: `${beside}: src/alpha/__tests__/alpha.test.ts is in a __tests__/ folder`,
 	},
 	{
 		name: "a test spelled *.spec.ts, at commit",
 		gate: "pre-commit",
-		files: { "src/greeting/greeting.spec.ts": unitTest },
-		says: `${beside}: src/greeting/greeting.spec.ts is spelled *.spec.ts`,
+		files: { ...slice("alpha"), "src/alpha/alpha.spec.ts": unitTest },
+		says: `${beside}: src/alpha/alpha.spec.ts is spelled *.spec.ts`,
 	},
 ];
 
