@@ -4,7 +4,8 @@
 # The rule, checked by `tools/bin/itos tests smoke check scenario` in CI:
 # every feature file with a live scenario has at least one here, every ID here
 # is a live scenario of the file it is listed under, and a file with more than
-# one says why (`more`). `vp run e2e:smoke` runs exactly this set.
+# one says why (`more`). `tools/bin/itos tests smoke run scenario` runs exactly
+# this set.
 #
 # How to pick one: a fast scenario that exercises what its file is about, not
 # an edge of it, chosen from the per-scenario times of the full runs and from
