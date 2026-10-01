@@ -1,0 +1,171 @@
+# Phase 2: the template's code design and its supply chain. The rules every
+# project made from the template writes code by (a feature is a vertical
+# slice in one folder, no mocks, unit tests beside the code they test), each
+# held by a gate where a command can decide it and named in AGENTS.md's "Code
+# design"; and what keeps the toolchain current and safe (the Node version
+# pinned, stricter TypeScript, the workflows' actions pinned to commits,
+# dependency updates landing on main, a vulnerability scan every night).
+# No scenario changes: the demo moves into a slice and still behaves as in
+# phase 0.
+
+- id: T-023
+  type: build
+  title: The Node version pinned in the repository
+  why: >
+    itos needs Node 24 and CI installs it, but nothing pinned it locally, so a
+    contributor on an older Node met failures that named no cause.
+    .node-version holds it, the first place Vite+ looks, and the workflows
+    stop naming a version of their own and let setup-vp resolve the same
+    file, so the version is written once.
+  done_when:
+    - run: test -s .node-version
+      cost: static
+    - fails: grep -n 'node-version:' .github/workflows/ci.yml .github/workflows/nightly.yml
+      cost: static
+    - run: actionlint
+
+- id: T-024
+  type: build
+  title: Stricter TypeScript
+  why: >
+    strict leaves out three checks that are cheap while the code is small and
+    costly to turn on later: noUncheckedIndexedAccess (an index into an array
+    or a record may be undefined), exactOptionalPropertyTypes (an optional
+    property is absent, not undefined) and noImplicitOverride (a method that
+    overrides says so). They are on for src/, e2e/ and tools/ alike, and what
+    they find is fixed, in the commit types the paths ask for.
+  done_when:
+    - run: >-
+        sh -c 'for k in noUncheckedIndexedAccess exactOptionalPropertyTypes
+        noImplicitOverride; do grep -q "\"$k\": true" tsconfig.json || exit 1; done'
+      cost: static
+    - run: vp check
+
+- id: T-025
+  type: ci
+  title: The workflows' actions pinned to commits
+  why: >
+    A tag can be moved to other code, so an action named by its tag runs
+    whatever the tag points at on the day. Every uses: in the workflows names
+    a full commit SHA, with its tag beside it as a comment for the reader and
+    the update bot, and the actionlint install script is fetched from a
+    commit, not a tag: the same rule package.json follows for the itos
+    tarball.
+  done_when:
+    - fails: >-
+        grep -PnH 'uses:\s*[^\s#]+@(?![0-9a-f]{40}(\s|$))'
+        .github/workflows/ci.yml .github/workflows/nightly.yml
+      cost: static
+    - fails: grep -nE 'raw\.githubusercontent\.com/[^ ]+/v[0-9]' .github/workflows/ci.yml .github/workflows/nightly.yml
+      cost: static
+    - run: actionlint
+
+- id: T-026
+  type: build
+  title: Dependency updates land on main
+  why: >
+    Nothing kept the dependencies, the catalog in pnpm-workspace.yaml or the
+    workflows' pinned actions current, so they went stale without a word.
+    Renovate does, weekly, the updates grouped. Renovate rather than
+    Dependabot, because the project works on main alone: Dependabot only
+    opens pull requests and writes no footer, while Renovate's branch
+    automerge lands an update on main with no pull request, as a build
+    commit whose body says what moved and carries the Task footer every
+    commit needs, and CI checks it as it checks any push. The itos tarball is
+    left out: it moves by its release notes' upgrading steps, by hand. The
+    Renovate app is installed on the repository by its owner.
+  done_when:
+    - run: npx --yes --package renovate -- renovate-config-validator --strict
+
+- id: T-027
+  type: build
+  title: A vulnerability scan every night
+  why: >
+    The audit gate (fallow) scores the code's health, not its dependencies'
+    known vulnerabilities, so nothing reported a CVE in the lockfile. The
+    nightly scans pnpm-lock.yaml with osv-scanner, a pinned release checked
+    against its published hash as actionlint's is, through one script the
+    nightly and a contributor both run. A red scan turns the nightly red,
+    which opens or comments on its issue, so a new advisory is one morning's
+    work rather than a surprise on some later push.
+  done_when:
+    - run: tools/bin/itos config check
+    - run: tools/bin/vuln-scan
+
+- id: T-028
+  type: docs
+  title: The code design rules, in AGENTS.md
+  why: >
+    AGENTS.md said how to commit and finish, not how to write the code. Its
+    "Code design" section says it, and names the gate that holds each rule a
+    command can decide without restating it, as the rest of the file does. A
+    feature is a vertical slice: one folder under src/ holding the feature's
+    file and its tests, every layer inside that file (the pure part first,
+    the edge that touches the page, the network or the clock after it) until
+    it grows, and then it splits into more features, not into layer folders.
+    No mocks: a test drives the real code, and where it meets a true outer
+    boundary (the network, the clock) it hands in a fake written for that
+    edge. Unit tests are for the pure part; the edge is covered by the
+    scenarios, and later by integration tests. Property-based tests are asked
+    for where an invariant says more than examples do, with fast-check, and
+    the section gives one on the demo: for every string s, greeting(s) equals
+    greeting(s.trim()), and when s.trim() is not empty the greeting contains
+    it. The gates themselves land with T-029 to T-031, each adding its name
+    to the section.
+  done_when:
+    - run: grep -q '^## Code design' AGENTS.md
+      prose: true
+    - run: grep -q 'fast-check' AGENTS.md
+      prose: true
+
+- id: T-029
+  type: refactor
+  title: The demo as a vertical slice, and the slice boundary gate
+  why: >
+    The demo is the example every project copies, so it takes the shape
+    AGENTS.md's "Code design" gives a feature: src/greeting/greeting.ts and
+    greeting.test.ts beside it, and src/main.ts as the composition root that
+    wires slices to the page and holds nothing else. A slice reaches another
+    only through that slice's feature file (src/<slice>/<slice>.ts), never
+    another file of its folder, and src/ holds no file but main.ts outside a
+    slice. Lint holds it (vite.config.ts, run by vp check), or, if oxlint
+    cannot express it, a static check CI and the pre-commit hook both run.
+    tools/selftest/code-design.ts proves the gate refuses what it should, in
+    a scratch tree; T-030 and T-031 add their cases to it. The scenarios see
+    the same page.
+  done_when:
+    - fails: test -e src/greeting.ts
+      cost: static
+    - run: vp check
+    - run: node tools/selftest/code-design.ts
+    - run: tools/bin/itos tests smoke run scenario
+
+- id: T-030
+  type: build
+  title: No mocks, held by lint
+  why: >
+    A test that mocks a module or spies on a call checks the code's wiring
+    rather than its behaviour, and passes on code that no longer works. Lint
+    refuses module mocks, spies and stubs in tests (vi.mock, vi.doMock,
+    vi.importMock, vi.fn, vi.spyOn, vi.stubGlobal and the like) outside an
+    allowlist of files vite.config.ts names for true outer boundaries, empty
+    in the template; the clock's fakes (vi.useFakeTimers, vi.setSystemTime)
+    stay allowed, since time is an outer boundary every project has. A fake
+    handed in at the edge needs no allowlist: it is plain code.
+  done_when:
+    - run: vp check
+    - run: node tools/selftest/code-design.ts
+
+- id: T-031
+  type: build
+  title: Unit tests beside the code they test
+  why: >
+    A unit test lives beside the file it tests, <name>.test.ts next to
+    <name>.ts in a slice under src/ (tools/ keeps its own beside its
+    scripts), so a slice moves or splits with its tests and a reader finds
+    them where the code is. A test file anywhere else fails a static check
+    that CI and the pre-commit hook run, rather than running unnoticed or
+    not at all.
+  done_when:
+    - run: vp check
+    - run: node tools/selftest/code-design.ts

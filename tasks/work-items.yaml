@@ -37,6 +37,7 @@
 phases:
   0: donvargax
   1: donvargax
+  2: donvargax
 
 items:
   # ---- phase 0 ----------------------------------------------------------------
@@ -235,18 +236,19 @@ items:
       0.2.0 checks them in its commit-msg hook, against what is staged, so the hook's copies go and
       the gates self-test's cases prove the release's hook instead.
 
-  - id: p1-footer-rules-in-itos
-    title: "commitlint's footer rules, run by itos beside the header lint"
+  - id: T-022
+    title: itos 0.4.0
     phase: 1
-    owner: null
+    owner: donvargax
     status: todo
-    depends_on: [T-014]
-    kind: idea
+    depends_on: [T-021]
+    kind: task
+    refs: [tasks/phase-1.yaml]
     why: >
-      With a header lint set, itos runs only commitlint, so commitlint.config.ts carries the footer
-      rules and asks itos commit check-message for them under a copy of the policy without the
-      header lint. When an itos release runs its footer rules beside the header lint, the plugin
-      goes and commitlint keeps config-conventional alone.
+      With a header lint set, itos 0.2.0 runs only commitlint, so commitlint.config.ts carries the
+      footer rules and asks itos commit check-message for them under a copy of the policy without
+      the header lint. itos 0.4.0 runs its footer rules beside the header lint, so the plugin goes
+      and commitlint keeps config-conventional alone.
 
   - id: p1-scenario-moves-in-itos
     title: The scenario moving rule, shipped by itos
@@ -261,3 +263,125 @@ items:
       commit that moves the feature files with their root passes; itos's footer rules read the
       working tree's root instead, and find a moved commit's scenarios only by falling back to the
       working tree. If an itos release ships the rule as a built-in range check, the script goes.
+
+  # ---- phase 2 ----------------------------------------------------------------
+  - id: T-023
+    title: The Node version pinned in the repository
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-022]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: T-024
+    title: Stricter TypeScript
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-022]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: T-025
+    title: "The workflows' actions pinned to commits"
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-022]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: T-026
+    title: Dependency updates land on main
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-025]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: T-027
+    title: A vulnerability scan every night
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-022]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: T-028
+    title: The code design rules, in AGENTS.md
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-022]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: T-029
+    title: The demo as a vertical slice, and the slice boundary gate
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-028]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: T-030
+    title: No mocks, held by lint
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-029]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: T-031
+    title: Unit tests beside the code they test
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-029]
+    kind: task
+    refs: [tasks/phase-2.yaml]
+
+  - id: p2-integration-tests
+    title: Integration tests as a named kind, for the edge of each slice
+    phase: 2
+    owner: null
+    status: todo
+    depends_on: [T-031]
+    kind: idea
+    why: >
+      Unit tests cover a slice's pure part and the scenarios the page, so the edge between them (the
+      page, the network, storage) has no test of its own. Integration tests would be a named kind
+      in itos.yaml (tests.integration), named by footers and run by CI like the scenarios, which
+      needs an itos release that merges more than one kind in a CI run (itos's
+      p1-several-test-kinds; v0.4.0 does not). Open when it is specified: the runner, where the
+      files live, the ID pattern.
+
+  - id: p2-mutation-testing
+    title: Mutation testing in the nightly
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-031]
+    kind: idea
+    why: >
+      Coverage thresholds show the code ran, not that a test would notice it break, and agents
+      write most of the tests. A mutation run over src/ (Stryker, say) in the nightly would find
+      the tests that assert nothing. The owner has a follow-up on its shape before it is specified.
+
+  - id: p2-project-generator
+    title: Projects made by a generator, starting fresh
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: []
+    kind: idea
+    why: >
+      A project made from the template inherits its history, its phases and its ledger, and has to
+      set commits.since to step past them. A project should start fresh, so a generator that writes
+      a new project from the template's current rules and tooling may replace the GitHub template.
+      To be discussed before it is specified.

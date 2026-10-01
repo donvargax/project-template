@@ -60,16 +60,36 @@ The template's setup: the Vite+ project, the gates, the hooks, itos and CI
 
 The template's own too: itos pinned as a release, the feature files at the
 root, the work registry beside the ledger, verification that starts at
-`commits.since`, and setup checks that hold in any project
-(`tasks/phase-1.yaml`). No scenario changes.
+`commits.since`, setup checks that hold in any project, and each itos release
+as it comes, by its notes' "Upgrading" steps (`tasks/phase-1.yaml`). No
+scenario changes.
 
 - **Usable:** the page opens, as in phase 0.
 
-### Phase 2: <name>
+### Phase 2: code design and the supply chain
 
-<What it builds, its slices in order, and what each slice leaves usable.
-The scenarios live in `features/`, tagged `@phase-2`, and the tasks in
-`tasks/phase-2.yaml`.>
+The template's own too (`tasks/phase-2.yaml`). The rules code is written
+by, in `AGENTS.md`'s "Code design", each held by a gate where a command can
+decide it: a feature is a vertical slice, one folder under `src/` with the
+feature's file and its tests, every layer inside that file until it grows
+and then split into more features, never into layer folders; a slice reaches
+another only through that slice's feature file; no mocks, a fake handed in
+only at a true outer boundary; unit tests beside the code they test, for its
+pure part; property-based tests where an invariant says more than examples.
+And the supply chain: the Node version pinned, stricter TypeScript, the
+workflows' actions pinned to commits, dependency updates landing on `main`
+(Renovate, since the work is trunk-based), a vulnerability scan every night.
+Integration tests, mutation testing and a project generator are ideas in the
+registry. No scenario changes.
+
+- **Usable:** the page opens, as in phase 0, from the demo moved into a
+  slice.
+
+### Phase <n>: <name>
+
+<A project's own phases follow the template's. What each builds, its slices
+in order, and what each slice leaves usable. The scenarios live in
+`features/`, tagged `@phase-<n>`, and the tasks in `tasks/phase-<n>.yaml`.>
 
 - **Usable:** <…>
 
