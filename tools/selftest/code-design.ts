@@ -376,8 +376,12 @@ const git = gitIn(env, scratch);
 const run = (command: string) => sh(command, { cwd: scratch, env });
 
 // How each gate judges a case's files, once they are written and staged.
+// Lint's output format is pinned: left to itself, oxlint picks one by where it
+// runs (GitHub's annotations on a runner, a terse one under an agent), and
+// only some of them print the rule's name beside its message.
 const gates: Record<Gate, (files: string[]) => Run> = {
-	lint: (files) => run(`vp lint ${files.filter((f) => f.endsWith(".ts")).join(" ")}`),
+	lint: (files) =>
+		run(`vp lint --format default ${files.filter((f) => f.endsWith(".ts")).join(" ")}`),
 	static: () => run("node tools/code-design.ts"),
 	"pre-commit": () => run("sh .vite-hooks/pre-commit"),
 };
