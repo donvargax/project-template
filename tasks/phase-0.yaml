@@ -50,12 +50,12 @@
     Playwright with playwright-bdd: scenarios in Gherkin under features/,
     steps that drive page objects only, the built app served for the run, a
     recorded retry in CI that never hides a flaky scenario. A push's CI runs
-    the smoke set (features/smoke.yaml) and what its commits name in one run; the
-    self-test proves the plan's E2E command selects exactly that, against
-    Playwright's own listing.
+    the smoke set (features/smoke.yaml) and what its commits name in one run;
+    the self-test proves the plan's E2E command selects exactly that, against
+    Playwright's own listing. The checks name no scenario, so they hold
+    whatever scenarios a project has.
   done_when:
     - run: tools/bin/itos tests smoke check scenario
-    - run: vp run e2e --grep @ID-APP-01
     - run: tools/bin/itos tests smoke run scenario
     - run: node tools/selftest/e2e-scope.ts
 
@@ -95,15 +95,19 @@
     moves and then commitlint (config-conventional plus one rule per footer,
     from itos.yaml); pre-commit formats, lints and runs the unit tests the
     change reaches and the audit; pre-push runs the unit tests the pushed
-    commits reach. CI runs this task on every push.
+    commits reach. CI runs this task on every push, so its checks name only
+    what every project made from the template keeps (itos.yaml, package.json,
+    the ledger, the README), never the demo's paths: a project that changes
+    its source layout or drops the demo keeps them true.
   done_when:
     - fails: "printf 'update things\\n' | vp exec commitlint"
     - run: "printf 'build: scaffold\\n\\nTask: T-001\\n' | vp exec commitlint"
     - fails: "printf 'build: scaffold\\n' | vp exec commitlint"
     - fails: "printf 'feat: x\\n\\nScenarios: @ID-NOPE-01\\n' | vp exec commitlint"
-    - fails: tools/bin/itos commit check-paths --type refactor e2e/features/app.feature
-    - fails: tools/bin/itos commit check-paths --type build src/greeting.ts
+    - fails: tools/bin/itos commit check-paths --type build tasks/phase-0.yaml
+    - fails: tools/bin/itos commit check-paths --type docs itos.yaml
     - run: tools/bin/itos commit check-paths --type docs README.md tasks/phase-0.yaml
+    - run: tools/bin/itos commit check-paths --type build itos.yaml package.json
     - fails: 'sh -c ''f=$(mktemp) && printf "build: x\n" > "$f" && tools/bin/itos hook commit-msg "$f"'''
       cost: static
     - run: 'sh -c ''f=$(mktemp) && printf "docs: x\n" > "$f" && tools/bin/itos hook commit-msg "$f"'''
@@ -156,11 +160,16 @@
   type: chore
   title: Licences
   why: >
-    The template is 0BSD, so a project made from it owes nothing; the task
-    tool it carries in tools/itos/ keeps its own licence, AGPL-3.0, in its
-    folder. The check asks GitHub which licence it detects for the repository.
+    The template is 0BSD, so a project made from it owes nothing, and a
+    project puts its own licence in LICENSE and its SPDX ID in package.json's
+    license. itos is installed from its release under its own licence,
+    AGPL-3.0, and not carried here. The check asks GitHub which licence it
+    detects for the repository and holds it to the one package.json names, so
+    it holds in any project that keeps the two in step.
   done_when:
-    - run: gh api 'repos/{owner}/{repo}/license' --jq .license.spdx_id | grep -qx 0BSD
+    - run: >-
+        gh api 'repos/{owner}/{repo}/license' --jq .license.spdx_id |
+        grep -qxF "$(node -p 'require("./package.json").license')"
       after: push
 
 - id: T-012

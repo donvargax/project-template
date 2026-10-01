@@ -93,19 +93,28 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
 4. **Contributors.** Put the project's people in `CONTRIBUTORS.md` (their
    GitHub logins are the owners `tasks/work-items.yaml` names), and set the
    phase owners in `tasks/work-items.yaml` and `docs/PHASES.md`.
-5. **Licence.** The template is 0BSD (`LICENSE`): replace it with the
-   project's own. itos is not carried in the repository: it is installed
-   from its release, under its own licence (AGPL-3.0).
+5. **Licence.** The template is 0BSD (`LICENSE`, and `license` in
+   `package.json`): replace both with the project's own, its SPDX ID in
+   `package.json`; T-011 checks that GitHub detects the licence `package.json`
+   names. itos is not carried in the repository: it is installed from its
+   release, under its own licence (AGPL-3.0).
 6. **Ledger.** `tasks/phase-0.yaml` and `tasks/phase-1.yaml` hold the
    template's own setup tasks; keep them as the project's phases 0 and 1,
    and add the project's phases after them.
-7. **Plan.** Fill in `PLAN.md` (what the project is, its decisions, its
+7. **The demo.** The page (`index.html`, `src/`), its scenario
+   (`features/app.feature`) and their steps and page object (`e2e/`) are a
+   demo for the gates to run against; replace them with the project's own.
+   The setup checks name none of it, except the gates self-test
+   (`tools/selftest/gates.ts`, T-009, run nightly), which edits a module and
+   its unit test, `src/main.ts` and a scenario to prove what the hooks run:
+   point it at the project's own when the demo goes.
+8. **Plan.** Fill in `PLAN.md` (what the project is, its decisions, its
    phases), the application's sections of `docs/ARCHITECTURE.md`, and
    `docs/HANDOFF.md` with the first steps. The agent instructions
    (`AGENTS.md`, `docs/ORCHESTRATING.md`) are written for any project and
    need no change to start; add a project's own rules to them as it finds
    them, each with its reason.
-8. **Check.** `tools/bin/itos task --phase 0` runs every setup task's checks; push to
+9. **Check.** `tools/bin/itos task --phase 0` runs every setup task's checks; push to
    `main` and CI runs on GitHub Actions with no secrets to configure.
 
 ## itos, pinned
