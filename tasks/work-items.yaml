@@ -291,7 +291,7 @@ items:
     title: Stricter TypeScript
     phase: 2
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-022]
     kind: task
     refs: [tasks/phase-2.yaml]

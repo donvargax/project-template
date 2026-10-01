@@ -154,6 +154,12 @@ the commands, `itos <command> --help` each one).
   first when it resolves a project's Node, and both workflows hand it to
   setup-vp (`node-version-file`), which runs `vp env use` with it and keys
   the dependency cache on it. No workflow names a version of its own.
+- **The type check** is `vp check`'s, over one `tsconfig.json` that covers
+  `src/`, `e2e/`, `tools/` and the root `*.config.ts` alike. Beside `strict`
+  it turns on `noUncheckedIndexedAccess` (an index may be undefined, so it is
+  narrowed before use), `exactOptionalPropertyTypes` (an optional property is
+  absent, not undefined; one that may be handed on undefined says
+  `| undefined`) and `noImplicitOverride`.
 - **CI** (`.github/workflows/ci.yml`) is one job, a thin wrapper around
   `itos ci run`, so everything it does runs locally too. A newer push
   replaces a run still waiting for the runner; a running one finishes, and
