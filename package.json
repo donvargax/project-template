@@ -29,6 +29,7 @@
 		"@vitest/coverage-v8": "catalog:",
 		"fallow": "3.25.0",
 		"git-cliff": "2.14.2",
+		"itos": "https://github.com/donvargax/itos/releases/download/v0.1.0/itos-0.1.0.tgz",
 		"playwright": "^1.63.0",
 		"playwright-bdd": "9.2.1",
 		"typescript": "~6.0.2",

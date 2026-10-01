@@ -1,4 +1,4 @@
-// The scenario-moves rule: outside feat and fix, live scenarios may only
+// The scenario-moves rule (tools/scenario-moves.ts): outside feat and fix, live scenarios may only
 // change file, unchanged; @wip ones may come, go and change; a file's header
 // stays; and an allowed rename passes, any other fails.
 import { describe, expect, it } from "vite-plus/test";

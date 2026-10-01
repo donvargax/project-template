@@ -2,10 +2,10 @@
 #
 # One file for every table the task tool reads: the ledger's layout, the
 # commit rules, the named tests, the CI plan, the work routing and the hooks.
-# tools/itos/config.ts loads it and rejects a key it does not know;
-# `ITOS_CONFIG` names another file. `$name` in a path list stands for
-# `commits.path_sets.<name>`. The range, the identity and the people are
-# providers (tools/itos/providers.ts).
+# itos (the release package.json pins, run by tools/bin/itos) loads it and
+# rejects a key it does not know; `ITOS_CONFIG` names another file. `$name` in
+# a path list stands for `commits.path_sets.<name>`. The range, the identity
+# and the people are providers.
 version: 1
 requires: ">=0.1.0" # the oldest itos that reads this file
 shell: [sh, -c]
@@ -24,7 +24,7 @@ commits:
     use: command # commitlint: config-conventional plus one rule per footer
     hook: "vp exec commitlint --edit {file}"
     stdin: "vp exec commitlint"
-  footers: # tools/itos/footers.ts reads them, for the commit-msg rule and CI
+  footers: # the commit-msg rule and CI read them; commitlint.config.ts runs them
     Task:
       source: ledger
       # A revert names the task it undoes, so a failed piece of work leaves a trail.
@@ -62,9 +62,9 @@ commits:
     style: {}
   reject_message: "Commit rejected (see tasks/README.md):"
 
-tests: # named tests, each kind behind an adapter (tools/itos/tests.ts)
+tests: # named tests, each kind behind an adapter
   scenario:
-    adapter: gherkin # built in: tools/itos/gherkin.ts
+    adapter: gherkin # built into itos
     root: e2e/features
     id: "ID-[A-Z]+-\\d+"
     tag_prefix: "@"
@@ -80,10 +80,12 @@ tests: # named tests, each kind behind an adapter (tools/itos/tests.ts)
       - { command: "vp run e2e:smoke", as: smoke }
     smoke: { file: e2e/smoke.yaml, every_file: true, add_hint: "add one to e2e/smoke.yaml" }
     range_checks:
-      - name: scenario-moves # outside feat and fix, live scenarios only move, unchanged
+      # Outside feat and fix, live scenarios only move, unchanged. The project's
+      # own script: the itos package does not ship the rule.
+      - name: scenario-moves
         except_types: [feat, fix]
-        staged: "node tools/itos/scenario-moves.ts --type {type}"
-        range: "node tools/itos/scenario-moves.ts {from} {to}"
+        staged: "node tools/scenario-moves.ts --type {type}"
+        range: "node tools/scenario-moves.ts {from} {to}"
 
 ci:
   env: { CI: "1" }
@@ -108,7 +110,7 @@ ci:
       - "^actionlint\\b"
       - "^git ls-remote "
       - "\\| vp exec commitlint$"
-      - "^node tools/selftest/(ci-scope|ci-range)\\.ts$"
+      - "^node tools/selftest/ci-scope\\.ts$"
     keep_written_order: true # a task's checks never run before the ones above them
   covers: # a check a step has just done is not run again
     - { by: "vp run test:coverage", matches: "^vp test run(?: [^\\s-]\\S*)*$" }
@@ -128,7 +130,7 @@ ci:
         token_env: [GITHUB_TOKEN, GH_TOKEN],
       }
 
-work: # tools/itos/work.ts
+work:
   registry: docs/work-items.yaml
   groups_key: phases
   statuses: [todo, doing, done, blocked]

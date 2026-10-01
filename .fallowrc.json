@@ -10,14 +10,14 @@
 			"entryPointRole": "test"
 		}
 	],
-	"ignoreDependencies": ["yaml", "git-cliff"],
+	"ignoreDependencies": ["yaml", "git-cliff", "itos"],
 	"health": {
 		"coverage": "coverage/coverage-final.json",
 		"thresholdOverrides": [
 			{
 				"files": ["tools/**"],
 				"maxCrap": 1000,
-				"reason": "Verified by the conformance suite and the self-tests, which run it as a command, not by unit coverage; cyclomatic and cognitive limits still apply."
+				"reason": "The self-tests and the project's scripts are run as commands (by the ledger's checks and CI), not by unit coverage; cyclomatic and cognitive limits still apply."
 			}
 		]
 	}

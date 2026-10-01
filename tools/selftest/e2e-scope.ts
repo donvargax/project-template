@@ -1,45 +1,30 @@
 // What a CI run's E2E step selects, proved against Playwright's own listing of
 // the project's suite (`--list`, no browser), for ranges made with `git
-// commit-tree` on top of HEAD (objects only: no branch moves):
+// commit-tree` on top of HEAD (objects only: no branch moves). The plans are
+// itos's (`itos ci plan --json`, running nothing):
 //
-//   - `vp run e2e:smoke` runs exactly the smoke set;
+//   - the smoke run (`itos tests smoke run scenario`) runs exactly the smoke
+//     set;
 //   - a range naming one scenario runs the smoke set plus that one;
 //   - the nightly, and a range CI can't read, run every scenario;
 //   - a range naming the ledger's tasks whose checks are E2E subsets and CI
 //     steps (T-003, T-005, T-009) runs one Playwright run, selecting the smoke
 //     set and each subset, and no second build; the tasks' other checks still
 //     run, and the gates self-test is left to the nightly;
-//   - the smoke rule holds today, and the config calls no step or build check
-//     static.
+//   - the smoke rule holds today, and the config calls no step that builds or
+//     runs a browser static.
 //
 // What the plan does whatever the repository — the cost order, the written
 // order, the prose shortcut, merging, covering, the smoke rule's failures —
-// is tools/itos/conformance/plans.yaml's and smoke.yaml's.
+// is itos's, proven in its own repository.
 import { strict as assert } from "node:assert";
-import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ciPlan, e2eStep, isStatic, planFor } from "../itos/ci-plan.ts";
-import { smokeIds, smokeProblems } from "../itos/e2e-scope.ts";
-import { recognize } from "../itos/tests.ts";
+import { cleanEnv, e2eStep, gitIn, isE2eRun, plan, sh } from "./cli.ts";
 
-// Hooks export GIT_DIR and friends, and CI changes what Playwright lists.
-const env: NodeJS.ProcessEnv = { ...process.env };
-for (const key of Object.keys(env)) if (key.startsWith("GIT_") || key === "CI") delete env[key];
-const sh = (command: string, extra: NodeJS.ProcessEnv = {}) => {
-	const run = spawnSync("sh", ["-c", command], {
-		env: { ...env, ...extra },
-		encoding: "utf8",
-		maxBuffer: 64 * 1024 * 1024,
-	});
-	return { status: run.status ?? 1, output: `${run.stdout}${run.stderr}` };
-};
-const git = (command: string) => {
-	const run = sh(`git ${command}`);
-	assert.equal(run.status, 0, `git ${command} failed:\n${run.output}`);
-	return run.output.trim();
-};
+const env = cleanEnv();
+const git = gitIn(env);
 // A commit on top of HEAD with HEAD's tree and this message.
 const head = git("rev-parse HEAD");
 const range = (message: string) => {
@@ -66,7 +51,9 @@ const idsIn = (suite: Suite): string[] => [
 function listed(command: string): Set<string> {
 	const report = join(scratch, "list.json");
 	rmSync(report, { force: true });
-	const run = sh(`${command} --list --reporter=json`, { PLAYWRIGHT_JSON_OUTPUT_NAME: report });
+	const run = sh(`${command} --list --reporter=json`, {
+		env: { ...env, PLAYWRIGHT_JSON_OUTPUT_NAME: report },
+	});
 	assert.equal(run.status, 0, `${command} --list failed:\n${run.output}`);
 	return new Set(idsIn(JSON.parse(readFileSync(report, "utf8")) as Suite));
 }
@@ -79,88 +66,85 @@ const same = (a: Set<string>, b: Set<string>, what: string) => {
 	);
 };
 
+// The commands the scenario kind's `recognize` reads as a run of scenarios.
+const SMOKE_RUN = "vp run e2e:smoke";
+const isScenarioRun = (command: string) => isE2eRun(command) || command === SMOKE_RUN;
+// The task checks a step of this config has just done (`ci.covers`, and the
+// steps themselves).
+const COVERED = [
+	"vp test run",
+	"vp run test:coverage",
+	"tools/bin/itos tests smoke check scenario",
+];
+const GATES = "node tools/selftest/gates.ts";
+
 const scratch = mkdtempSync(join(tmpdir(), "e2e-scope-selftest-"));
 try {
-	const smoke = new Set(smokeIds());
+	const ids = sh("tools/bin/itos tests smoke ids scenario --json", { env });
+	assert.equal(ids.status, 0, `itos tests smoke ids failed:\n${ids.output}`);
+	const smoke = new Set((JSON.parse(ids.stdout) as { ids: string[] }).ids);
 	const everything = listed("vp run e2e");
 	assert.ok(everything.size >= smoke.size, "the suite lists fewer scenarios than the smoke set");
 	same(
 		listed("tools/bin/itos tests smoke run scenario --"),
 		smoke,
-		"`vp run e2e:smoke` is not the smoke set",
+		"the smoke run is not the smoke set",
 	);
 
 	// A range naming one scenario: the smoke set and it. The last one listed,
 	// outside the smoke set once the suite has one there.
 	const named = [...everything].find((id) => !smoke.has(id)) ?? [...everything].at(-1)!;
-	let plan = planFor(head, range(`feat: name a scenario\n\nScenarios: @${named}\n`));
-	let step = e2eStep(plan);
+	let p = plan([head, range(`feat: name a scenario\n\nScenarios: @${named}\n`)]);
+	const step = e2eStep(p);
 	assert.ok(step, "a push naming a scenario ran no E2E step");
 	same(listed(step), new Set([...smoke, named]), `a range naming @${named}`);
 
 	// The nightly, and a range that can't be read, run every scenario.
-	assert.deepEqual(ciPlan({ known: false, nightly: true }).steps, [
-		"vp run e2e",
-		"node tools/selftest/gates.ts",
-	]);
-	assert.equal(e2eStep(planFor("", head)), "vp run e2e", "an unread range should run everything");
+	assert.deepEqual(plan(["--nightly"]).steps, ["vp run e2e", GATES]);
+	assert.equal(e2eStep(plan(["", head])), "vp run e2e", "an unread range should run everything");
 
 	// A range naming tasks whose checks are E2E subsets and CI steps (T-003:
-	// `vp test run` and the coverage step; T-005: the smoke check, an E2E
-	// subset, the smoke run and this self-test; T-009: the gates self-test,
-	// the nightly's).
-	plan = planFor(head, range("ci: name three tasks\n\nTask: T-003, T-005, T-009\n"));
-	const runs = plan.steps.filter((s) => s.startsWith("vp run e2e"));
+	// `vp test run` and the coverage step; T-005: the smoke check, the smoke
+	// run and this self-test; T-009: the gates self-test, the nightly's).
+	p = plan([head, range("ci: name three tasks\n\nTask: T-003, T-005, T-009\n")]);
+	const runs = p.steps.filter(isE2eRun);
 	assert.equal(runs.length, 1, `expected one Playwright run, got:\n${runs.join("\n")}`);
-	assert.equal(plan.steps.filter((s) => s === "vp build").length, 1, "the build runs twice");
-	for (const planned of plan.checks) {
-		const command = planned.check.run ?? "";
-		const expected = recognize("scenario", command, [...smoke])
+	assert.equal(p.steps.filter((s) => s === "vp build").length, 1, "the build runs twice");
+	const checks = p.order.filter((o) => o.check);
+	for (const planned of checks) {
+		const { task, command } = planned.check!;
+		const expected = isScenarioRun(command)
 			? "merged"
-			: [
-						"vp test run",
-						"vp run test:coverage",
-						"tools/bin/itos tests smoke check scenario",
-				  ].includes(command)
+			: COVERED.includes(command)
 				? "covered"
-				: command === "node tools/selftest/gates.ts"
+				: command === GATES
 					? "nightly"
 					: "run";
-		const got = planned.merged
-			? "merged"
-			: planned.coveredBy
-				? "covered"
-				: planned.nightly
-					? "nightly"
-					: "run";
-		assert.equal(got, expected, `${planned.task}'s \`${command}\` should be ${expected}`);
+		assert.equal(planned.action, expected, `${task}'s \`${command}\` should be ${expected}`);
 	}
 	assert.ok(
-		plan.checks.some((c) => c.task === "T-005" && !c.merged && !c.coveredBy && !c.nightly),
+		checks.some((c) => c.check!.task === "T-005" && c.action === "run"),
 		"T-005's own check no longer runs",
 	);
 	assert.ok(
-		plan.checks.some((c) => c.task === "T-009" && c.nightly),
+		checks.some((c) => c.check!.task === "T-009" && c.action === "nightly"),
 		"a push runs the gates self-test",
 	);
-	assert.ok(
-		!plan.steps.includes("node tools/selftest/gates.ts"),
-		"a push runs the gates self-test",
-	);
-	const subsets = plan.checks
-		.filter((c) => c.merged)
-		.map((c) => listed(c.check.run!))
-		.flatMap((ids) => [...ids]);
+	assert.ok(!p.steps.includes(GATES), "a push runs the gates self-test");
+	const subsets = checks
+		.filter((c) => c.action === "merged")
+		.flatMap((c) => [...listed(c.check!.command)]);
 	same(listed(runs[0]!), new Set([...smoke, ...subsets]), "the merged run");
 
-	// A step and a check this config may not call static.
-	const built = "test -f dist/index.html";
-	for (const command of ["vp run test:coverage", "vp build", "vp run e2e", built])
-		assert.ok(!isStatic(command), `\`${command}\` should not be static`);
+	// What builds or runs a browser is late, never static.
+	for (const entry of p.order) {
+		const command = entry.step ?? entry.check!.command;
+		if (["vp run test:coverage", "vp build"].includes(command) || isScenarioRun(command))
+			assert.equal(entry.cost, "late", `\`${command}\` should not be static`);
+	}
 
 	// The smoke rule holds today.
-	assert.deepEqual(smokeProblems(), []);
-	assert.equal(sh("tools/bin/itos tests smoke check scenario").status, 0);
+	assert.equal(sh("tools/bin/itos tests smoke check scenario", { env }).status, 0);
 } finally {
 	rmSync(scratch, { recursive: true, force: true });
 }

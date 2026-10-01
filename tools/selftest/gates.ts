@@ -23,8 +23,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync
 import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { e2eStep, planFor } from "../itos/ci-plan.ts";
-import { STEPS, tasksIn } from "../itos/ci-scope.ts";
+import { e2eStep, plan } from "./cli.ts";
 
 const root = resolve(".");
 const scratch = mkdtempSync(join(tmpdir(), "gates-selftest-"));
@@ -148,8 +147,9 @@ try {
 	// upstream branch in the checkout.
 	env.FALLOW_AUDIT_BASE = base;
 
+	const steps = plan(["--whole"]).steps;
 	for (const step of ["vp run e2e", "vp run test:coverage"])
-		expect(STEPS.includes(step), `CI no longer runs \`${step}\`, which the hooks leave to it`);
+		expect(steps.includes(step), `CI no longer runs \`${step}\`, which the hooks leave to it`);
 
 	// 1. A change to a leaf module runs the tests that reach it and not the
 	// whole suite, on both gates.
@@ -220,9 +220,10 @@ try {
 	expect(!run.output.includes("$ vp run e2e"), "pre-push ran the scenarios a footer names");
 	expect(!run.output.includes("$ vp run task"), "pre-push ran the checks of a task a footer names");
 	// ...and CI finds the task in the pushed range.
+	const named = plan([base, sha], scratch).tasks;
 	expect(
-		tasksIn(base, sha).includes("T-007"),
-		`CI did not find T-007 in the pushed range: ${tasksIn(base, sha).join(", ") || "none"}`,
+		named.includes("T-007"),
+		`CI did not find T-007 in the pushed range: ${named.join(", ") || "none"}`,
 	);
 
 	// The commit-msg hook, through its shim. A docs commit may not touch src/;
@@ -270,7 +271,7 @@ try {
 	run = prePush("that refactor", base, sha);
 	expect(run.status === 0, `pre-push should leave the scenarios to CI:\n${run.output}`);
 	// ...and fails a push's E2E step, the smoke set among it.
-	const step = e2eStep(planFor(base, sha)) ?? "";
+	const step = e2eStep(plan([base, sha], scratch)) ?? "";
 	expect(step.startsWith("vp run e2e --grep"), `a push's E2E step is not a selection: ${step}`);
 	run = gate("CI's E2E step for a push, same refactor", step);
 	expect(run.status !== 0, "a push's E2E step passed a refactor that breaks every scenario");

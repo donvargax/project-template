@@ -1,4 +1,11 @@
 #!/bin/sh
-# itos: the task tool's one command line, tools/itos/main.ts, wherever it is
-# called from. `itos --help` lists the commands.
-exec node "$(dirname "$0")/../itos/main.ts" "$@"
+# itos: the task tool's one command line, wherever it is called from. It runs
+# the release package.json pins (the `itos` dev dependency, its bin), so the
+# hooks, CI and the ledger call this path whatever implements itos.
+# `itos --help` lists the commands.
+bin="$(dirname "$0")/../../node_modules/.bin/itos"
+if [ ! -x "$bin" ]; then
+	echo "itos is not installed: run \`vp install\`" >&2
+	exit 3
+fi
+exec "$bin" "$@"

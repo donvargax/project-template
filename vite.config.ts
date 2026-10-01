@@ -41,9 +41,6 @@ const lint: NonNullable<UserConfig["lint"]> = {
 
 const test = {
 	passWithNoTests: true,
-	// The conformance suite runs the task tool's command line in scratch
-	// repositories; on a busy machine that outgrows Vitest's 5 s default.
-	testTimeout: 30_000,
 	// `--changed` (the git hooks) picks tests by what they import; a change to one
 	// of these reruns everything instead. Written as the files themselves: the
 	// defaults' `**/package.json/**` form never matches a changed file. The
@@ -74,9 +71,6 @@ const fmt = {
 	ignorePatterns: [
 		// The changelog, written on demand by `vp run changelog`.
 		"docs/changelog/**",
-		// The conformance fixtures hold exact command output, byte for byte; the
-		// formatter would reflow it.
-		"tools/itos/conformance/**",
 		"e2e/.features-gen/**",
 		"coverage/**",
 		".claude/**",
