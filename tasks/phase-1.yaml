@@ -19,17 +19,22 @@
     fixtures are itos's, proven in its own repository. What the config needs
     and the package does not ship stays as the project's own: the scenario
     moving rule (tools/scenario-moves.ts, the scenario kind's range check),
-    and commitlint's footer rules, which ask the installed itos rather than
-    import its modules (commitlint.config.ts says how). The self-tests read
-    what they prove from the command line (ci plan --json, ci scope, tests
-    smoke ids) instead of importing the tool's modules; which run the github
-    range provider picks is itos's to prove. The checksum check downloads the
-    tarball package.json pins and holds it to the release's checksums.txt.
+    and, until itos 0.4.0 ran them itself (T-022), commitlint's footer rules,
+    which asked the installed itos rather than import its modules. The checks
+    that a footer is rejected and accepted pipe the message into itos commit
+    check-message, which runs the header lint and then the footer rules, as
+    the commit-msg hook does. The self-tests read what they prove from the
+    command line (ci plan --json, ci scope, tests smoke ids) instead of
+    importing the tool's modules; which run the github range provider picks is
+    itos's to prove. The checksum check downloads the tarball package.json
+    pins and holds it to the release's checksums.txt.
   done_when:
     - run: tools/bin/itos version --check
       cost: static
-    - fails: "printf 'docs: x\\n\\nTask: T-000\\n' | vp exec commitlint"
-    - run: "printf 'docs: x\\n\\nTask: T-014\\n' | vp exec commitlint"
+    - fails: "printf 'docs: x\\n\\nTask: T-000\\n' | tools/bin/itos commit check-message -"
+      cost: static
+    - run: "printf 'docs: x\\n\\nTask: T-014\\n' | tools/bin/itos commit check-message -"
+      cost: static
     - run: node tools/selftest/ci-scope.ts
     - run: vp install --frozen-lockfile
     - run: vp test run tools/scenario-moves.test.ts

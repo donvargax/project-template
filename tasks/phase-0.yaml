@@ -92,18 +92,21 @@
     Conventional Commits with a Task: or Scenarios: footer naming what drives
     the commit, and each type held to the paths it may touch, so a commit's
     type is honest. The commit-msg hook applies the path rules, the scenario
-    moves and then commitlint (config-conventional plus one rule per footer,
-    from itos.yaml); pre-commit formats, lints and runs the unit tests the
-    change reaches and the audit; pre-push runs the unit tests the pushed
-    commits reach. CI runs this task on every push, so its checks name only
-    what every project made from the template keeps (itos.yaml, package.json,
-    the ledger, the README), never the demo's paths: a project that changes
-    its source layout or drops the demo keeps them true.
+    moves, then commitlint (config-conventional) and itos's footer rules
+    (commits.footers in itos.yaml), so a message's header is commitlint's to
+    judge and its footers itos's; pre-commit formats, lints and runs the unit
+    tests the change reaches and the audit; pre-push runs the unit tests the
+    pushed commits reach. CI runs this task on every push, so its checks name
+    only what every project made from the template keeps (itos.yaml,
+    package.json, the ledger, the README), never the demo's paths: a project
+    that changes its source layout or drops the demo keeps them true.
   done_when:
     - fails: "printf 'update things\\n' | vp exec commitlint"
     - run: "printf 'build: scaffold\\n\\nTask: T-001\\n' | vp exec commitlint"
-    - fails: "printf 'build: scaffold\\n' | vp exec commitlint"
-    - fails: "printf 'feat: x\\n\\nScenarios: @ID-NOPE-01\\n' | vp exec commitlint"
+    - fails: "printf 'build: scaffold\\n' | tools/bin/itos commit check-message -"
+      cost: static
+    - fails: "printf 'feat: x\\n\\nScenarios: @ID-NOPE-01\\n' | tools/bin/itos commit check-message -"
+      cost: static
     - fails: tools/bin/itos commit check-paths --type build tasks/phase-0.yaml
     - fails: tools/bin/itos commit check-paths --type docs itos.yaml
     - run: tools/bin/itos commit check-paths --type docs README.md tasks/phase-0.yaml
@@ -122,12 +125,16 @@
     the range from the last green run, the named tasks' checks in cost order,
     one E2E run over the smoke set and what the range names, a prose-only
     shortcut. It re-checks every pushed commit with the commit-msg rules, so a
-    commit made with the hooks bypassed fails CI.
+    commit made with the hooks bypassed fails CI. Verifying the whole history
+    is late: it re-checks commits already checked, so it says nothing at
+    commit time, and its time grows with the history (24 s over 48 commits)
+    toward the commit-msg hook's 60-second cap on a named task's check.
   done_when:
     - run: actionlint
     - run: node tools/selftest/ci-scope.ts
-    - run: tools/bin/itos verify "" HEAD
     - fails: tools/bin/itos verify HEAD "$(git commit-tree 'HEAD^{tree}' -p HEAD -m 'update things')"
+    - run: tools/bin/itos verify "" HEAD
+      cost: late
     - run: tools/bin/itos ci run
 
 - id: T-009
