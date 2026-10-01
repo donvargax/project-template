@@ -17,7 +17,12 @@ export interface Run {
 	stdout: string;
 	output: string;
 }
-export function sh(command: string, options: { cwd?: string; env?: NodeJS.ProcessEnv } = {}): Run {
+// An absent or undefined `cwd` runs in the caller's directory, as spawnSync's
+// does: callers hand on a `cwd?` of their own.
+export function sh(
+	command: string,
+	options: { cwd?: string | undefined; env?: NodeJS.ProcessEnv } = {},
+): Run {
 	const run = spawnSync("sh", ["-c", command], {
 		cwd: options.cwd,
 		env: options.env ?? cleanEnv(),
