@@ -154,6 +154,18 @@ the commands, `itos <command> --help` each one).
   first when it resolves a project's Node, and both workflows hand it to
   setup-vp (`node-version-file`), which runs `vp env use` with it and keys
   the dependency cache on it. No workflow names a version of its own.
+- **The workflows' actions** are pinned to commits, because a tag can be
+  moved to other code: every `uses:` in `ci.yml` and `nightly.yml` names the
+  full 40-character SHA of the commit its release tag pointed at, with that
+  precise release beside it as a comment
+  (`uses: actions/checkout@<sha> # v4.4.0`), for the reader and the update
+  bot; an annotated tag is followed to its commit, not the tag object. A move
+  changes the SHA and the comment together. The tools a workflow installs are
+  pinned the same way: actionlint's install script is fetched from its
+  release's commit, not the tag, and asked for that release
+  (`raw.githubusercontent.com/rhysd/actionlint/<sha>/…`, `1.7.12`), and the
+  nightly's GitHub CLI comes from its release tarball, checked against the
+  release's SHA-256.
 - **The type check** is `vp check`'s, over one `tsconfig.json` that covers
   `src/`, `e2e/`, `tools/` and the root `*.config.ts` alike. Beside `strict`
   it turns on `noUncheckedIndexedAccess` (an index may be undefined, so it is

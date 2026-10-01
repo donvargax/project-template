@@ -300,7 +300,7 @@ items:
     title: "The workflows' actions pinned to commits"
     phase: 2
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-022]
     kind: task
     refs: [tasks/phase-2.yaml]
@@ -411,3 +411,32 @@ items:
       so a move to Node 26 that leaves the types behind type-checks against an API the runtime no
       longer matches. The update bot should move both together, grouped as one update, or a check
       should hold the types' major to the file's.
+
+  - id: p2-run-step-pins-updated
+    title: The versions pinned inside run steps, moved by the update bot
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-026]
+    kind: idea
+    why: >
+      Renovate's github-actions manager moves a uses: pinned as <sha> # <version>, but two pins live
+      inside run steps where it does not look: ci.yml's actionlint script, fetched from a commit and
+      asked for 1.7.12, the two of which must move together, and nightly.yml's GitHub CLI, its
+      GH_VERSION beside the release's GH_SHA256. Without a custom manager for each they stay where
+      T-025 left them while everything around them moves.
+
+  - id: p2-actionlint-binary-hash
+    title: actionlint's binary checked against its release's hash
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-025]
+    kind: idea
+    why: >
+      T-025 fetches actionlint's install script from a commit, but the script then downloads the
+      release tarball by its tag's URL and checks no hash, so the binary CI runs is still whatever
+      the release asset is on the day. T-027's why takes actionlint as its model for a release
+      checked against its published hash, which it is not; the nightly's GitHub CLI is. Installing
+      actionlint the way the GitHub CLI is installed, from the tarball checked against the release's
+      checksums file, would make both true.
