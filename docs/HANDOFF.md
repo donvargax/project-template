@@ -12,45 +12,44 @@ Read [AGENTS.md](../AGENTS.md), [PLAN.md](../PLAN.md),
 [tasks/work-items.yaml](../tasks/work-items.yaml) before taking work; a
 coordinator reads [docs/ORCHESTRATING.md](ORCHESTRATING.md) too.
 
-Last rewritten after T-021 landed: itos pinned at v0.2.0, its commit-msg hook
-checking its own data from the index.
+Last rewritten after phase 2 was planned: itos v0.4.0 is the next step, then
+phase 2's tasks.
 
 ## Where things stand
 
-Phases 0 and 1 are done (`docs/PHASES.md`). itos is pinned at **v0.2.0**
-(README, "itos, pinned"); its commit-msg hook checks `itos.yaml`, the ledger,
-the registry and the smoke set as staged, so the pre-commit hook no longer
-does.
-
-The template carries two things only until itos does them, each an idea in
-the registry:
-
-- the footer rules inside commitlint, which ask itos through a copy of the
-  policy without the header lint (`commitlint.config.ts`,
-  `p1-footer-rules-in-itos`);
-- the scenario moving rule, `tools/scenario-moves.ts`
-  (`p1-scenario-moves-in-itos`).
+itos is pinned at **v0.2.0**; v0.3.0 and v0.4.0 are released, and T-022
+moves straight to v0.4.0 (`tasks/phase-1.yaml`), so phase 1 is open until it
+lands. Phase 2, the template's code design and supply chain, is specified
+(`PLAN.md`, "Phase 2"; `tasks/phase-2.yaml`): every task `todo`, owned by
+donvargax, waiting on T-022. Implementing sessions now document their work
+before their last push, and the coordinator checks it (`AGENTS.md`,
+"Finishing"; `docs/ORCHESTRATING.md`, "Checking a result").
 
 Read the newest CI run and the newest nightly on `main` before beginning
 (`gh run list --workflow ci.yml --branch main --limit 1`, and the same for
-`nightly.yml`); a red nightly takes priority over new work. The first nightly
-after T-021 is the first to run the gates self-test's new commit-msg cases on
-the runner: check it.
+`nightly.yml`); a red nightly takes priority over new work.
 
 ## Next
 
-1. **Move to each new itos release by its notes' "Upgrading" section**, as
-   T-021 did for v0.2.0: pin it as the README's "itos, pinned" says, make the
-   changes the section lists, and land them under a task of their own, with
-   `tools/bin/itos version --check` and `tools/bin/itos config check` among
-   its checks. Write the task `todo` and let the agent take it
-   (`docs/ORCHESTRATING.md`, "Lessons").
-2. **Close the two ideas above** when a release covers them: its footer
-   rules run beside the header lint, or it ships the moving rule as a
-   built-in range check.
-3. Continue with what `tools/bin/itos work` proposes. Ideas, deferred work and
-   everything further out live only in `tasks/work-items.yaml`.
+1. **T-022, itos v0.4.0.** Hand it to one agent with the brief in
+   `docs/ORCHESTRATING.md`, pointing it at both releases' notes
+   (`gh release view v0.3.0 -R donvargax/itos`, and `v0.4.0`), "Upgrading"
+   above all; its `why` says which steps apply. The agent takes it
+   (`status: doing`) in its first `docs` commit. From v0.3.0 on, a commit
+   naming a `done` task runs that task's static checks in the commit-msg
+   hook, so expect slow ones to be marked `cost: late`.
+2. **Phase 2, one agent at a time,** in the order `tools/bin/itos work`
+   proposes: T-023, T-024, T-025 and T-027 are small and independent; T-026
+   follows T-025; T-028, then T-029, then T-030 and T-031. The decisions they
+   build to are in `PLAN.md`'s phase 2 and each task's `why`; don't let an
+   agent re-decide them.
+3. Close `p1-scenario-moves-in-itos` when an itos release ships the moving
+   rule, and specify `p2-integration-tests` when one merges more than one
+   kind of named test (itos's `p1-several-test-kinds`).
 
 ## User review
 
-Nothing waits on the user's review.
+- **T-026 needs the Renovate app** installed on the repository before its
+  updates arrive; the owner does it when the task lands.
+- `p2-mutation-testing` waits on the owner's follow-up, and
+  `p2-project-generator` on a discussion of starting projects fresh.
