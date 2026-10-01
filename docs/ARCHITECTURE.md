@@ -17,9 +17,9 @@ loads `src/main.ts`.
 
 ## The scenarios
 
-The behaviour a user can observe is Gherkin in `e2e/features/`, run by
+The behaviour a user can observe is Gherkin in `features/`, run by
 Playwright through playwright-bdd against what `vp build` produces, served by
-`vp preview` (`playwright.config.ts`). `e2e/features/README.md` holds the
+`vp preview` (`playwright.config.ts`). `features/README.md` holds the
 rules: the black-box boundary, the tags, the smoke set, the moving rule.
 
 - **Steps** (`e2e/steps/`) read as the scenarios do and drive **page
@@ -58,7 +58,7 @@ the commands, `itos <command> --help` each one).
   names another file. A project changes its policy here, not in code.
 - **What it reads.** The ledger is `tasks/phase-<n>.yaml` (`ledger.files`),
   the registry `docs/work-items.yaml` (`work.registry`), the people
-  `CONTRIBUTORS.md` (`work.people`), the smoke set `e2e/smoke.yaml`
+  `CONTRIBUTORS.md` (`work.people`), the smoke set `features/smoke.yaml`
   (`tests.scenario.smoke`). `itos config check` validates all of them.
 - **One command line**: exit 0 on success, 1 for a policy failure (a check
   failed, a commit rejected, an unknown task), 2 for a usage or config error,

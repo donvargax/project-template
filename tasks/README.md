@@ -1,6 +1,6 @@
 # Tasks: non-feature work with automated confirmation
 
-Feature files (`e2e/features/`) drive `feat:` and `fix:` commits and contain
+Feature files (`features/`) drive `feat:` and `fix:` commits and contain
 only user-observable behavior. Every other commit type is driven by a
 **task** in this folder. Each task states its "done when" as executable
 checks, so completion is confirmed automatically without putting
@@ -34,18 +34,18 @@ there, not in the commits.
 
 ## Commit types and what drives them
 
-| Type           | Driven by                                               | Scope rule (checked by the commit-msg hook)                                                                    | Extra checks, in CI                                     |
-| -------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `feat`         | scenarios (`Scenarios:` footer)                         | must touch `src/` or `e2e/`                                                                                    | the referenced scenarios                                |
-| `fix`          | a `@bug-<n>` scenario, or a failing referenced scenario | must touch `src/`                                                                                              | the referenced scenarios                                |
-| `refactor`     | task (`Task:` footer)                                   | must not touch `e2e/features/**`                                                                               | the task's checks; CI runs the full unit and E2E suites |
-| `perf`         | task                                                    | must not touch `e2e/features/**`                                                                               | the task's measurement check                            |
-| `test`         | task                                                    | only `e2e/**`, `**/*.test.ts`, `tools/**`, `playwright.config.ts`; in a feature file, `@wip` changes and moves | the changed tests pass                                  |
-| `build` / `ci` | task                                                    | only config, hooks, workflows, lockfile, `.claude/settings.json`, `tools/**`, `index.html`, `src/main.ts`      | the task's checks                                       |
-| `chore`        | task                                                    | no `src/**` changes                                                                                            | the task's checks                                       |
-| `revert`       | task (the one whose work it undoes)                     | none                                                                                                           | the task's checks                                       |
-| `docs`         | task (optional for typo-level edits)                    | only `*.md`, `docs/**`, `tasks/**`, and feature files when every change is `@wip`                              | none                                                    |
-| `style`        | none                                                    | formatting only                                                                                                | `vp check`                                              |
+| Type           | Driven by                                               | Scope rule (checked by the commit-msg hook)                                                                                   | Extra checks, in CI                                     |
+| -------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `feat`         | scenarios (`Scenarios:` footer)                         | must touch `src/`, `e2e/` or `features/`                                                                                      | the referenced scenarios                                |
+| `fix`          | a `@bug-<n>` scenario, or a failing referenced scenario | must touch `src/`                                                                                                             | the referenced scenarios                                |
+| `refactor`     | task (`Task:` footer)                                   | must not touch `features/**`                                                                                                  | the task's checks; CI runs the full unit and E2E suites |
+| `perf`         | task                                                    | must not touch `features/**`                                                                                                  | the task's measurement check                            |
+| `test`         | task                                                    | only `features/**`, `e2e/**`, `**/*.test.ts`, `tools/**`, `playwright.config.ts`; in a feature file, `@wip` changes and moves | the changed tests pass                                  |
+| `build` / `ci` | task                                                    | only config, hooks, workflows, lockfile, `.claude/settings.json`, `tools/**`, `index.html`, `src/main.ts`                     | the task's checks                                       |
+| `chore`        | task                                                    | no `src/**` changes                                                                                                           | the task's checks                                       |
+| `revert`       | task (the one whose work it undoes)                     | none                                                                                                                          | the task's checks                                       |
+| `docs`         | task (optional for typo-level edits)                    | only `*.md`, `docs/**`, `tasks/**`, and feature files when every change is `@wip`                                             | none                                                    |
+| `style`        | none                                                    | formatting only                                                                                                               | `vp check`                                              |
 
 The scope rules keep the commit type honest. A `refactor` that edits a feature
 file is rejected, because changing behavior needs `feat` or `fix`. Outside
@@ -62,7 +62,7 @@ scenario is lost or added (a `@wip` one may still come, go or change), and a
 file with a live scenario keeps its header and Background; comment lines are
 not compared, so a `docs` commit may write a scenario's reason beside it. The
 files are organised by area of behaviour, and a move is a `test` commit, one
-that also moves the file's smoke entries in `e2e/smoke.yaml`. A live
+that also moves the file's smoke entries in `features/smoke.yaml`. A live
 scenario's name may not change outside `feat` and `fix`, unless the rename is
 listed by ID and name in `ALLOWED_RENAMES` (`tools/scenario-moves.ts`). A
 scenario that duplicates another stays: removing one is a `feat` or `fix`

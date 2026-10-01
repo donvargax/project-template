@@ -47,10 +47,10 @@
   type: build
   title: E2E harness and the smoke set
   why: >
-    Playwright with playwright-bdd: scenarios in Gherkin under e2e/features,
+    Playwright with playwright-bdd: scenarios in Gherkin under features/,
     steps that drive page objects only, the built app served for the run, a
     recorded retry in CI that never hides a flaky scenario. A push's CI runs
-    the smoke set (e2e/smoke.yaml) and what its commits name in one run; the
+    the smoke set (features/smoke.yaml) and what its commits name in one run; the
     self-test proves the plan's E2E command selects exactly that, against
     Playwright's own listing.
   done_when:

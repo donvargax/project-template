@@ -109,7 +109,7 @@ the rest.
 > earlier slices' commits (<which; `vp run changelog -- --scenario <id>` or
 > `git log --grep` finds them>), what the last one left missing (<the ideas
 > and `todo` items in `docs/work-items.yaml`, from `vp run work`>),
-> `docs/ARCHITECTURE.md`, `e2e/features/README.md` and `tasks/README.md`
+> `docs/ARCHITECTURE.md`, `features/README.md` and `tasks/README.md`
 > first, and follow `AGENTS.md` — in particular "The gates run themselves":
 > just commit and react to what a gate reports.
 >

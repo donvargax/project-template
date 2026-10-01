@@ -37,7 +37,8 @@ was built; this section records what was decided and why.>
 ```
 <project>/
   src/        <…>
-  e2e/        the scenarios (e2e/features/) and their steps
+  features/   the scenarios: the specification, in Gherkin
+  e2e/        the harness that runs them: steps and page objects
   tasks/      the ledger: non-feature work and its checks
   tools/      itos and the project's own tools
 ```
@@ -67,7 +68,7 @@ root, the work registry beside the ledger, verification that starts at
 ### Phase 2: <name>
 
 <What it builds, its slices in order, and what each slice leaves usable.
-The scenarios live in `e2e/features/`, tagged `@phase-2`, and the tasks in
+The scenarios live in `features/`, tagged `@phase-2`, and the tasks in
 `tasks/phase-2.yaml`.>
 
 - **Usable:** <…>

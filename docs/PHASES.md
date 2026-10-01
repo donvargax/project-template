@@ -4,7 +4,7 @@
 only **who** works each one, so two people or sessions never build the same
 phase in parallel. A phase changes owner here, by agreement, before any work
 on it starts. Its tasks stay in `tasks/phase-<n>.yaml` and its scenarios in
-`e2e/features/`, tagged `@phase-<n>`.
+`features/`, tagged `@phase-<n>`.
 
 | Phase | What                                    | State | Owner                     | Issue |
 | ----- | --------------------------------------- | ----- | ------------------------- | ----- |

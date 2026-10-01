@@ -1,7 +1,12 @@
 # Feature files
 
 Every `feat:` and `fix:` commit is driven by scenarios in this folder. Nothing
-else belongs here.
+else belongs here: the feature files, this README and the smoke set
+(`smoke.yaml`). They are the specification, so they sit at the root and read
+without the code that runs them. That code, the Playwright harness, is
+`../e2e/`: the steps (`e2e/steps/`), the page objects (`e2e/support/`) and the
+specs playwright-bdd generates from these files (`e2e/.features-gen/`, not
+committed).
 
 ## What goes in a feature file
 

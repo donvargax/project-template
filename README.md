@@ -30,7 +30,7 @@ What it gives a new project from its first commit:
   `docs/ORCHESTRATING.md` is the coordinator's: the loop of handing slices to
   subagents, the brief, a slice that fails, checking a result.
 
-`tasks/README.md` and `e2e/features/README.md` state the rules;
+`tasks/README.md` and `features/README.md` state the rules;
 `tools/bin/itos --help` lists the tool's commands.
 
 ## Where things are
@@ -45,7 +45,8 @@ What it gives a new project from its first commit:
 | `docs/PHASES.md`        | Who owns which phase, and how work is routed.                                   |
 | `docs/work-items.yaml`  | The one list of open work: owners, statuses, dependencies, ideas.               |
 | `tasks/`                | The ledger: every non-feature task and the checks that prove it.                |
-| `e2e/features/`         | The scenarios: the behaviour a user can observe.                                |
+| `features/`             | The scenarios: the behaviour a user can observe, and the smoke set.             |
+| `e2e/`                  | The Playwright harness that runs them: steps and page objects.                  |
 | `itos.yaml`             | The policy every gate reads.                                                    |
 
 ## Create a project from it
