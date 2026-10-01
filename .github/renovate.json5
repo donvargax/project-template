@@ -3,61 +3,61 @@
 // Every update lands on main as one build commit, with no pull request, once
 // CI is green on its branch.
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["config:recommended"],
+	$schema: "https://docs.renovatebot.com/renovate-schema.json",
+	extends: ["config:recommended"],
 
-  // npm covers package.json, packageManager and the catalog in
-  // pnpm-workspace.yaml; github-actions the uses: lines. .node-version is left
-  // to p2-node-types-follow-runtime, the pins inside run: steps to
-  // p2-run-step-pins-updated.
-  enabledManagers: ["npm", "github-actions"],
+	// npm covers package.json, packageManager and the catalog in
+	// pnpm-workspace.yaml; github-actions the uses: lines. .node-version is left
+	// to p2-node-types-follow-runtime, the pins inside run: steps to
+	// p2-run-step-pins-updated.
+	enabledManagers: ["npm", "github-actions"],
 
-  // The itos tarball moves by its release notes' upgrading steps, by hand
-  // (README, "itos, pinned").
-  ignoreDeps: ["itos"],
+	// The itos tarball moves by its release notes' upgrading steps, by hand
+	// (README, "itos, pinned").
+	ignoreDeps: ["itos"],
 
-  // Weekly: early on Monday, UTC. A branch made in the window is still
-  // rebased and landed after it.
-  timezone: "Etc/UTC",
-  schedule: ["* 0-5 * * 1"],
+	// Weekly: early on Monday, UTC. A branch made in the window is still
+	// rebased and landed after it.
+	timezone: "Etc/UTC",
+	schedule: ["* 0-5 * * 1"],
 
-  // Branch automerge: Renovate fast-forwards main to its branch once CI is
-  // green there (ci.yml runs on renovate/** for that), so no pull request is
-  // opened unless CI goes red. main takes no merge commits.
-  automerge: true,
-  automergeType: "branch",
+	// Branch automerge: Renovate fast-forwards main to its branch once CI is
+	// green there (ci.yml runs on renovate/** for that), so no pull request is
+	// opened unless CI goes red. main takes no merge commits.
+	automerge: true,
+	automergeType: "branch",
 
-  // Every commit passes the commit-msg rules CI re-checks (itos verify):
-  // `build: <lowercase subject>`, a body saying what moved, the Task footer.
-  semanticCommits: "enabled",
-  commitBody: "Renovate's weekly update, landed on main once CI passed on its branch.\n\n{{#each upgrades}}{{#unless @first}}\n{{/unless}}- {{{depName}}} {{{currentVersion}}} to {{{newVersion}}}{{#if (equals manager 'github-actions')}} ({{{newDigestShort}}}){{/if}}{{/each}}",
-  commitTrailers: ["Task: T-026"],
+	// Every commit passes the commit-msg rules CI re-checks (itos verify):
+	// `build: <lowercase subject>`, a body saying what moved, the Task footer.
+	semanticCommits: "enabled",
+	commitBody: "Renovate's weekly update, landed on main once CI passed on its branch.\n\n{{#each upgrades}}{{#unless @first}}\n{{/unless}}- {{{depName}}} {{{currentVersion}}} to {{{newVersion}}}{{#if (equals manager 'github-actions')}} ({{{newDigestShort}}}){{/if}}{{/each}}",
+	commitTrailers: ["Task: T-026"],
 
-  packageRules: [
-    {
-      // After config:recommended's rules, which would make these chore or fix.
-      matchPackageNames: ["*"],
-      semanticCommitType: "build",
-      semanticCommitScope: null,
-    },
-    {
-      // One branch for the npm updates, one for the actions; majors come
-      // apart from the rest in each (separateMajorMinor).
-      matchManagers: ["npm"],
-      groupName: "npm dependencies",
-    },
-    {
-      matchManagers: ["github-actions"],
-      groupName: "workflow actions",
-      // uses: <sha> # vX.Y.Z, as T-025 wrote them: the SHA and the comment move together.
-      pinDigests: true,
-    },
-    {
-      // The Node types follow the runtime's major in .node-version, which
-      // nothing here moves: p2-node-types-follow-runtime.
-      matchPackageNames: ["@types/node"],
-      matchUpdateTypes: ["major"],
-      enabled: false,
-    },
-  ],
+	packageRules: [
+		{
+			// After config:recommended's rules, which would make these chore or fix.
+			matchPackageNames: ["*"],
+			semanticCommitType: "build",
+			semanticCommitScope: null,
+		},
+		{
+			// One branch for the npm updates, one for the actions; majors come
+			// apart from the rest in each (separateMajorMinor).
+			matchManagers: ["npm"],
+			groupName: "npm dependencies",
+		},
+		{
+			matchManagers: ["github-actions"],
+			groupName: "workflow actions",
+			// uses: <sha> # vX.Y.Z, as T-025 wrote them: the SHA and the comment move together.
+			pinDigests: true,
+		},
+		{
+			// The Node types follow the runtime's major in .node-version, which
+			// nothing here moves: p2-node-types-follow-runtime.
+			matchPackageNames: ["@types/node"],
+			matchUpdateTypes: ["major"],
+			enabled: false,
+		},
+	],
 }

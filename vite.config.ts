@@ -4,7 +4,7 @@ import { defineConfig, type UserConfig } from "vite-plus";
 const staged = {
 	"{src,e2e,tools}/**/*.{ts,js,json,html,css}": "vp check --fix",
 	"*.{md,json,yaml,ts,toml}": "vp check --fix",
-	"{docs,tasks,.github}/**/*.{md,yml,yaml}": "vp check --fix",
+	"{docs,tasks,.github}/**/*.{md,yml,yaml,json5}": "vp check --fix",
 };
 
 const lint: NonNullable<UserConfig["lint"]> = {
