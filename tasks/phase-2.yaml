@@ -84,7 +84,8 @@
     The audit gate (fallow) scores the code's health, not its dependencies'
     known vulnerabilities, so nothing reported a CVE in the lockfile. The
     nightly scans pnpm-lock.yaml with osv-scanner, a pinned release checked
-    against its published hash as actionlint's is, through one script the
+    against its published SHA-256 as the nightly's GitHub CLI is (actionlint's
+    install checks no hash yet: p2-actionlint-binary-hash), through one script the
     nightly and a contributor both run. A red scan turns the nightly red,
     which opens or comments on its issue, so a new advisory is one morning's
     work rather than a surprise on some later push.
