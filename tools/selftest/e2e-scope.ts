@@ -35,7 +35,8 @@ const range = (message: string) => {
 	);
 };
 
-// The scenario IDs an E2E command selects, as Playwright lists them.
+// The scenario IDs an E2E command selects, as Playwright lists them. The smoke
+// run hands Playwright only what follows its `--`.
 interface Suite {
 	suites?: Suite[];
 	specs?: { tags?: string[]; tests?: { tags?: string[] }[] }[];
@@ -51,7 +52,8 @@ const idsIn = (suite: Suite): string[] => [
 function listed(command: string): Set<string> {
 	const report = join(scratch, "list.json");
 	rmSync(report, { force: true });
-	const run = sh(`${command} --list --reporter=json`, {
+	const flags = `${command === SMOKE_RUN ? "-- " : ""}--list --reporter=json`;
+	const run = sh(`${command} ${flags}`, {
 		env: { ...env, PLAYWRIGHT_JSON_OUTPUT_NAME: report },
 	});
 	assert.equal(run.status, 0, `${command} --list failed:\n${run.output}`);
@@ -85,11 +87,7 @@ try {
 	const smoke = new Set((JSON.parse(ids.stdout) as { ids: string[] }).ids);
 	const everything = listed("vp run e2e");
 	assert.ok(everything.size >= smoke.size, "the suite lists fewer scenarios than the smoke set");
-	same(
-		listed("tools/bin/itos tests smoke run scenario --"),
-		smoke,
-		"the smoke run is not the smoke set",
-	);
+	same(listed(SMOKE_RUN), smoke, "the smoke run is not the smoke set");
 
 	// A range naming one scenario: the smoke set and it. The last one listed,
 	// outside the smoke set once the suite has one there.
