@@ -14,8 +14,10 @@
 //     footers from the pushed range and runs them;
 //   - the commit-msg hook, a one-line shim calling `itos hook commit-msg`,
 //     rejects a commit whose type may not touch a staged path, a scenario
-//     renamed outside feat and fix, a header commitlint rejects, and itos's
-//     own data broken as it is staged: a ledger with a duplicate task ID (even
+//     renamed outside feat and fix, a header commitlint rejects, a footer
+//     itos's footer rules reject (each problem reported once, and beside a
+//     header problem rather than hidden by it), and itos's own data broken as
+//     it is staged: a ledger with a duplicate task ID (even
 //     when the working tree's copy has been fixed, since the hook reads the
 //     index) and a registry item waiting on one that does not exist; and it
 //     lets a sound commit through;
@@ -232,7 +234,9 @@ try {
 
 	// The commit-msg hook, through its shim. A docs commit may not touch src/;
 	// a test commit may not rename a live scenario; commitlint rejects a header
-	// without a type; a docs commit with its footer passes.
+	// without a type; itos's footer rules reject a missing footer and an
+	// unknown task, once each, the second beside commitlint's report; a docs
+	// commit with its footer passes.
 	git(`reset -q --hard ${base}`);
 	edit(
 		module,
@@ -261,6 +265,23 @@ try {
 	expect(
 		run.status !== 0 && run.output.includes("[type-empty]"),
 		`commit-msg did not pass the header to commitlint:\n${run.output}`,
+	);
+	const times = (text: string, part: string) => text.split(part).length - 1;
+	run = commitMsg("a chore commit without its footer", "chore: edit the readme\n");
+	expect(
+		run.status === 1 && times(run.output, "[task-footer]") === 1,
+		`commit-msg did not reject a missing Task: footer once:\n${run.output}`,
+	);
+	run = commitMsg(
+		"a header without a type, naming an unknown task",
+		"update things\n\nTask: T-000\n",
+	);
+	expect(
+		run.status !== 0 &&
+			run.output.includes("[type-empty]") &&
+			times(run.output, "[task-footer]") === 1 &&
+			run.output.includes("T-000"),
+		`commit-msg did not report the header and the unknown task, the task once:\n${run.output}`,
 	);
 	run = commitMsg("a sound docs commit", "docs: edit the readme\n\nTask: T-007\n");
 	expect(run.status === 0, `commit-msg rejected a sound docs commit:\n${run.output}`);
