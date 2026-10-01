@@ -24,9 +24,29 @@ What it gives a new project from its first commit:
 - **Work routing** (`docs/work-items.yaml`, `CONTRIBUTORS.md`): `vp run work`
   says what the person a session works for can start next.
 - **A changelog from the commits**: `vp run changelog`.
+- **Agent instructions for what no command can check.** `AGENTS.md` is the
+  implementing session's: which session it is, how to split work into
+  commits, the gates as built, what never to do, how to finish.
+  `docs/ORCHESTRATING.md` is the coordinator's: the loop of handing slices to
+  subagents, the brief, a slice that fails, checking a result.
 
 `tasks/README.md` and `e2e/features/README.md` state the rules;
 `tools/bin/itos --help` lists the tool's commands.
+
+## Where things are
+
+| File                    | What it holds                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| `PLAN.md`               | The decisions, the intended architecture, the phases and the references.        |
+| `docs/ARCHITECTURE.md`  | How the code is put together as built, the task tooling and the gates included. |
+| `docs/HANDOFF.md`       | Only what the next session should do; the coordinator rewrites it.              |
+| `AGENTS.md`             | The working rules for a session that implements.                                |
+| `docs/ORCHESTRATING.md` | The working rules for the session that coordinates.                             |
+| `docs/PHASES.md`        | Who owns which phase, and how work is routed.                                   |
+| `docs/work-items.yaml`  | The one list of open work: owners, statuses, dependencies, ideas.               |
+| `tasks/`                | The ledger: every non-feature task and the checks that prove it.                |
+| `e2e/features/`         | The scenarios: the behaviour a user can observe.                                |
+| `itos.yaml`             | The policy every gate reads.                                                    |
 
 ## Create a project from it
 
@@ -51,7 +71,13 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
    stays with it.
 5. **Ledger.** `tasks/phase-0.yaml` holds the template's own setup tasks; keep
    them as the project's phase 0, and add the project's phases after it.
-6. **Check.** `vp run task --phase 0` runs every setup task's checks; push to
+6. **Plan.** Fill in `PLAN.md` (what the project is, its decisions, its
+   phases), the application's sections of `docs/ARCHITECTURE.md`, and
+   `docs/HANDOFF.md` with the first steps. The agent instructions
+   (`AGENTS.md`, `docs/ORCHESTRATING.md`) are written for any project and
+   need no change to start; add a project's own rules to them as it finds
+   them, each with its reason.
+7. **Check.** `vp run task --phase 0` runs every setup task's checks; push to
    `main` and CI runs on GitHub Actions with no secrets to configure.
 
 ## Licence
