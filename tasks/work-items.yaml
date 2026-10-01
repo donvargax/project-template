@@ -318,7 +318,7 @@ items:
     title: A vulnerability scan every night
     phase: 2
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-022]
     kind: task
     refs: [tasks/phase-2.yaml]
@@ -425,8 +425,10 @@ items:
       Renovate's github-actions manager moves a uses: pinned as <sha> # <version>, but two pins live
       inside run steps where it does not look: ci.yml's actionlint script, fetched from a commit and
       asked for 1.7.12, the two of which must move together, and nightly.yml's GitHub CLI, its
-      GH_VERSION beside the release's GH_SHA256. Without a custom manager for each they stay where
-      T-025 left them while everything around them moves.
+      GH_VERSION beside the release's GH_SHA256. T-027 adds a third outside its reach:
+      tools/bin/vuln-scan's osv-scanner version and the four platforms' hashes beside it. Without
+      a custom manager for each they stay where they were pinned while everything around them
+      moves.
 
   - id: p2-update-release-age
     title: A release old enough before the update bot takes it
@@ -468,3 +470,18 @@ items:
       checked against its published hash, which it is not; the nightly's GitHub CLI is. Installing
       actionlint the way the GitHub CLI is installed, from the tarball checked against the release's
       checksums file, would make both true.
+
+  - id: p2-vuln-scan-negative-proof
+    title: The vulnerability scan proven to report a finding
+    phase: 2
+    owner: donvargax
+    status: todo
+    depends_on: [T-027]
+    kind: idea
+    why: >
+      T-027's check runs tools/bin/vuln-scan over the lockfile and passes because nothing is found
+      today, which a scan that never reports would pass as well. A negative proof, the script
+      failing over a small lockfile that locks a long-known vulnerable release (lodash 4.17.15,
+      say), would show the scan still reports, after a move of osv-scanner or of its arguments.
+      The script already hands a second --lockfile to osv-scanner; what is missing is the
+      fixture, kept where the update bot and the project's own install leave it alone.

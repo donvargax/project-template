@@ -165,7 +165,7 @@ the commands, `itos <command> --help` each one).
   release's commit, not the tag, and asked for that release
   (`raw.githubusercontent.com/rhysd/actionlint/<sha>/…`, `1.7.12`), and the
   nightly's GitHub CLI comes from its release tarball, checked against the
-  release's SHA-256.
+  release's SHA-256, as is the vulnerability scan's osv-scanner (below).
 - **Dependency updates** arrive through Renovate (`.github/renovate.json5`),
   weekly, early on Monday (UTC), for the npm dependencies, `packageManager`,
   the catalog in `pnpm-workspace.yaml` and the workflows' `uses:` pins,
@@ -183,7 +183,8 @@ the commands, `itos <command> --help` each one).
   (`ignoreDeps`), which moves by hand ("itos, pinned" in the README);
   `.node-version` (only the `npm` and `github-actions` managers are on);
   `@types/node`'s majors, held to the runtime's; and the versions pinned
-  inside `run:` steps. Its Dependency Dashboard issue lists what is pending.
+  inside `run:` steps and `tools/bin/vuln-scan`. Its Dependency Dashboard
+  issue lists what is pending.
 - **The type check** is `vp check`'s, over one `tsconfig.json` that covers
   `src/`, `e2e/`, `tools/` and the root `*.config.ts` alike. Beside `strict`
   it turns on `noUncheckedIndexedAccess` (an index may be undefined, so it is
@@ -218,8 +219,27 @@ the commands, `itos <command> --help` each one).
   and builds nothing.
 - **The nightly** (`.github/workflows/nightly.yml`, at 11:44 UTC on `main` or
   by hand) runs `itos ci run --nightly`: the whole E2E suite, then the gates
-  self-test. A red run opens one issue labelled `nightly-red`, or comments on
-  the open one with the failing scenarios; a green run closes it.
+  self-test. Then, in a step of its own, the vulnerability scan, whatever
+  their result. A red run opens one issue labelled `nightly-red`, or comments
+  on the open one with the failing scenarios and what the scan found; a green
+  run closes it.
+- **The vulnerability scan** (`tools/bin/vuln-scan`) checks `pnpm-lock.yaml`,
+  both its documents (pnpm's own and the project's), against the OSV
+  database with osv-scanner, and exits 1 on a finding. The nightly and a
+  contributor run the same script. It installs osv-scanner itself: one pinned
+  release, the binary for the platform it runs on (linux or darwin, amd64 or
+  arm64), downloaded once per version into `${XDG_CACHE_HOME:-~/.cache}/vuln-scan/`
+  and checked on every run against the SHA-256 the script carries for that
+  platform, copied from the release's `osv-scanner_SHA256SUMS`, never read
+  from a file fetched beside the binary. The version and the four hashes are
+  written there alone, and move together. It is the nightly's, not a push's,
+  because an advisory arrives with no commit; and a step apart from
+  `ci.nightly`, whose plan stops at its first failure, so a red scan stops
+  neither the suite nor the self-test, and a red suite hides no advisory. A
+  finding is fixed by moving the dependency; one with no fixed version is
+  ignored in `osv-scanner.toml` at the root (`[[IgnoredVulns]]`, with its
+  `reason` and an `ignoreUntil` date), which osv-scanner reads beside the
+  lockfile.
 - **The self-tests** (`tools/selftest/`) prove the gates rather than the code:
   `gates.ts` runs the real hooks in a scratch worktree and shows that they run
   only what a change reaches and that CI's steps catch what they leave out;

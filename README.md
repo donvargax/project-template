@@ -20,7 +20,8 @@ What it gives a new project from its first commit:
   tests the change reaches and the audit; pre-push runs the unit tests the
   pushed commits reach; CI runs everything from the last green run, in cost
   order, with one E2E run over the smoke set and what the commits name; a
-  nightly runs every scenario and opens an issue when it goes red.
+  nightly runs every scenario, scans the lockfile for known vulnerabilities,
+  and opens an issue when it goes red.
 - **Work routing** (`tasks/work-items.yaml`, `CONTRIBUTORS.md`): `tools/bin/itos work`
   says what the person a session works for can start next.
 - **A changelog from the commits**: `vp run changelog`.
@@ -148,6 +149,38 @@ Then follow the release notes' upgrading steps, and run
 `tools/bin/itos version --check` and `tools/bin/itos config check`.
 Renovate leaves it alone (`ignoreDeps` in `.github/renovate.json5`), so a
 move is always this one.
+
+## Vulnerability scan
+
+`tools/bin/vuln-scan` scans `pnpm-lock.yaml` for known vulnerabilities with
+osv-scanner and exits 1 on a finding. The nightly runs it, and a red scan
+opens or comments on the "Nightly red" issue; run it yourself after adding or
+moving a dependency, or to reproduce a red nightly:
+
+```sh
+tools/bin/vuln-scan                 # a table of what it found, if anything
+tools/bin/vuln-scan --format json   # any osv-scanner `scan source` option
+```
+
+It needs `curl` and `sha256sum` or `shasum`, on linux or macOS, amd64 or
+arm64. The first run downloads the pinned osv-scanner for your platform into
+`${XDG_CACHE_HOME:-~/.cache}/vuln-scan/`, and every run checks it against the
+SHA-256 the script carries. To move to another release, set `version` in the
+script and copy the four platforms' hashes from the release's
+`osv-scanner_SHA256SUMS`, after checking that file against the release's
+provenance.
+
+A finding is fixed by moving the dependency to a fixed version (`vp update`,
+or `vp add` for a direct one) in a `build` commit. When no fixed version
+exists, ignore it in `osv-scanner.toml` at the root, with the reason and a
+date it stops being ignored, so it comes back:
+
+```toml
+[[IgnoredVulns]]
+id = "GHSA-xxxx-xxxx-xxxx"
+ignoreUntil = 2026-12-31
+reason = "Only reached from the dev server; no release fixes it yet."
+```
 
 ## Licence
 
