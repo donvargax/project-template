@@ -55,11 +55,20 @@ The template's setup: the Vite+ project, the gates, the hooks, itos and CI
 
 - **Usable:** the page opens.
 
-### Phase 1: <name>
+### Phase 1: the pinned task tool and the layout
+
+The template's own too: itos pinned as a release, the feature files at the
+root, the work registry beside the ledger, verification that starts at
+`commits.since`, and setup checks that hold in any project
+(`tasks/phase-1.yaml`). No scenario changes.
+
+- **Usable:** the page opens, as in phase 0.
+
+### Phase 2: <name>
 
 <What it builds, its slices in order, and what each slice leaves usable.
-The scenarios live in `e2e/features/`, tagged `@phase-1`, and the tasks in
-`tasks/phase-1.yaml`.>
+The scenarios live in `e2e/features/`, tagged `@phase-2`, and the tasks in
+`tasks/phase-2.yaml`.>
 
 - **Usable:** <…>
 

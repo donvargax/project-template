@@ -1,0 +1,158 @@
+# Phase 1: the task tool as a pinned release, the feature files at the root,
+# the work registry beside the ledger, and the gaps a project made from the
+# template met in its first pushes: the squashed first commit GitHub makes, the
+# pre-commit hook that checked no ledger, and setup checks tied to the demo.
+# No scenario changes: the behaviour a user observes is phase 0's.
+
+- id: T-014
+  type: build
+  title: itos as a pinned release
+  why: >
+    The task tool was a copy of itos v0 in tools/itos/, with its conformance
+    corpus beside it. It is now a dev dependency pinned to a release:
+    package.json names the release tarball's URL and the lockfile its
+    integrity, so a tarball replaced under the same URL fails every later
+    install, and a version bump is the README's Install steps again.
+    tools/bin/itos runs the installed package's bin, so the hooks, CI and the
+    ledger keep one command whatever implements itos. The corpus and the
+    fixtures are itos's, proven in its own repository. What the config needs
+    and the package does not ship stays as the project's own: the scenario
+    moving rule (tools/scenario-moves.ts, the scenario kind's range check),
+    and commitlint's footer rules, which ask the installed itos rather than
+    import its modules (commitlint.config.ts says how). The self-tests read
+    what they prove from the command line (ci plan --json, ci scope, tests
+    smoke ids) instead of importing the tool's modules; which run the github
+    range provider picks is itos's to prove. The checksum check downloads the
+    tarball package.json pins and holds it to the release's checksums.txt.
+  done_when:
+    - run: tools/bin/itos version --check
+    - fails: "printf 'docs: x\\n\\nTask: T-000\\n' | vp exec commitlint"
+    - run: "printf 'docs: x\\n\\nTask: T-014\\n' | vp exec commitlint"
+    - run: node tools/selftest/ci-scope.ts
+    - run: vp install --frozen-lockfile
+    - run: vp test run tools/scenario-moves.test.ts
+    - run: node tools/selftest/e2e-scope.ts
+    - run: >-
+        u=$(node -p 'require("./package.json").devDependencies.itos') &&
+        d=$(mktemp -d) && cd "$d" && curl -fsSLO "$u" &&
+        curl -fsSLO "${u%/*}/checksums.txt" && sha256sum -c checksums.txt
+
+- id: T-015
+  type: chore
+  title: The feature files at the root
+  why: >
+    The scenarios are the specification, so they sit at the root, in
+    features/, and read without the harness: the Gherkin files, their README
+    and the smoke set (features/smoke.yaml, its paths relative to the folder).
+    The Playwright harness stays in e2e/: the steps, the page objects and the
+    generated specs are code that drives a browser, linted to keep out of
+    src/, and replaced together if the runner is; playwright-bdd's features
+    glob points at the root. The scope rules follow: feat must touch src/,
+    e2e/ or features/; refactor and perf may not touch features/; test may
+    touch features/ and e2e/; docs may touch the feature files. The move is
+    one commit that changes the root and moves the files: the moving rule
+    reads each tree's scenario root from that tree's own itos.yaml, so it sees
+    the scenarios unchanged.
+  done_when:
+    - run: tools/bin/itos config check
+    - run: tools/bin/itos tests smoke check scenario
+    - fails: tools/bin/itos commit check-paths --type refactor features/any.feature
+    - run: tools/bin/itos commit check-paths --type docs features/any.feature
+    - run: tools/bin/itos tests smoke run scenario
+    - run: node tools/selftest/e2e-scope.ts
+
+- id: T-016
+  type: build
+  title: The work registry beside the ledger
+  why: >
+    The registry is data itos validates, not prose, so it sits beside the
+    ledger it routes, as tasks/work-items.yaml, named in itos.yaml's
+    work.registry (itos's default is still docs/work-items.yaml). A push that
+    touches only the registry stays a prose push (ci.prose.paths), as when it
+    lived under docs/, and itos config check, which validates it, is a static
+    CI step and a prose step, so a registry broken on a prose-only push fails
+    CI.
+  done_when:
+    - run: tools/bin/itos work check
+    - run: tools/bin/itos config check
+    - run: node tools/selftest/ci-scope.ts
+
+- id: T-017
+  type: build
+  title: The pre-commit hook checks the ledger and the registry
+  why: >
+    The hook skips the unit tests and the audit for a commit of only
+    Markdown, docs/**, tasks/** and feature files, which no unit test reads.
+    Nothing then checked the config, the ledger, the smoke set or the
+    registry before CI, so a duplicate task ID or a broken registry landed and
+    failed a later push. Before that early exit, the hook now runs itos config
+    check when itos.yaml, a ledger file or the smoke set is staged, and itos
+    work check when the registry is, and a failure rejects the commit (until
+    itos checks the registry in its own commit-msg hook). Both read the
+    working tree, not the index. The gates self-test proves each case in a
+    scratch worktree.
+  done_when:
+    - run: node tools/selftest/gates.ts
+
+- id: T-018
+  type: build
+  title: A project's history starts at commits.since
+  why: >
+    GitHub creates a project from a template as one squashed commit, "Initial
+    commit", which no commit rule passes. CI verifies every commit since the
+    last green run, and a new project has none, so its CI is red until
+    itos.yaml's commits.since names that commit: verify and the range checks
+    leave it and its ancestors out. The changelog failed on it too: git-cliff
+    gives an unconventional commit no footers, which cliff.toml and the
+    footer filter read; tools/changelog.ts now starts after commits.since, and
+    a commit without footers reads as one with none. The README's first steps
+    set it in the project's first commit; a project adopting itos with a
+    history of its own names its last commit before the rules. The template's
+    own history is clean and sets none. The self-test makes the project GitHub
+    would (a root commit "Initial commit" holding this tree, then the first
+    commit the README describes) and proves that verify and the changelog
+    pass, and that verify fails without commits.since.
+  done_when:
+    - run: tools/bin/itos config check
+    - run: vp run changelog
+    - run: node tools/selftest/new-project.ts
+
+- id: T-019
+  type: chore
+  title: The setup checks hold in any project made from the template
+  why: >
+    T-007 runs on every push and named the demo's paths (a module under src/,
+    a feature file), so a project that changed its scopes or dropped the demo
+    turned every push red; it now proves the path rules on what every project
+    made from the template keeps: itos.yaml, the ledger and Markdown. T-005
+    named the demo's scenario; the smoke run and the E2E self-test prove the
+    harness without it. T-006 ran itos's fixtures and corpus, which went with
+    the copy; it now proves that the pinned itos refuses the project's own
+    policy with a misspelt key, its own ledger with every task twice, and a
+    registry with a cycle. T-011 expected 0BSD, so it failed in any project
+    that relicensed; package.json's license names the licence, and the check
+    asks GitHub whether it detects the same. What cannot be generic is in the
+    README's first steps: the gates self-test edits the demo's module and
+    scenario, and a project that drops the demo points it at its own.
+  done_when:
+    - run: tools/bin/itos task T-006 T-007
+    - run: >-
+        gh api 'repos/{owner}/{repo}/license' --jq .license.spdx_id |
+        grep -qxF "$(node -p 'require("./package.json").license')"
+      after: push
+
+- id: T-020
+  type: build
+  title: One way to run itos
+  why: >
+    package.json held scripts that only wrapped tools/bin/itos (itos, task,
+    work, ci, e2e:smoke), so the docs named two ways to run one command. They
+    go, and the docs, the ledger and the CI plan call tools/bin/itos, which
+    stays the same command whatever implements itos. The scripts that do more
+    than call itos stay: e2e and e2e:generate (playwright-bdd generates the
+    specs, then Playwright runs them), test, test:coverage, audit and
+    changelog, and Vite+'s dev, build, preview and prepare.
+  done_when:
+    - run: tools/bin/itos config check
+    - fails: vp run task T-020
+    - run: node tools/selftest/e2e-scope.ts

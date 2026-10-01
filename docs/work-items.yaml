@@ -34,6 +34,7 @@
 
 phases:
   0: donvargax
+  1: donvargax
 
 items:
   # ---- phase 0 ----------------------------------------------------------------
@@ -153,3 +154,67 @@ items:
     depends_on: []
     kind: task
     refs: [tasks/phase-0.yaml]
+
+  # ---- phase 1 ----------------------------------------------------------------
+  - id: T-014
+    title: itos as a pinned release
+    phase: 1
+    owner: donvargax
+    status: doing
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-1.yaml]
+
+  - id: T-015
+    title: The feature files at the root
+    phase: 1
+    owner: donvargax
+    status: doing
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-1.yaml]
+
+  - id: T-016
+    title: The work registry beside the ledger
+    phase: 1
+    owner: donvargax
+    status: doing
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-1.yaml]
+
+  - id: T-017
+    title: The pre-commit hook checks the ledger and the registry
+    phase: 1
+    owner: donvargax
+    status: doing
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-1.yaml]
+
+  - id: T-018
+    title: "A project's history starts at commits.since"
+    phase: 1
+    owner: donvargax
+    status: doing
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-1.yaml]
+
+  - id: T-019
+    title: The setup checks hold in any project made from the template
+    phase: 1
+    owner: donvargax
+    status: doing
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-1.yaml]
+
+  - id: T-020
+    title: One way to run itos
+    phase: 1
+    owner: donvargax
+    status: doing
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-1.yaml]
