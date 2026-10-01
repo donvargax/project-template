@@ -499,3 +499,16 @@ items:
       on) directly, mocks past it. Refusing those imports in the same files, under the same
       mockBoundaries allowlist (no-restricted-imports in the rule's override, or the plugin's
       runners set grown into a list of mocking packages), would close it before the first one lands.
+
+  - id: p2-control-regex-warning
+    title: The control-character regex in the gates self-test, without a lint warning
+    phase: 2
+    owner: null
+    status: todo
+    depends_on: []
+    kind: idea
+    why: >
+      Every vp check prints one warning, no-control-regex at tools/selftest/gates.ts, from the regex
+      that strips ANSI colours from a hook's output. A warning every run reads as noise, so the next
+      real one is missed. Pinning the hook's colour off (NO_COLOR, FORCE_COLOR=0) would make the
+      regex unnecessary; failing that, a disable comment on the line saying why.
