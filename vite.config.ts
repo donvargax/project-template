@@ -72,6 +72,13 @@ const lint: NonNullable<UserConfig["lint"]> = {
 
 const test = {
 	passWithNoTests: true,
+	// A unit test is <name>.test.ts beside the <name>.ts it tests, in a slice
+	// under src/ or in tools/ (AGENTS.md, "Code design"); vitest runs nothing
+	// else. Every other file its default would run (*.spec.ts, *.test.js,
+	// *.test.tsx…) is refused by tools/code-design.ts rather than left here
+	// unrun, and so is a test under e2e/, in a folder of tests or with no file
+	// beside it.
+	include: ["src/**/*.test.ts", "tools/**/*.test.ts"],
 	// `--changed` (the git hooks) picks tests by what they import; a change to one
 	// of these reruns everything instead. Written as the files themselves: the
 	// defaults' `**/package.json/**` form never matches a changed file. The

@@ -1,6 +1,6 @@
 vp staged || exit $?
-# The code design rules lint cannot hold (which files src/ may hold), over what
-# the commit carries; CI runs the same as a step.
+# The code design rules lint cannot hold (which files src/ may hold, and where
+# a unit test may sit), over what the commit carries; CI runs the same as a step.
 node tools/code-design.ts || exit $?
 # The staged paths that match, by git's --diff-filter (the first argument).
 staged() {
