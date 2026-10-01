@@ -26,10 +26,10 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0 # the commit re-check and the scope read the pushed range
-      - uses: voidzero-dev/setup-vp@v1.21.0
+      - uses: voidzero-dev/setup-vp@24d870228786dc83ae73482406bdd1e7befaec14 # v1.21.0
         with:
           node-version-file: .node-version # the one place the Node version is written
           cache: true
@@ -52,11 +52,12 @@ jobs:
       - if: steps.scope.outputs.docs_only != 'true'
         run: vp exec playwright install --with-deps chromium
       # actionlint, for the task checks that lint the workflows: the runners
-      # don't carry it. Pinned, from its own release script.
+      # don't carry it. Pinned, from its own release script, which is fetched
+      # from v1.7.12's commit rather than the tag, as every action is.
       - name: actionlint
         run: |
           mkdir -p "$RUNNER_TEMP/bin"
-          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12 "$RUNNER_TEMP/bin"
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/914e7df21a07ef503a81201c76d2b11c789d3fca/scripts/download-actionlint.bash) 1.7.12 "$RUNNER_TEMP/bin"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       # Every gate lives in one local command. Its E2E step is one Playwright
       # run over the smoke set and the scenarios and task subsets the range
@@ -67,7 +68,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - name: Upload Playwright failure artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-failure-artifacts
           path: |
