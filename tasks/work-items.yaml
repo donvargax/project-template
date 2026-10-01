@@ -162,7 +162,7 @@ items:
     title: itos as a pinned release
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: []
     kind: task
     refs: [tasks/phase-1.yaml]
@@ -171,7 +171,7 @@ items:
     title: The feature files at the root
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: []
     kind: task
     refs: [tasks/phase-1.yaml]
@@ -180,7 +180,7 @@ items:
     title: The work registry beside the ledger
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: []
     kind: task
     refs: [tasks/phase-1.yaml]
@@ -189,7 +189,7 @@ items:
     title: The pre-commit hook checks the ledger and the registry
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: []
     kind: task
     refs: [tasks/phase-1.yaml]
@@ -198,7 +198,7 @@ items:
     title: "A project's history starts at commits.since"
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: []
     kind: task
     refs: [tasks/phase-1.yaml]
@@ -207,7 +207,7 @@ items:
     title: The setup checks hold in any project made from the template
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: []
     kind: task
     refs: [tasks/phase-1.yaml]
@@ -216,7 +216,47 @@ items:
     title: One way to run itos
     phase: 1
     owner: donvargax
-    status: doing
+    status: done
     depends_on: []
     kind: task
     refs: [tasks/phase-1.yaml]
+
+  - id: p1-hook-checks-in-itos
+    title: "The pre-commit hook's config and work checks, run by itos's commit-msg hook"
+    phase: 1
+    owner: null
+    status: todo
+    depends_on: [T-017]
+    kind: idea
+    why: >
+      The pre-commit hook runs itos config check and itos work check when what they read is staged,
+      because itos's own hooks check neither yet; both read the working tree, not the index. When an
+      itos release checks them in its commit-msg hook, against what is staged, the hook's copies go
+      and the gates self-test's cases prove the release's hook instead.
+
+  - id: p1-footer-rules-in-itos
+    title: "commitlint's footer rules, run by itos beside the header lint"
+    phase: 1
+    owner: null
+    status: todo
+    depends_on: [T-014]
+    kind: idea
+    why: >
+      With a header lint set, itos runs only commitlint, so commitlint.config.ts carries the footer
+      rules and asks itos commit check-message for them under a copy of the policy without the
+      header lint. When an itos release runs its footer rules beside the header lint, the plugin
+      goes and commitlint keeps config-conventional alone.
+
+  - id: p1-scenario-moves-in-itos
+    title: The scenario moving rule, shipped by itos
+    phase: 1
+    owner: null
+    status: todo
+    depends_on: [T-014]
+    kind: idea
+    why: >
+      tools/scenario-moves.ts is the project's own because the itos package ships its command line
+      and not this rule. It reads each tree's scenario root from that tree's own itos.yaml, so a
+      commit that moves the feature files with their root passes; itos's footer rules read the
+      working tree's root instead, and find a moved commit's scenarios only by falling back to the
+      working tree. If an itos release ships the rule as a built-in range check, the script goes.
