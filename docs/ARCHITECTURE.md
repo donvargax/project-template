@@ -66,8 +66,9 @@ the commands, `itos <command> --help` each one).
 - **What it reads.** The ledger is `tasks/phase-<n>.yaml` (`ledger.files`),
   the registry `tasks/work-items.yaml` (`work.registry`), the people
   `CONTRIBUTORS.md` (`work.people`), the smoke set `features/smoke.yaml`
-  (`tests.scenario.smoke`). `itos config check` validates all of them, in
-  the pre-commit hook and as a CI step.
+  (`tests.scenario.smoke`). `itos config check` validates all of them, as a
+  CI step; the commit-msg hook runs its problems over the index when one of
+  them, or `itos.yaml`, is staged.
 - **One command line**: exit 0 on success, 1 for a policy failure (a check
   failed, a commit rejected, an unknown task), 2 for a usage or config error,
   3 for a missing environment. `--json` prints one object with
@@ -120,12 +121,9 @@ the commands, `itos <command> --help` each one).
   `itos hook pre-push`; `pre-commit` is the project's own. `vp config`
   (`prepare`, on `vp install`) points git at the folder.
   - **pre-commit** runs `vp staged` (each path's command in `vite.config.ts`'s
-    `staged`); then `itos config check` when `itos.yaml`, a ledger file or
-    the smoke set is staged, and `itos work check` when the registry is,
-    since no unit test reads them and nothing else would before CI (both read
-    the working tree; they stay until itos runs them in its own commit-msg
-    hook); then, unless every staged file is Markdown, under `docs/` or
-    `tasks/`, or a feature file, `vp test run --changed HEAD` with coverage
+    `staged`); then, unless every staged file is Markdown, under `docs/` or
+    `tasks/`, or a feature file (no unit test reads them, and itos's data
+    among them is the commit-msg hook's), `vp test run --changed HEAD` with coverage
     collected but no thresholds, then `fallow audit` on what is new against
     HEAD. Vitest
     follows the imports from every changed file; `forceRerunTriggers` reruns
@@ -134,7 +132,10 @@ the commands, `itos <command> --help` each one).
     file. The audit scores changed functions by that coverage
     (`.fallowrc.json`), exact for the changed files since every test that
     runs one imports it.
-  - **commit-msg** applies the type's path rules (`commits.scopes`), then
+  - **commit-msg** first, when `itos.yaml`, a ledger file, the registry or
+    the smoke set is staged, runs `itos config check`'s problems over the
+    index, so a file broken as it is staged is rejected though its copy on
+    disk is sound; then it applies the type's path rules (`commits.scopes`), then
     outside `feat` and `fix` the scenario moving rule
     (`tools/scenario-moves.ts`), then the header lint: commitlint
     (`commitlint.config.ts`, `config-conventional` plus one `<key>-footer`

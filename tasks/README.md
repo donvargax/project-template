@@ -115,8 +115,8 @@ Keys:
 **Written order.** A task's checks never run before the ones written above
 them (`ci.cost.keep_written_order`), so a static check may not follow a late
 one: write it above, or it is late. `tools/bin/itos config check` (run by
-the pre-commit hook when a ledger file is staged, and by CI) rejects a
-ledger that breaks this, beside anything else wrong in the config, the ledger,
+CI, and over the index by the commit-msg hook when a ledger file is staged)
+rejects a ledger that breaks this, beside anything else wrong in the config, the ledger,
 the work registry or the smoke set.
 
 ## Commands
