@@ -13,13 +13,17 @@
 //     runner's helpers, a fake handed in at the edge, and a file
 //     vite.config.ts's mockBoundaries names (that one only);
 //   - the static check (tools/code-design.ts) refuses a file directly under
-//     src/, of any kind, and allows src/main.ts beside the slice folders;
+//     src/, of any kind, and allows src/main.ts beside the slice folders; and
+//     it refuses a unit test with no file beside it, one outside a slice and
+//     tools/ (directly in src/, under e2e/), any file in a folder of tests,
+//     and every other spelling vitest's default include would run, and allows
+//     <name>.test.ts beside <name>.ts in a slice or in tools/;
 //   - the pre-commit hook runs that check, and CI runs both gates as steps.
 //
 // A case is the files it writes over the base tree, the gate that judges
-// them, and whether the gate must refuse them, naming what (`says`). T-031
-// (unit tests beside their code, the static check) adds its cases to
-// `cases`; a gate that is new adds itself to `gates`.
+// them, and whether the gate must refuse them, naming what (`says`): a
+// refusal counts only when it names the rule. The next code design rule adds
+// its cases to `cases`; a gate that is new adds itself to `gates`.
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -79,6 +83,17 @@ const allowing = (file: string) => {
 		`const mockBoundaries: string[] = [\n\t"${file}", // the self-test's boundary\n];`,
 	);
 };
+
+// A unit test that passes, importing nothing.
+const unitTest =
+	'import { expect, it } from "vite-plus/test";\n\nit("adds", () => {\n\texpect(1 + 1).toBe(2);\n});\n';
+const beside = "code-design(tests-beside-code)";
+// Every spelling vitest's default include, **/*.{test,spec}.?(c|m)[jt]s?(x),
+// runs, but <name>.test.ts: each refused.
+const spellings = ["test", "spec"]
+	.flatMap((kind) => ["", "c", "m"].map((module) => `${kind}.${module}`))
+	.flatMap((stem) => ["js", "ts"].flatMap((lang) => [`${stem}${lang}`, `${stem}${lang}x`]))
+	.filter((spelling) => spelling !== "test.ts");
 
 const cases: Case[] = [
 	// The slice boundary (T-029), lint.
@@ -362,6 +377,108 @@ const cases: Case[] = [
 		files: { "src/foo.ts": "export const foo = 1;\n" },
 		says: "src/foo.ts is outside a slice",
 	},
+	// Unit tests beside the code they test (T-031), the static check.
+	{
+		name: "a test beside its file in a slice, and beside an inner file",
+		gate: "static",
+		files: {
+			...slice("alpha"),
+			"src/alpha/alpha.test.ts": unitTest,
+			"src/alpha/inner.test.ts": unitTest,
+		},
+	},
+	{
+		name: "a test beside its script in tools/, at any depth",
+		gate: "static",
+		files: {
+			"tools/thing.ts": "export const thing = 1;\n",
+			"tools/thing.test.ts": unitTest,
+			"tools/deep/thing.ts": "export const thing = 1;\n",
+			"tools/deep/thing.test.ts": unitTest,
+		},
+	},
+	{
+		name: "a test with no file beside it, in a slice",
+		gate: "static",
+		files: { ...slice("alpha"), "src/alpha/beta.test.ts": unitTest },
+		says: `${beside}: src/alpha/beta.test.ts has no beta.ts beside it`,
+	},
+	{
+		name: "a test with no file beside it, in tools/",
+		gate: "static",
+		files: { "tools/thing.test.ts": unitTest },
+		says: `${beside}: tools/thing.test.ts has no thing.ts beside it`,
+	},
+	{
+		name: "a test whose file is in another folder",
+		gate: "static",
+		files: { ...slice("alpha"), "src/beta/alpha.test.ts": unitTest },
+		says: `${beside}: src/beta/alpha.test.ts has no alpha.ts beside it`,
+	},
+	{
+		name: "a test directly in src/, beside src/main.ts",
+		gate: "static",
+		files: { "src/main.test.ts": unitTest },
+		says: `${beside}: src/main.test.ts is neither in a slice under src/ nor in tools/`,
+	},
+	{
+		name: "a test at the root, beside its file",
+		gate: "static",
+		files: { "thing.ts": "export const thing = 1;\n", "thing.test.ts": unitTest },
+		says: `${beside}: thing.test.ts is neither in a slice under src/ nor in tools/`,
+	},
+	{
+		name: "a unit test under e2e/, beside its file",
+		gate: "static",
+		files: { "e2e/support/app.test.ts": unitTest },
+		says: `${beside}: e2e/support/app.test.ts is a unit test under e2e/`,
+	},
+	...["__tests__", "test", "tests"].map((folder): Case => ({
+		name: `a test in a ${folder}/ folder of its slice`,
+		gate: "static",
+		files: { ...slice("alpha"), [`src/alpha/${folder}/alpha.test.ts`]: unitTest },
+		says: `${beside}: src/alpha/${folder}/alpha.test.ts is in a ${folder}/ folder`,
+	})),
+	{
+		name: "a helper in a tests/ folder of tools/",
+		gate: "static",
+		files: { "tools/tests/helper.ts": "export const helper = 1;\n" },
+		says: `${beside}: tools/tests/helper.ts is in a tests/ folder`,
+	},
+	...spellings.map((spelling): Case => ({
+		name: `a test spelled *.${spelling}, beside its file`,
+		gate: "static",
+		files: { ...slice("alpha"), [`src/alpha/alpha.${spelling}`]: unitTest },
+		says: `${beside}: src/alpha/alpha.${spelling} is spelled *.${spelling}`,
+	})),
+	{
+		name: "a test beside its file in a slice, at commit",
+		gate: "pre-commit",
+		files: {
+			"src/greeting/shout.ts":
+				"export const shout = (text: string): string => `${text.toUpperCase()}!`;\n",
+			"src/greeting/shout.test.ts":
+				'import { expect, it } from "vite-plus/test";\nimport { shout } from "./shout.ts";\n\nit("shouts", () => {\n\texpect(shout("hi")).toBe("HI!");\n});\n',
+		},
+	},
+	{
+		name: "a test with no file beside it, at commit",
+		gate: "pre-commit",
+		files: { "src/greeting/farewell.test.ts": unitTest },
+		says: `${beside}: src/greeting/farewell.test.ts has no farewell.ts beside it`,
+	},
+	{
+		name: "a test in a __tests__/ folder, at commit",
+		gate: "pre-commit",
+		files: { "src/greeting/__tests__/greeting.test.ts": unitTest },
+		says: `${beside}: src/greeting/__tests__/greeting.test.ts is in a __tests__/ folder`,
+	},
+	{
+		name: "a test spelled *.spec.ts, at commit",
+		gate: "pre-commit",
+		files: { "src/greeting/greeting.spec.ts": unitTest },
+		says: `${beside}: src/greeting/greeting.spec.ts is spelled *.spec.ts`,
+	},
 ];
 
 const root = resolve(".");
@@ -401,7 +518,7 @@ try {
 
 	for (const c of cases) {
 		git(`reset -q --hard ${base}`);
-		git("clean -fdq -- src");
+		git("clean -fdq -- src tools e2e");
 		for (const [file, text] of Object.entries(c.files)) {
 			mkdirSync(dirname(join(scratch, file)), { recursive: true });
 			writeFileSync(join(scratch, file), text);
