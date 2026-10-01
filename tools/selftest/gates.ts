@@ -143,8 +143,8 @@ try {
 
 	// 1. A change to a leaf module runs the tests that reach it and not the
 	// whole suite, on both gates.
-	const module = "src/greeting.ts";
-	const moduleTest = "src/greeting.test.ts";
+	const module = "src/greeting/greeting.ts";
+	const moduleTest = "src/greeting/greeting.test.ts";
 	edit(
 		module,
 		"export function greeting",

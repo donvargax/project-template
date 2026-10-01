@@ -1,6 +1,7 @@
-import { greeting } from "./greeting.ts";
+// The composition root: it wires the slices to the page, each through its
+// feature file, and holds nothing else.
+import { greeting } from "./greeting/greeting.ts";
 
-// The page's one element, filled in from the pure function below it.
 const app = document.querySelector<HTMLElement>("#app");
 if (app) {
 	const heading = document.createElement("h1");
