@@ -91,6 +91,16 @@ the same thing waste both. Take one by setting its `owner` and
   footer. The commit-msg hook enforces the shape and the footers
   (`commits.header_lint` and `commits.footers` in `itos.yaml`); the body's
   reason is yours, because it is the changelog.
+- **Where verification starts.** `commits.since` in `itos.yaml` names the
+  commit where verification starts: `itos verify` (CI's re-check of every
+  pushed commit), the range checks and the changelog leave it and its
+  ancestors out. A project made from the template on GitHub sets it to the
+  squashed "Initial commit" in its first commit (README, first steps); a
+  project that adopts itos with a history of its own sets it to its last
+  commit before the rules, so only what was written under them is judged.
+  It never moves to get a red commit past CI: a pushed commit is not
+  rewritten, so a broken one is followed by a fix, and moving the start is
+  the project owner's decision.
 - **Decide the split before you start editing.** Each type may touch only
   certain paths, so one piece of work is often two or three commits. The
   rules are `commits.scopes` in `itos.yaml`, and `tasks/README.md` has them

@@ -62,23 +62,50 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
 1. **Install.** `vp install` installs the dependencies and, through
    `prepare`, the git hooks (`vp config`). Install the browser for the
    scenarios once: `vp exec playwright install chromium`.
-2. **Rename.** Set `name` in `package.json`, the page's `<title>` in
+2. **Start verification after GitHub's commit, in the first commit.** GitHub
+   creates the repository as one squashed commit, "Initial commit", which no
+   commit rule passes, so until `itos.yaml` says where verification starts,
+   CI fails on it at every push. Before anything else, set `commits.since`
+   to that commit's full SHA, which `git rev-list --max-parents=0 HEAD`
+   prints:
+
+   ```yaml
+   commits:
+     # ...
+     reject_message: "Commit rejected (see tasks/README.md):"
+     since: "<the SHA>" # GitHub's squashed "Initial commit": verification starts after it
+   ```
+
+   and commit it alone, as a `build` commit naming T-018, its message
+   written to a file and passed with `git commit -F`:
+
+   ```text
+   build: start verification after the template's initial commit
+
+   GitHub made this repository from the template as one squashed commit, which no commit rule
+   passes; commits.since names it, so verification and the changelog start after it.
+
+   Task: T-018
+   ```
+
+3. **Rename.** Set `name` in `package.json`, the page's `<title>` in
    `index.html`, and this README's title and text.
-3. **Contributors.** Put the project's people in `CONTRIBUTORS.md` (their
+4. **Contributors.** Put the project's people in `CONTRIBUTORS.md` (their
    GitHub logins are the owners `tasks/work-items.yaml` names), and set the
    phase owners in `tasks/work-items.yaml` and `docs/PHASES.md`.
-4. **Licence.** The template is 0BSD (`LICENSE`): replace it with the
+5. **Licence.** The template is 0BSD (`LICENSE`): replace it with the
    project's own. itos is not carried in the repository: it is installed
    from its release, under its own licence (AGPL-3.0).
-5. **Ledger.** `tasks/phase-0.yaml` holds the template's own setup tasks; keep
-   them as the project's phase 0, and add the project's phases after it.
-6. **Plan.** Fill in `PLAN.md` (what the project is, its decisions, its
+6. **Ledger.** `tasks/phase-0.yaml` and `tasks/phase-1.yaml` hold the
+   template's own setup tasks; keep them as the project's phases 0 and 1,
+   and add the project's phases after them.
+7. **Plan.** Fill in `PLAN.md` (what the project is, its decisions, its
    phases), the application's sections of `docs/ARCHITECTURE.md`, and
    `docs/HANDOFF.md` with the first steps. The agent instructions
    (`AGENTS.md`, `docs/ORCHESTRATING.md`) are written for any project and
    need no change to start; add a project's own rules to them as it finds
    them, each with its reason.
-7. **Check.** `vp run task --phase 0` runs every setup task's checks; push to
+8. **Check.** `vp run task --phase 0` runs every setup task's checks; push to
    `main` and CI runs on GitHub Actions with no secrets to configure.
 
 ## itos, pinned

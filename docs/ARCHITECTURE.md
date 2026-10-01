@@ -98,6 +98,16 @@ the commands, `itos <command> --help` each one).
 - **The footers** (`commits.footers`): which types need each footer, which
   IDs must exist, and `read_at: commit`, which reads the IDs that exist (the
   ledger's tasks, the live scenarios) at the commit being checked.
+- **Where verification starts** (`commits.since`): when set, the full SHA
+  of the commit after which the commit rules apply. `itos verify` and the
+  range checks leave it and its ancestors out, and so does the changelog
+  (`tools/changelog.ts`); `itos config check` refuses a value that is not a
+  commit of the repository. A project made from the template on GitHub sets
+  it to the squashed "Initial commit" GitHub made, which no rule passes; a
+  project adopting itos with a history of its own, to its last commit before
+  the rules. The template's own history is clean and sets none.
+  `tools/selftest/new-project.ts` makes a new project's history in a scratch
+  worktree and proves the README's first commit turns it green.
 - **The world outside the repository** is three providers: where a push's
   range starts (`ci.range`: the last green run on GitHub, a command, or
   none), who a session works for (`work.identity`: `gh api user`, a command,
