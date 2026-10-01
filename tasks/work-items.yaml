@@ -336,7 +336,7 @@ items:
     title: The demo as a vertical slice, and the slice boundary gate
     phase: 2
     owner: donvargax
-    status: todo
+    status: doing
     depends_on: [T-028]
     kind: task
     refs: [tasks/phase-2.yaml]
