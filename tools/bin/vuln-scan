@@ -1,0 +1,84 @@
+#!/bin/sh
+# vuln-scan: pnpm-lock.yaml scanned for known vulnerabilities by osv-scanner,
+# the same way in the nightly and on a contributor's machine.
+#
+# osv-scanner is one pinned release. Its binary for this platform is
+# downloaded once per version into a cache outside the tree
+# (${XDG_CACHE_HOME:-~/.cache}/vuln-scan/) and checked, on every run, against
+# the SHA-256 written below: the hashes are the release's own
+# (osv-scanner_SHA256SUMS, which its SLSA provenance names too), carried here
+# rather than fetched at run time from where the binary comes from. A move to
+# another release changes the version and all four hashes together.
+#
+# Exit 0: nothing found. 1: a finding. 3: osv-scanner could not be installed
+# (no binary pinned for this platform, no curl or SHA-256 tool, or a download
+# that does not match its hash). Anything else is osv-scanner's own error.
+# Arguments are handed to `osv-scanner scan source`, e.g. `--format json`.
+# A finding that cannot be fixed yet is ignored in osv-scanner.toml at the
+# root, with its reason and an ignoreUntil date, never by changing this file.
+set -eu
+
+version=2.6.0
+case "$(uname -s)/$(uname -m)" in
+	Linux/x86_64 | Linux/amd64)
+		platform=linux_amd64
+		sha256=ca69b3d3cd08f889a49dc0a383122f71cc528b83803671df5fd874d97485b108
+		;;
+	Linux/aarch64 | Linux/arm64)
+		platform=linux_arm64
+		sha256=2c71403eb443d05891c4f268c3ad771cf4f16e5443463fd7851ef8f454d3c7e4
+		;;
+	Darwin/x86_64)
+		platform=darwin_amd64
+		sha256=60c5296637e977b28eeda5c7f13573e447659a632922737f94d11fa7e30ad6ca
+		;;
+	Darwin/arm64)
+		platform=darwin_arm64
+		sha256=98c460dcd37de25819babd757d04542045b6243113e209edcd4d89fedb0256b4
+		;;
+	*)
+		echo "vuln-scan: no osv-scanner $version is pinned for $(uname -s)/$(uname -m)" >&2
+		exit 3
+		;;
+esac
+
+if command -v sha256sum >/dev/null 2>&1; then
+	sha256_of() { sha256sum "$1" | cut -d ' ' -f 1; }
+elif command -v shasum >/dev/null 2>&1; then
+	sha256_of() { shasum -a 256 "$1" | cut -d ' ' -f 1; }
+else
+	echo "vuln-scan: neither sha256sum nor shasum is installed" >&2
+	exit 3
+fi
+
+root=$(cd "$(dirname "$0")/../.." && pwd)
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/vuln-scan"
+bin="$cache/osv-scanner-$version-$platform"
+
+if [ -f "$bin" ] && [ "$(sha256_of "$bin")" != "$sha256" ]; then
+	echo "vuln-scan: the cached $bin does not match its hash; downloading it again" >&2
+	rm -f "$bin"
+fi
+
+if [ ! -f "$bin" ]; then
+	if ! command -v curl >/dev/null 2>&1; then
+		echo "vuln-scan: curl is not installed, so osv-scanner $version cannot be downloaded" >&2
+		exit 3
+	fi
+	mkdir -p "$cache"
+	tmp=$(mktemp "$cache/download.XXXXXX")
+	trap 'rm -f "$tmp"' EXIT
+	url="https://github.com/google/osv-scanner/releases/download/v$version/osv-scanner_$platform"
+	echo "vuln-scan: downloading osv-scanner $version ($platform)" >&2
+	curl -fsSL -o "$tmp" "$url"
+	got=$(sha256_of "$tmp")
+	if [ "$got" != "$sha256" ]; then
+		echo "vuln-scan: $url has SHA-256 $got, not the pinned $sha256" >&2
+		exit 3
+	fi
+	chmod 755 "$tmp"
+	mv "$tmp" "$bin"
+	trap - EXIT
+fi
+
+exec "$bin" scan source --lockfile "$root/pnpm-lock.yaml" "$@"
