@@ -41,6 +41,7 @@ commits:
       - "*.{json,yaml,yml,ts,toml}"
       - .gitignore
       - .editorconfig
+      - .node-version # the Node version, read by Vite+ and by setup-vp in CI
       - ".vite-hooks/**"
       - ".github/**"
       - "tools/**"

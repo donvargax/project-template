@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: voidzero-dev/setup-vp@v1.21.0
         with:
-          node-version: "24"
+          node-version-file: .node-version # the one place the Node version is written
           cache: true
       - run: vp install
       - run: vp exec playwright install --with-deps chromium

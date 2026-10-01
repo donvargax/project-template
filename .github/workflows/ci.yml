@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0 # the commit re-check and the scope read the pushed range
       - uses: voidzero-dev/setup-vp@v1.21.0
         with:
-          node-version: "24"
+          node-version-file: .node-version # the one place the Node version is written
           cache: true
       - run: vp install
       # Where the range starts, computed once for every step below: a pull
