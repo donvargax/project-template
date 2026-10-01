@@ -7,6 +7,10 @@
 //     vite.config.ts's forceRerunTriggers, and fails on a change that breaks one;
 //   - pre-push does the same against the remote commit it builds on, fails on
 //     that broken change, and passes a prose-only push;
+//   - pre-commit runs no unit test and no audit for a commit of only docs/,
+//     tasks/, Markdown and feature files, but rejects one that stages a ledger
+//     with a duplicate task ID (itos config check) or a registry item waiting
+//     on one that does not exist (itos work check);
 //   - pre-push runs neither the scenarios a commit's `Scenarios:` footer names
 //     nor the checks of the tasks its `Task:` footer names; CI reads those
 //     footers from the pushed range and runs them;
@@ -211,6 +215,42 @@ try {
 	run = prePush("a prose-only push", base, sha);
 	expect(run.status === 0, `pre-push failed on a prose-only push:\n${run.output}`);
 
+	// 5. What itos reads and no unit test does. A commit of only docs/ (any
+	// file, not just Markdown) and tasks/ runs no unit test and no audit...
+	git(`reset -q --hard ${base}`);
+	writeFileSync(join(scratch, "docs/gates-selftest.json"), "{}\n");
+	edit("tasks/work-items.yaml", "items:", "# gates self-test: a harmless change\nitems:");
+	run = preCommit("docs/ and tasks/ only");
+	expect(run.status === 0, `pre-commit failed on a commit of docs/ and tasks/:\n${run.output}`);
+	expect(
+		!/Test Files|fallow/i.test(plain(run.output)),
+		`pre-commit ran the unit tests or the audit for docs/ and tasks/:\n${run.output}`,
+	);
+	// ...but a ledger with a duplicate task ID is rejected...
+	git(`reset -q --hard ${base}`);
+	edit(
+		"tasks/phase-0.yaml",
+		"- id: T-002",
+		"- id: T-001\n  type: build\n  title: A duplicate\n  done_when: []\n\n- id: T-002",
+	);
+	run = preCommit("a ledger with a duplicate task ID");
+	expect(
+		run.status !== 0 && run.output.includes("T-001"),
+		`pre-commit passed a ledger with a duplicate task ID:\n${run.output}`,
+	);
+	// ...and so is a registry item that waits on one that does not exist.
+	git(`reset -q --hard ${base}`);
+	edit(
+		"tasks/work-items.yaml",
+		"items:",
+		"items:\n  - id: p0-gates-selftest\n    title: Waits on nothing that exists\n    phase: 0\n    owner: null\n    status: todo\n    depends_on: [p0-nowhere]\n    kind: idea\n",
+	);
+	run = preCommit("a registry item waiting on an unknown one");
+	expect(
+		run.status !== 0 && run.output.includes("p0-nowhere"),
+		`pre-commit passed a registry item waiting on an unknown one:\n${run.output}`,
+	);
+
 	// A commit that names a scenario and a task leaves both to CI...
 	git(`reset -q --hard ${base}`);
 	edit("README.md", "# ", "A footed edit.\n\n# ");
@@ -261,7 +301,7 @@ try {
 	run = commitMsg("a sound docs commit", "docs: edit the readme\n\nTask: T-007\n");
 	expect(run.status === 0, `commit-msg rejected a sound docs commit:\n${run.output}`);
 
-	// 5. What the hooks leave out, CI's steps catch. A refactor that changes the
+	// 6. What the hooks leave out, CI's steps catch. A refactor that changes the
 	// page's heading, which every scenario reads, passes both hooks...
 	git(`reset -q --hard ${base}`);
 	edit("src/main.ts", '"h1"', '"h2"');
