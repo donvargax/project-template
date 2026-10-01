@@ -145,14 +145,11 @@ items:
     kind: task
     refs: [tasks/phase-0.yaml]
 
-  - id: p0-agent-instructions
-    title: The agent instructions, and the plan, handoff and architecture skeletons
+  - id: T-013
+    title: Agent instructions
     phase: 0
     owner: donvargax
-    status: todo
+    status: doing
     depends_on: []
-    kind: idea
-    why: >
-      AGENTS.md holds only the Vite+ block and a pointer; the rules no command can
-      check (which session you are, splitting work, the gates, finishing) are not
-      yet written for a project made from the template.
+    kind: task
+    refs: [tasks/phase-0.yaml]

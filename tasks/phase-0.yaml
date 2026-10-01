@@ -168,3 +168,18 @@
     What the template is, how to create a project from it, and the first steps
     in a new one.
   done_when: []
+
+- id: T-013
+  type: docs
+  title: Agent instructions
+  why: >
+    itos holds every rule a command can decide; the agent instructions hold
+    the rest, written for any project made from the template. AGENTS.md is
+    the implementing session's (which session you are, what drives a change,
+    the split, the gates as built, what no gate does, Never, Finishing),
+    docs/ORCHESTRATING.md the coordinator's (the loop, the brief, a slice that
+    fails, lessons, doc work beside a running agent, checking a result), and
+    docs/HANDOFF.md, PLAN.md and docs/ARCHITECTURE.md the skeletons a project
+    fills in. Where a gate enforces a rule, the docs name the gate rather than
+    restating it. Prose has no check that runs it: review is the proof.
+  done_when: []
