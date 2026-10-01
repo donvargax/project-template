@@ -116,7 +116,8 @@ the rest.
 > <What PLAN settled, in short — decisions the agent must build to, not
 > re-decide. The gaps the previous slice left, from the registry. Any live
 > scenario this slice will make untrue, and that the `feat` corrects it and
-> says so.>
+> says so. The invariants worth a property-based test, where the slice has
+> one (`AGENTS.md`, "Code design").>
 >
 > Check the scenarios' labels and names against what you build, correcting
 > only a name, never what a scenario checks. If a scenario can't show the
@@ -140,8 +141,8 @@ the rest.
 >
 > Report: the commits, the CI run URL, the scenarios turned green, <the
 > slice's own questions>, what the next slice will find missing (the
-> `kind: idea` items its last `docs` commit added), and any scenario text
-> corrected and why.
+> `kind: idea` items its last `docs` commit added), what it documented and
+> where, and any scenario text corrected and why.
 
 Everything else an implementing agent needs is in `AGENTS.md`. Don't restate
 its rules in the brief — repeating them invites the agent to treat them as
@@ -262,6 +263,13 @@ whole E2E suite runs nightly. Don't re-run what these cover. Check only:
   (`vp run changelog -- --scenario <id>`), and the reasons that outlast them
   are where they belong (a comment in the feature file, a `why`,
   `docs/ARCHITECTURE.md`), not only in a commit.
+- **The docs describe what landed.** The agent's report says what it
+  documented and where (`AGENTS.md`, "Finishing"). Read its commits against
+  that: a new gate named in `AGENTS.md`, a new mechanism in
+  `docs/ARCHITECTURE.md`, a new command or setup step in `README.md`, a
+  decision in `PLAN.md`. What is missing, write in a `docs` commit before the
+  next slice starts; no gate reads prose against code, so this check is the
+  only one.
 - The project's own checks that no gate runs (`AGENTS.md`, "What no gate does
   for you") ran, if the slice reaches them.
 

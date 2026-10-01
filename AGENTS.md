@@ -229,7 +229,17 @@ Run these yourself when they apply:
 **You are not alone on this repository.** Other people and other sessions
 push to `main` too, so expect the remote to have moved while you worked.
 
-1. **Pull before you push, every time:** commit your work, then
+1. **Document what you built before the last push.** Read your commits
+   against the docs a reader would look in, and bring each up to date in a
+   `docs` commit: `docs/ARCHITECTURE.md` for how the code is put together,
+   `README.md` for setup and commands, `AGENTS.md` for a rule a new gate
+   holds (name the gate, don't restate it), `PLAN.md` for a decision,
+   `tasks/README.md` or `features/README.md` for how the ledger or the
+   scenarios work, a task's `why` or a scenario's comment for a reason. A doc
+   that still describes what you changed is a bug the next session builds
+   on, and nobody else will notice it: no gate reads prose against code. Say
+   in your report what you documented and where, or that nothing needed it.
+2. **Pull before you push, every time:** commit your work, then
    `git pull --rebase --no-autostash origin main`, read what came down, and
    only then push to `main` (no branches or pull requests) **in a separate
    command**. A push the remote has moved past is rejected _after_ the
@@ -242,13 +252,13 @@ push to `main` too, so expect the remote to have moved while you worked.
    push. **Never force**, whatever the rejection says, and read a rejection
    before diagnosing it: the pre-push hook failing is as likely as the remote
    having moved.
-2. Watch CI on your last commit with a `Monitor` over
+3. Watch CI on your last commit with a `Monitor` over
    `gh run watch <run id> --exit-status` (`gh run list --commit <sha>` gives
    the id, and needs the full 40-character SHA), and carry on with something
    else while it runs. If it's red, read `gh run view <id> --log-failed`, fix
    the cause with a commit of the right type, and push again until it's
    green.
-3. Report the green run's URL with your results. **Done is that run green
+4. Report the green run's URL with your results. **Done is that run green
    and the next nightly green for what your change reaches**: a push runs
    the smoke set and what your commits name, the whole suite runs nightly,
    and a nightly red on a scenario your change reaches is yours the next
