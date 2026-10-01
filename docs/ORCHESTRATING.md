@@ -119,6 +119,12 @@ the rest.
 > says so. The invariants worth a property-based test, where the slice has
 > one (`AGENTS.md`, "Code design").>
 >
+> A self-test that reads a tool's output pins that output's format: the tool
+> picks it from the environment, and this session's differs from the
+> runner's. Run it once as CI would
+> (`env -u AI_AGENT -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT GITHUB_ACTIONS=true …`).
+> A commit body line that starts `Word:` is read as a footer; reword it.
+>
 > Check the scenarios' labels and names against what you build, correcting
 > only a name, never what a scenario checks. If a scenario can't show the
 > behaviour it names, stop and propose the change, as `AGENTS.md` says.
@@ -204,6 +210,15 @@ teaches you a new one, stated as the rule and its reason.
   pushed first, which is why the brief asks for checkpoints. Read its commits
   (`vp run changelog -- --scenario <id>`) instead of resuming it for a
   report.
+- **A tool's output differs between an agent's shell and the runner.** oxlint
+  prints `file:line: error rule: message` under Claude Code and GitHub
+  annotations, the rule's name in a title of its own, on Actions; a self-test
+  that matched the first passed every local run and went red in CI (T-030).
+  The brief asks for the format pinned and one run with CI's environment.
+- **A body line that starts with a word and a colon is a footer** to the
+  commit-msg hook (`Task: …`, `CI: …`, `vite-plus: …`), so a commit whose
+  body opens a line that way is rejected or, worse, names a task it did not
+  mean to. Two phase 2 agents lost a commit to it; the brief says so.
 - **Never pipe a command whose exit code matters** (`… | tail`,
   `…; echo EXIT=$?` after a pipe): the pipeline, and a background task
   running it, reports the last command's status. Write the output to a file
