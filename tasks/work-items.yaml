@@ -345,7 +345,7 @@ items:
     title: No mocks, held by lint
     phase: 2
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-029]
     kind: task
     refs: [tasks/phase-2.yaml]
@@ -498,6 +498,21 @@ items:
       a push that names T-029, T-030 or T-031 runs it, and once they are done none will. The lint
       half is a JS plugin of the project's on oxlint's plugin API, which Renovate moves with
       vite-plus: a release that changes a node's shape or the context a rule is handed would leave
-      the rule loaded and silent, every allowed case still passing. Running the self-test in the
+      the rule loaded and silent, every allowed case still passing; code-design/no-mocks leans on
+      its scope analysis and on each node's parent too. Running the self-test in the
       nightly beside gates.ts (ci.nightly in itos.yaml; a few seconds) would show it the next
       morning.
+
+  - id: p2-no-mocks-other-libraries
+    title: Mocking libraries other than vitest's refused too
+    phase: 2
+    owner: null
+    status: todo
+    depends_on: [T-030]
+    kind: idea
+    why: >
+      code-design/no-mocks follows vitest's vi, the only way to mock the project has today. A
+      project that adds sinon, testdouble or jest-mock, or imports @vitest/spy (what vi.fn is built
+      on) directly, mocks past it. Refusing those imports in the same files, under the same
+      mockBoundaries allowlist (no-restricted-imports in the rule's override, or the plugin's
+      runners set grown into a list of mocking packages), would close it before the first one lands.

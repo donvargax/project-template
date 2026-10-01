@@ -158,7 +158,15 @@
     allowlist of files vite.config.ts names for true outer boundaries, empty
     in the template; the clock's fakes (vi.useFakeTimers, vi.setSystemTime)
     stay allowed, since time is an outer boundary every project has. A fake
-    handed in at the edge needs no allowlist: it is plain code.
+    handed in at the edge needs no allowlist: it is plain code. What it
+    found: no-restricted-properties names an object by its text, so a
+    renamed or destructured vi passes it; oxlint's JS plugins have ESLint's
+    scope analysis, so code-design/no-mocks follows the vi binding itself,
+    and refuses a member of vi it does not know rather than let a new way to
+    mock through. The allowlist is vite.config.ts's mockBoundaries, an
+    override that turns the rule off; e2e/ is left out, since a browser test
+    reaches no module to mock and its fakes sit at the network's and the
+    clock's edge.
   done_when:
     - run: vp check
     - run: node tools/selftest/code-design.ts

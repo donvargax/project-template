@@ -40,6 +40,26 @@ The template's own, in the shape AGENTS.md's "Code design" gives a feature:
   `vp staged`, and CI as a static step of its own, on every push. Each is a
   list of rules the later code design gates join: the plugin's `rules`, the
   script's `rules`.
+- **No mocks**, held by lint: the plugin's second rule, `code-design/no-mocks`,
+  which `vite.config.ts` turns on for every module under `src/` and `tools/`
+  (a helper a test imports included). It judges each member of vitest's `vi`
+  by what it does to the code under test: what replaces a module, a
+  function, a global or an environment variable is refused, and so is what
+  serves only that (`importActual`, `hoisted`, `mocked`, the unmock, clear,
+  reset, restore and unstub calls); the clock's controls and the runner's
+  helpers (`waitFor`, `setConfig`, `resetModules`…) are allowed, and a member
+  the rule does not know is refused, so a release that adds a way to mock is
+  read before it passes. It follows `vi` by oxlint's scope analysis
+  (`getDeclaredVariables`, the global scope's unresolved references) from its
+  import out of `vite-plus/test` or `vitest` (renamed or not, a namespace, a
+  dynamic import) or the global, through aliases and destructuring, and
+  refuses `vi` handed on where it cannot follow; `no-restricted-properties`
+  names an object by its text, and a renamed `vi` passes it. The files allowed
+  to mock are `vite.config.ts`'s `mockBoundaries`, each with a comment naming
+  its boundary, which an override after the rule's turns it off for; empty in
+  the template. `e2e/` is left out: it drives the built page in a browser,
+  where no module can be mocked, and Playwright's fakes (`page.route`,
+  `page.clock`) sit at the network's and the clock's edge.
 
 ## The scenarios
 
@@ -274,7 +294,9 @@ the commands, `itos <command> --help` each one).
   only prose and that the plan's E2E command selects exactly what it claims,
   against Playwright's own listing; `code-design.ts` writes slices of its own
   into a scratch worktree and shows that the code design gates (lint, the
-  static check, the pre-commit hook) refuse and allow what they should, and
+  static check, the pre-commit hook) refuse and allow what they should (lint's
+  no-mocks cases among them: each refused member of `vi`, `vi` reached every
+  way a test can, the clock allowed, a `mockBoundaries` file allowed), and
   that CI runs them on every push: a table of cases, each the files it
   writes, the gate that judges them and what a refusal must name, which the
   later code design gates extend. They share `cli.ts`, which asks itos's

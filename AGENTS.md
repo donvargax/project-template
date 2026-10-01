@@ -133,8 +133,8 @@ the same thing waste both. Take one by setting its `owner` and
 ## Code design
 
 How the code is written. A rule a command can decide names its gate here
-once one holds it: T-030 brings the mocks', T-031 the test files'. A rule
-that names no gate has none yet, and is yours to keep.
+once one holds it: T-031 brings the test files'. A rule that names no gate
+has none yet, and is yours to keep.
 
 - **A feature is a vertical slice**: one folder under `src/` holding the
   feature's file and its tests. Every layer lives inside that file, the pure
@@ -152,8 +152,12 @@ that names no gate has none yet, and is yours to keep.
   by the pre-commit hook and CI).
 - **No mocks.** A test drives the real code. Where the code meets a true
   outer boundary (the network, the clock), the test hands in a fake written
-  for that edge. A test that mocks a module or spies on a call checks the
-  wiring, not the behaviour, and passes on code that no longer works.
+  for that edge; vitest's fake clock is one. A test that mocks a module or
+  spies on a call checks the wiring, not the behaviour, and passes on code
+  that no longer works. Lint holds it under `src/` and `tools/`
+  (`code-design/no-mocks` in `tools/lint/code-design.ts`), outside the files
+  `vite.config.ts`'s `mockBoundaries` names, each with the boundary it is:
+  none in the template.
 - **Unit tests are for the pure part**, beside the file they test
   (`<name>.test.ts` next to `<name>.ts`). The edge is covered by the
   scenarios, and later by integration tests: a unit test of it would need
