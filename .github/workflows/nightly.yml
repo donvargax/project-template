@@ -2,9 +2,10 @@ name: Nightly
 
 # The whole E2E suite. A push's CI runs the smoke set and the scenarios and
 # task subsets its commits name; every scenario runs here, once a night on
-# main, or by hand from the Actions tab, and then the gates self-test, which
-# a push's CI leaves to the nightly (itos.yaml's `ci.nightly`). Then the
-# vulnerability scan of the lockfile, whatever the suite's result. A red run
+# main, or by hand from the Actions tab; then the gates self-test, which a
+# push's CI leaves to the nightly, and the code design self-test, which a push
+# runs only when it names a task that checks it (itos.yaml's `ci.nightly`).
+# Then the vulnerability scan of the lockfile, whatever the suite's result. A red run
 # opens one issue, "Nightly red", or comments on the open one; a green run
 # closes it. A push's CI opens nothing.
 on:
@@ -44,8 +45,8 @@ jobs:
       # tools/bin/vuln-scan, the script a contributor runs, which installs its
       # pinned osv-scanner checked against the release's SHA-256. A new
       # advisory appears overnight with no commit, so the scan is here rather
-      # than in a push's CI. It runs after the suite and the self-test, so a
-      # red scan stops neither, and whatever their result, so a red suite
+      # than in a push's CI. It runs after the suite and the self-tests, so a
+      # red scan stops none of them, and whatever their result, so a red suite
       # hides no advisory; a red scan turns the run red. The output is kept
       # for the issue below.
       - name: Vulnerability scan

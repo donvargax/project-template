@@ -121,8 +121,16 @@ ci:
     - { by: "vp run test:coverage", matches: "^vp test run(?: [^\\s-]\\S*)*$" }
   # Slow, and it proves the gates rather than the code: left to the nightly.
   nightly_only: ["node tools/selftest/gates.ts"]
+  # The code design self-test runs here too, so a vite-plus release that leaves
+  # the lint plugin loaded but silent shows the next morning; it is fast, so a
+  # push naming a task that checks it still runs it (not nightly_only).
   nightly:
-    steps: [{ tests: scenario, whole: true }, node tools/selftest/gates.ts]
+    steps:
+      [
+        { tests: scenario, whole: true },
+        node tools/selftest/gates.ts,
+        node tools/selftest/code-design.ts,
+      ]
   wait_on_status: [todo] # a named task nobody has started waits
   stop_at_first_failure: true
   range:
