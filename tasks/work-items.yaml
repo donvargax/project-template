@@ -300,7 +300,7 @@ items:
     title: "The workflows' actions pinned to commits"
     phase: 2
     owner: donvargax
-    status: todo
+    status: doing
     depends_on: [T-022]
     kind: task
     refs: [tasks/phase-2.yaml]
