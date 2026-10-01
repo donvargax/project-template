@@ -133,7 +133,13 @@
     cannot express it, a static check CI and the pre-commit hook both run.
     tools/selftest/code-design.ts proves the gate refuses what it should, in
     a scratch tree; T-030 and T-031 add their cases to it. The scenarios see
-    the same page.
+    the same page. What it found: oxlint's no-restricted-imports cannot say
+    the import half, since its regex has no lookahead or backreference and
+    drops a pattern that uses one without a word, so a JS plugin of the
+    project's holds it (tools/lint/code-design.ts), resolving each specifier
+    against its file; what src/ holds is beyond lint, which sees only the
+    files it lints, so tools/code-design.ts checks it, in the pre-commit hook
+    and as a CI step every push runs.
   done_when:
     - fails: test -e src/greeting.ts
       cost: static

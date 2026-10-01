@@ -106,7 +106,8 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
    and add the project's phases after them.
 7. **The demo.** The page (`index.html`, `src/`), its scenario
    (`features/app.feature`) and their steps and page object (`e2e/`) are a
-   demo for the gates to run against; replace them with the project's own.
+   demo for the gates to run against; replace them with the project's own,
+   each feature a slice of `src/` as AGENTS.md's "Code design" says.
    The setup checks name none of it, except the gates self-test
    (`tools/selftest/gates.ts`, T-009, run nightly), which edits a module and
    its unit test, `src/main.ts` and a scenario to prove what the hooks run:

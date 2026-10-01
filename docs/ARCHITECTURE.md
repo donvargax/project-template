@@ -10,10 +10,36 @@ history (`vp run changelog`), and the decisions behind it are in `PLAN.md`.
 other: which are pure and unit-tested, which touch the page, and the
 boundaries lint holds them to.>
 
-The template's own: `src/greeting.ts` is a pure function with its unit test
-beside it (`src/greeting.test.ts`); `src/main.ts` only wires it to the page,
-so the unit coverage leaves it out and the scenarios cover it. `index.html`
-loads `src/main.ts`.
+The template's own, in the shape AGENTS.md's "Code design" gives a feature:
+
+- **One slice**, `src/greeting/`: its feature file `greeting.ts`, a pure
+  function, and `greeting.test.ts` beside it, examples and a fast-check
+  property (whitespace around a name never changes the greeting, and a name
+  is always in it). A feature that grows splits into more slices, never into
+  layer folders.
+- **The composition root**, `src/main.ts`, which `index.html` loads: it
+  wires the slices to the page, each through its feature file, and holds
+  nothing else, so the unit coverage leaves it out (`vite.config.ts`'s
+  `coverage`: every module under `src/` but it) and the scenarios cover it.
+  `src/` holds it and the slice folders, nothing else.
+- **The slice boundary**, held by two gates. Lint: `tools/lint/code-design.ts`
+  is an oxlint JS plugin `vite.config.ts` loads for `src/**`, so `vp check`
+  runs it wherever it runs (pre-commit, CI, the editor). Its rule
+  `code-design/slice-boundary` resolves each relative or root-absolute
+  specifier (import, re-export, dynamic import) against the file it is
+  written in, and refuses one that lands in another slice's folder anywhere
+  but on its feature file, `src/<slice>/<slice>.ts`, with or without the
+  extension; a slice's own files and packages are left alone, and
+  `src/main.ts` is held as a slice is. A plugin rather than
+  `no-restricted-imports`, because oxlint's `regex` there has no lookahead
+  or backreference (and drops a pattern that uses one without a word), and
+  a specifier's meaning depends on the file it is in. The static check:
+  `tools/code-design.ts` lists the files git tracks or has staged under
+  `src/` and refuses one directly in it but `main.ts`, of any kind, since
+  lint sees only the files it lints. The pre-commit hook runs it after
+  `vp staged`, and CI as a static step of its own, on every push. Each is a
+  list of rules the later code design gates join: the plugin's `rules`, the
+  script's `rules`.
 
 ## The scenarios
 
@@ -122,7 +148,8 @@ the commands, `itos <command> --help` each one).
   `itos hook pre-push`; `pre-commit` is the project's own. `vp config`
   (`prepare`, on `vp install`) points git at the folder.
   - **pre-commit** runs `vp staged` (each path's command in `vite.config.ts`'s
-    `staged`); then, unless every staged file is Markdown, under `docs/` or
+    `staged`), then the code design check (`tools/code-design.ts`, under
+    "The application"); then, unless every staged file is Markdown, under `docs/` or
     `tasks/`, or a feature file (no unit test reads them, and itos's data
     among them is the commit-msg hook's), `vp test run --changed HEAD` with coverage
     collected but no thresholds, then `fallow audit` on what is new against
@@ -204,7 +231,7 @@ the commands, `itos <command> --help` each one).
   commit-msg rules, so a commit made with the hooks bypassed fails CI.
   **The plan** (`itos ci plan <from> <to>` prints it, running nothing) is
   one sequence in cost order: the static steps of `ci.steps` (`vp check`,
-  the smoke rule, `itos config check`) and every named task check that is static (its
+  the code design check, the smoke rule, `itos config check`) and every named task check that is static (its
   own `cost: static`, else a pattern of `ci.cost.static`); then the late
   steps (the whole unit suite with the coverage thresholds, `vp build`, the
   audit, T-007); then **one Playwright run** over the smoke set, the
@@ -245,7 +272,12 @@ the commands, `itos <command> --help` each one).
   only what a change reaches and that CI's steps catch what they leave out;
   `ci-scope.ts` and `e2e-scope.ts` prove that the project's prose paths hold
   only prose and that the plan's E2E command selects exactly what it claims,
-  against Playwright's own listing. They share `cli.ts`, which asks itos's
+  against Playwright's own listing; `code-design.ts` writes slices of its own
+  into a scratch worktree and shows that the code design gates (lint, the
+  static check, the pre-commit hook) refuse and allow what they should, and
+  that CI runs them on every push: a table of cases, each the files it
+  writes, the gate that judges them and what a refusal must name, which the
+  later code design gates extend. They share `cli.ts`, which asks itos's
   command line.
 - **The changelog** (`tools/changelog.ts`, `cliff.toml`): git-cliff groups
   the Conventional Commits by type, each with its footers and body, into

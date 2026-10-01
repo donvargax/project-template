@@ -336,7 +336,7 @@ items:
     title: The demo as a vertical slice, and the slice boundary gate
     phase: 2
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-028]
     kind: task
     refs: [tasks/phase-2.yaml]
@@ -485,3 +485,19 @@ items:
       say), would show the scan still reports, after a move of osv-scanner or of its arguments.
       The script already hands a second --lockfile to osv-scanner; what is missing is the
       fixture, kept where the update bot and the project's own install leave it alone.
+
+  - id: p2-code-design-selftest-nightly
+    title: The code design self-test in the nightly
+    phase: 2
+    owner: null
+    status: todo
+    depends_on: [T-031]
+    kind: idea
+    why: >
+      tools/selftest/code-design.ts proves the code design gates refuse what they should, but only
+      a push that names T-029, T-030 or T-031 runs it, and once they are done none will. The lint
+      half is a JS plugin of the project's on oxlint's plugin API, which Renovate moves with
+      vite-plus: a release that changes a node's shape or the context a rule is handed would leave
+      the rule loaded and silent, every allowed case still passing. Running the self-test in the
+      nightly beside gates.ts (ci.nightly in itos.yaml; a few seconds) would show it the next
+      morning.
