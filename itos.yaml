@@ -93,14 +93,17 @@ ci:
   steps: # every step of CI, in order; each states its cost
     - { run: vp check, cost: static }
     - { run: tools/bin/itos tests smoke check scenario, cost: static }
+    - { run: tools/bin/itos config check, cost: static } # the config, the ledger, the registry, the smoke set
     - { run: vp run test:coverage, cost: late }
     - { run: vp build, cost: late }
     - { run: vp run audit, cost: late }
     - { run: vp run task T-007, cost: late } # the commit rules, proven on every push
     - { tests: scenario } # the one merged run; late, as no pattern matches it
   prose: # a range that touches only these runs only the prose steps
-    paths: ["**/*.md", "docs/**"]
-    steps: [vp check]
+    # The work registry is routing, not code: a push that only takes or closes
+    # an item stays a prose push, and the config check validates the registry.
+    paths: ["**/*.md", "docs/**", tasks/work-items.yaml]
+    steps: [vp check, tools/bin/itos config check]
   cost:
     # Checks with no `cost:` of their own: static if a pattern matches, else
     # late. Only commands static by what they are: `sh -c` wraps anything, so a
@@ -132,7 +135,8 @@ ci:
       }
 
 work:
-  registry: docs/work-items.yaml
+  # Beside the ledger it routes. Named here: itos's default is docs/work-items.yaml.
+  registry: tasks/work-items.yaml
   groups_key: phases
   statuses: [todo, doing, done, blocked]
   # or all-contributorsrc (contributors[].login) or yaml (a list of logins)

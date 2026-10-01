@@ -43,9 +43,12 @@ const docsOnly = (paths: string[]) => {
 try {
 	assert.equal(docsOnly(["docs/HANDOFF.md", "AGENTS.md", "PLAN.md"]), true);
 	assert.equal(docsOnly(["docs/decisions/format.md"]), true);
+	// The work registry is routing: taking or closing an item is a prose push.
+	assert.equal(docsOnly(["tasks/work-items.yaml", "README.md"]), true);
 
 	assert.equal(docsOnly(["AGENTS.md", "src/greeting.ts"]), false);
 	assert.equal(docsOnly(["tasks/phase-0.yaml"]), false);
+	assert.equal(docsOnly(["tasks/work-items.yaml", "tasks/phase-0.yaml"]), false);
 	assert.equal(docsOnly(["features/app.feature"]), false);
 	assert.equal(docsOnly(["package.json"]), false);
 	assert.equal(docsOnly([".github/workflows/ci.yml"]), false);
