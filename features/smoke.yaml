@@ -11,9 +11,9 @@
 # what has failed on main; slow, narrow or timing-heavy ones stay in the
 # nightly.
 #
-# The shape (read by tools/itos/smoke.ts, the file itos.yaml's
-# `tests.scenario.smoke` names): one entry per feature file, `file` relative to
-# e2e/features, `more` saying why the file has more than one (required when it
+# The shape (read by itos, the file itos.yaml's `tests.scenario.smoke`
+# names): one entry per feature file, `file` relative to features/, `more`
+# saying why the file has more than one (required when it
 # does), and each scenario's `id` and `why`. Quote a value holding `: `, and
 # every ID (its `@` starts no plain scalar).
 - file: app.feature

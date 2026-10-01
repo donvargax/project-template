@@ -3,10 +3,11 @@ import { defineConfig, devices } from "@playwright/test";
 import { defineBddConfig } from "playwright-bdd";
 
 const testDir = defineBddConfig({
-	features: "e2e/features/**/*.feature",
+	// The specification is at the root; the harness that runs it is e2e/.
+	features: "features/**/*.feature",
 	steps: ["e2e/steps/**/*.ts", "e2e/support/fixtures.ts"],
 	outputDir: "e2e/.features-gen",
-	// Specified but not yet implemented; see e2e/features/README.md.
+	// Specified but not yet implemented; see features/README.md.
 	tags: "not @wip",
 });
 

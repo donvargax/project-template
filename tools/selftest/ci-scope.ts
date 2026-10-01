@@ -46,7 +46,7 @@ try {
 
 	assert.equal(docsOnly(["AGENTS.md", "src/greeting.ts"]), false);
 	assert.equal(docsOnly(["tasks/phase-0.yaml"]), false);
-	assert.equal(docsOnly(["e2e/features/app.feature"]), false);
+	assert.equal(docsOnly(["features/app.feature"]), false);
 	assert.equal(docsOnly(["package.json"]), false);
 	assert.equal(docsOnly([".github/workflows/ci.yml"]), false);
 

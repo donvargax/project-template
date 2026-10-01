@@ -47,7 +47,7 @@ scenario in the file of the behaviour it fixes, not a slice.
   commit. CI runs the referenced scenarios with the smoke set; every scenario
   runs nightly.
 
-Other commit types reference a task instead: see `../../tasks/README.md`.
+Other commit types reference a task instead: see `../tasks/README.md`.
 
 ## The smoke set
 
@@ -57,7 +57,7 @@ E2E subsets of the tasks its `Task:` footers name. The whole suite runs
 nightly on `main` (`.github/workflows/nightly.yml`), and by hand from the
 Actions tab.
 
-The smoke set is the list in `../smoke.yaml`, not a tag, so that live
+The smoke set is the list in `smoke.yaml`, not a tag, so that live
 scenarios need not change to join it and each can say why it is there.
 `vp run e2e:smoke` runs exactly the list. The rule:
 
@@ -85,7 +85,7 @@ create feature files and delete the ones left empty, provided
 - a file with a live scenario keeps its header and Background (a moved
   scenario runs under its new file's Background and inherits the tags above
   its `Feature` line, so choose a file it fits);
-- the file's smoke entries in `../smoke.yaml` move with it, in the same commit.
+- the file's smoke entries in `smoke.yaml` move with it, in the same commit.
 
 The scenario kind's range check (`tests.scenario.range_checks` in `itos.yaml`)
 compares the two sets of scenarios, HEAD against the index in the commit-msg

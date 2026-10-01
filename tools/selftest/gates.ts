@@ -132,7 +132,7 @@ try {
 			throw new Error(`could not copy the working tree:\n${applied.output}`);
 	}
 	for (const file of sh(
-		"git ls-files --others --exclude-standard -- tools .vite-hooks src e2e",
+		"git ls-files --others --exclude-standard -- tools .vite-hooks src e2e features",
 		undefined,
 		root,
 	)
@@ -242,7 +242,7 @@ try {
 	);
 	git(`reset -q --hard ${base}`);
 	edit(
-		"e2e/features/app.feature",
+		"features/app.feature",
 		"Scenario: The page opens and greets the visitor by name",
 		"Scenario: The page opens, renamed",
 	);

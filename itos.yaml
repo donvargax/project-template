@@ -50,22 +50,22 @@ commits:
       - index.html
       - src/main.ts
   scopes: # the paths each commit type may touch (tasks/README.md's table)
-    feat: { must_touch: ["src/**", "e2e/**"] }
+    feat: { must_touch: ["src/**", "e2e/**", "features/**"] }
     fix: { must_touch: ["src/**"] }
-    refactor: { never: ["e2e/features/**"] }
-    perf: { never: ["e2e/features/**"] }
-    test: { only: ["e2e/**", "**/*.test.ts", "tools/**", playwright.config.ts] }
+    refactor: { never: ["features/**"] }
+    perf: { never: ["features/**"] }
+    test: { only: ["features/**", "e2e/**", "**/*.test.ts", "tools/**", playwright.config.ts] }
     build: { only: [$config] }
     ci: { only: [$config] }
     chore: { never: ["src/**"] }
-    docs: { only: ["**/*.md", "docs/**", "tasks/**", "e2e/features/**"] }
+    docs: { only: ["**/*.md", "docs/**", "tasks/**", "features/**/*.feature"] }
     style: {}
   reject_message: "Commit rejected (see tasks/README.md):"
 
 tests: # named tests, each kind behind an adapter
   scenario:
     adapter: gherkin # built into itos
-    root: e2e/features
+    root: features # the specification, at the root; its Playwright harness is e2e/
     id: "ID-[A-Z]+-\\d+"
     tag_prefix: "@"
     wip_tag: "@wip"
@@ -78,7 +78,8 @@ tests: # named tests, each kind behind an adapter
       - { command: "vp run e2e", as: whole }
       - { command: "vp run e2e --grep {pattern}", as: pattern }
       - { command: "vp run e2e:smoke", as: smoke }
-    smoke: { file: e2e/smoke.yaml, every_file: true, add_hint: "add one to e2e/smoke.yaml" }
+    smoke:
+      { file: features/smoke.yaml, every_file: true, add_hint: "add one to features/smoke.yaml" }
     range_checks:
       # Outside feat and fix, live scenarios only move, unchanged. The project's
       # own script: the itos package does not ship the rule.
