@@ -22,6 +22,13 @@ Playwright through playwright-bdd against what `vp build` produces, served by
 `vp preview` (`playwright.config.ts`). `features/README.md` holds the
 rules: the black-box boundary, the tags, the smoke set, the moving rule.
 
+- **Two folders.** `features/`, at the root, is the specification: the
+  feature files, their README and the smoke set, readable without the code
+  that runs them. `e2e/` is that code, the Playwright harness: the steps, the
+  page objects and the specs playwright-bdd generates into
+  `e2e/.features-gen/` (ignored). The harness is TypeScript that drives a
+  browser, held by lint to its boundary, and goes as one if the runner is
+  replaced; the feature files stay.
 - **Steps** (`e2e/steps/`) read as the scenarios do and drive **page
   objects** (`e2e/support/`, one per area of the interface), which alone
   locate elements. Lint keeps `e2e/**` from importing `src`.
