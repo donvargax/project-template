@@ -130,6 +130,37 @@ the same thing waste both. Take one by setting its `owner` and
   relabel a commit to slip past one — split it**: a commit's type is what the
   changelog and CI read it as.
 
+## Code design
+
+How the code is written. A rule a command can decide names its gate here
+once one holds it: T-029 brings the slice boundary's, T-030 the mocks', T-031
+the test files'. A rule that names no gate has none yet, and is yours to keep.
+
+- **A feature is a vertical slice**: one folder under `src/` holding the
+  feature's file and its tests. Every layer lives inside that file, the pure
+  part first and the edge that touches the page, the network or the clock
+  after it, until the file grows; then it splits into more features, never
+  into layer folders. A slice moves, splits or goes as one, and a reader
+  finds all of a feature where its code is.
+- **A slice reaches another only through that slice's feature file**
+  (`src/<slice>/<slice>.ts`), never another file of its folder, so what a
+  slice keeps to itself can change without breaking its neighbours.
+  `src/main.ts` is the composition root: it wires the slices to the page and
+  holds nothing else.
+- **No mocks.** A test drives the real code. Where the code meets a true
+  outer boundary (the network, the clock), the test hands in a fake written
+  for that edge. A test that mocks a module or spies on a call checks the
+  wiring, not the behaviour, and passes on code that no longer works.
+- **Unit tests are for the pure part**, beside the file they test
+  (`<name>.test.ts` next to `<name>.ts`). The edge is covered by the
+  scenarios, and later by integration tests: a unit test of it would need
+  the mocks the rule above refuses.
+- **Property-based tests where an invariant says more than examples**, with
+  fast-check. The demo's: for every string `s`, `greeting(s)` equals
+  `greeting(s.trim())`, and when `s.trim()` is not empty the greeting
+  contains it. Two examples check two names; the property checks every
+  string, the whitespace nobody thought to try among them.
+
 ## The gates run themselves
 
 Every commit and every push runs the checks for you. **Don't run them by hand
