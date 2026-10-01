@@ -77,7 +77,7 @@ tests: # named tests, each kind behind an adapter
     recognize: # a task check read back as a selection, so CI runs it in the one run
       - { command: "vp run e2e", as: whole }
       - { command: "vp run e2e --grep {pattern}", as: pattern }
-      - { command: "vp run e2e:smoke", as: smoke }
+      - { command: "tools/bin/itos tests smoke run scenario", as: smoke }
     smoke:
       { file: features/smoke.yaml, every_file: true, add_hint: "add one to features/smoke.yaml" }
     range_checks:
@@ -97,7 +97,7 @@ ci:
     - { run: vp run test:coverage, cost: late }
     - { run: vp build, cost: late }
     - { run: vp run audit, cost: late }
-    - { run: vp run task T-007, cost: late } # the commit rules, proven on every push
+    - { run: tools/bin/itos task T-007, cost: late } # the commit rules, proven on every push
     - { tests: scenario } # the one merged run; late, as no pattern matches it
   prose: # a range that touches only these runs only the prose steps
     # The work registry is routing, not code: a push that only takes or closes

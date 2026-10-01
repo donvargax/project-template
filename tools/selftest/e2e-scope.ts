@@ -67,7 +67,7 @@ const same = (a: Set<string>, b: Set<string>, what: string) => {
 };
 
 // The commands the scenario kind's `recognize` reads as a run of scenarios.
-const SMOKE_RUN = "vp run e2e:smoke";
+const SMOKE_RUN = "tools/bin/itos tests smoke run scenario";
 const isScenarioRun = (command: string) => isE2eRun(command) || command === SMOKE_RUN;
 // The task checks a step of this config has just done (`ci.covers`, and the
 // steps themselves).

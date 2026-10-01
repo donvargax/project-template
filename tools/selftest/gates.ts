@@ -240,7 +240,10 @@ try {
 	run = prePush("a push naming a scenario and a task", base, sha);
 	expect(run.status === 0, `pre-push failed on a footed push:\n${run.output}`);
 	expect(!run.output.includes("$ vp run e2e"), "pre-push ran the scenarios a footer names");
-	expect(!run.output.includes("$ vp run task"), "pre-push ran the checks of a task a footer names");
+	expect(
+		!/\$ (?:vp run |tools\/bin\/itos )task\b/.test(run.output),
+		"pre-push ran the checks of a task a footer names",
+	);
 	// ...and CI finds the task in the pushed range.
 	const named = plan([base, sha], scratch).tasks;
 	expect(

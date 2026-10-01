@@ -11,13 +11,8 @@
 		"test": "vp test run",
 		"test:coverage": "vp test run --coverage",
 		"e2e": "bddgen && playwright test",
-		"e2e:smoke": "tools/bin/itos tests smoke run scenario --",
 		"e2e:generate": "bddgen",
 		"audit": "fallow audit --quiet",
-		"itos": "tools/bin/itos",
-		"task": "tools/bin/itos task",
-		"work": "tools/bin/itos work",
-		"ci": "tools/bin/itos ci run",
 		"changelog": "node tools/changelog.ts"
 	},
 	"devDependencies": {
