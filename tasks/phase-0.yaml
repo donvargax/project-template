@@ -61,26 +61,29 @@
 
 - id: T-006
   type: build
-  title: itos v0, the task tool
+  title: itos, the task tool
   why: >
     The ledger, the commit rules, CI's plan and the work routing are one tool
     read from one config (itos.yaml), so the policy is data and a project
-    changes it without forking code. Its conformance suite states what it does
-    as cases run through its command line; a tampered copy of the cases must
-    fail, so the runner compares what it claims to.
+    changes it without forking code. itos is a dev dependency pinned to a
+    release (README, Install), and tools/bin/itos runs it; what itos does is
+    proven in its own repository. These checks prove the pin in this project:
+    the installed itos satisfies the config's `requires`, accepts the
+    project's policy, and refuses it with a misspelt key (exit 2), the
+    project's own ledger with every task twice, and a registry whose items
+    wait on each other (exit 1).
   done_when:
+    - run: tools/bin/itos version --check
+      cost: static
     - run: tools/bin/itos config check
-    - fails: ITOS_CONFIG=tools/itos/fixtures/typo.yaml tools/bin/itos config check
-    - fails: tools/bin/itos config check --ledger tools/itos/fixtures/static-after-late.yaml
-    - fails: tools/bin/itos work check tools/itos/fixtures/cycle.yaml
     - fails: tools/bin/itos task T-000
-    - run: ITOS_CONFIG=tools/itos/fixtures/lax-refactor.yaml tools/bin/itos commit check-paths --type refactor e2e/features/app.feature
-    - run: ITOS_CONFIG=tools/itos/fixtures/command-adapter.yaml tools/bin/itos tests list fixture --json
-    - run: sh -c 'test "$(ITOS_CONFIG=tools/itos/fixtures/range-command-false.yaml tools/bin/itos ci range --head HEAD)" = FROM='
-    - run: sh -c 'ITOS_CONFIG=tools/itos/fixtures/identity-command.yaml tools/bin/itos work | grep -q "Working for someone"'
-    - run: node tools/itos/conformance/run.ts --bin tools/bin/itos
-    - fails: node tools/itos/conformance/run.ts --bin tools/bin/itos --only tools/itos/conformance/fixtures/tampered.yaml
-    - run: vp test run tools/itos
+      cost: static
+    - run: 'sh -c ''f=$(mktemp) && sed "s/^ledger:/ledgr:/" itos.yaml > "$f" && { ITOS_CONFIG="$f" tools/bin/itos config check; test $? -eq 2; }'''
+      cost: static
+    - run: 'sh -c ''f=$(mktemp) && cat tasks/phase-0.yaml tasks/phase-0.yaml > "$f" && { tools/bin/itos config check --ledger "$f"; test $? -eq 1; }'''
+      cost: static
+    - run: 'sh -c ''f=$(mktemp) && printf "phases: {0: null}\nitems:\n  - {id: a, title: A, phase: 0, owner: null, status: todo, depends_on: [b]}\n  - {id: b, title: B, phase: 0, owner: null, status: todo, depends_on: [a]}\n" > "$f" && { tools/bin/itos work check "$f"; test $? -eq 1; }'''
+      cost: static
 
 - id: T-007
   type: build
@@ -119,7 +122,6 @@
   done_when:
     - run: actionlint
     - run: node tools/selftest/ci-scope.ts
-    - run: node tools/selftest/ci-range.ts
     - run: tools/bin/itos verify "" HEAD
     - fails: tools/bin/itos verify HEAD "$(git commit-tree 'HEAD^{tree}' -p HEAD -m 'update things')"
     - run: vp run ci

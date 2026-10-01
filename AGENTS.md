@@ -39,8 +39,9 @@ history: `vp run changelog` writes it from the commits into
 `-- --scenario <id>` prints one task's or one scenario's commits.
 `docs/ARCHITECTURE.md` says how the code is put together.
 
-The rules come in two halves. **itos** (`tools/bin/itos`, its policy in
-`itos.yaml`) holds every rule a command can decide: commit shape and footers,
+The rules come in two halves. **itos** (`tools/bin/itos`, which runs the
+release `package.json` pins; its policy in `itos.yaml`) holds every rule a
+command can decide: commit shape and footers,
 the paths each commit type may touch, which checks prove a task, what CI runs
 and in what order, who may take which work. The hooks and CI enforce those on
 every commit, whoever made it. This file holds what no command can check.

@@ -26,6 +26,7 @@
     tarball package.json pins and holds it to the release's checksums.txt.
   done_when:
     - run: tools/bin/itos version --check
+      cost: static
     - fails: "printf 'docs: x\\n\\nTask: T-000\\n' | vp exec commitlint"
     - run: "printf 'docs: x\\n\\nTask: T-014\\n' | vp exec commitlint"
     - run: node tools/selftest/ci-scope.ts

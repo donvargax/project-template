@@ -4,8 +4,8 @@ A starting point for a project that works by its tasks, its scenarios and its
 gates: a small [Vite+](https://viteplus.dev) app with unit tests and
 Gherkin scenarios, a task ledger whose every task is proven by commands, and
 commit rules, git hooks and CI that hold every commit to them. The rules live
-in one file, `itos.yaml`, read by **itos**, the task tool carried in
-`tools/itos/`.
+in one file, `itos.yaml`, read by **itos**, the task tool, a dev dependency
+pinned to a release and run as `tools/bin/itos`.
 
 What it gives a new project from its first commit:
 
@@ -67,8 +67,8 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
    GitHub logins are the owners `docs/work-items.yaml` names), and set the
    phase owners in `docs/work-items.yaml` and `docs/PHASES.md`.
 4. **Licence.** The template is 0BSD (`LICENSE`): replace it with the
-   project's own. `tools/itos/LICENSE` is the task tool's (AGPL-3.0) and
-   stays with it.
+   project's own. itos is not carried in the repository: it is installed
+   from its release, under its own licence (AGPL-3.0).
 5. **Ledger.** `tasks/phase-0.yaml` holds the template's own setup tasks; keep
    them as the project's phase 0, and add the project's phases after it.
 6. **Plan.** Fill in `PLAN.md` (what the project is, its decisions, its
@@ -80,7 +80,28 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
 7. **Check.** `vp run task --phase 0` runs every setup task's checks; push to
    `main` and CI runs on GitHub Actions with no secrets to configure.
 
+## itos, pinned
+
+itos is a dev dependency pinned to one release: `package.json` names the
+release tarball's URL and the lockfile holds its integrity, so a tarball
+replaced under that URL fails every later install. `tools/bin/itos` runs the
+installed bin; the hooks, CI and the ledger call that path, whatever
+implements itos. To move to another release, check its tarball against the
+hash its `checksums.txt` lists, then add its URL, as itos's README says
+under "Install":
+
+```sh
+version=<the release>
+url="https://github.com/donvargax/itos/releases/download/v$version/itos-$version.tgz"
+curl -fsSLO "$url"
+echo "<the hash in the release's checksums.txt>  itos-$version.tgz" | sha256sum -c -
+vp add -D "$url"
+```
+
+Then follow the release notes' upgrading steps, and run
+`tools/bin/itos version --check` and `tools/bin/itos config check`.
+
 ## Licence
 
-The template is [0BSD](LICENSE). The task tool in `tools/itos/` is
-[AGPL-3.0](tools/itos/LICENSE).
+The template is [0BSD](LICENSE). itos, installed from its release and not
+carried here, is AGPL-3.0.

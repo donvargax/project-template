@@ -64,7 +64,7 @@ not compared, so a `docs` commit may write a scenario's reason beside it. The
 files are organised by area of behaviour, and a move is a `test` commit, one
 that also moves the file's smoke entries in `e2e/smoke.yaml`. A live
 scenario's name may not change outside `feat` and `fix`, unless the rename is
-listed by ID and name in `ALLOWED_RENAMES` (`tools/itos/scenario-moves.ts`). A
+listed by ID and name in `ALLOWED_RENAMES` (`tools/scenario-moves.ts`). A
 scenario that duplicates another stays: removing one is a `feat` or `fix`
 decision.
 
