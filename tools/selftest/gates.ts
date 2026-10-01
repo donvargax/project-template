@@ -23,11 +23,10 @@
 //     coverage threshold the tree misses passes pre-commit and fails
 //     `vp run test:coverage`.
 import { spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
-import { writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { e2eStep, plan } from "./cli.ts";
+import { join, resolve } from "node:path";
+import { e2eStep, plan, worktreeOfCurrentTree } from "./cli.ts";
 
 const root = resolve(".");
 const scratch = mkdtempSync(join(tmpdir(), "gates-selftest-"));
@@ -128,24 +127,7 @@ let base = "";
 try {
 	// The scratch tree is the current tree: HEAD plus every tracked edit and the
 	// untracked files a gate could run, committed as the base the pushes build on.
-	git(`worktree add -q --detach ${scratch} HEAD`, root);
-	const diff = sh("git diff HEAD --binary", undefined, root).output;
-	if (diff.trim()) {
-		const applied = sh("git apply --whitespace=nowarn -", diff);
-		if (applied.status !== 0)
-			throw new Error(`could not copy the working tree:\n${applied.output}`);
-	}
-	for (const file of sh(
-		"git ls-files --others --exclude-standard -- tools .vite-hooks src e2e features",
-		undefined,
-		root,
-	)
-		.output.split("\n")
-		.filter(Boolean)) {
-		mkdirSync(dirname(join(scratch, file)), { recursive: true });
-		copyFileSync(join(root, file), join(scratch, file));
-	}
-	symlinkSync(join(root, "node_modules"), join(scratch, "node_modules"));
+	worktreeOfCurrentTree(root, scratch, env);
 	base = commit("gates self-test base");
 	// The audit's "new" is measured against the base, as it is against the
 	// upstream branch in the checkout.

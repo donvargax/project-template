@@ -3,7 +3,8 @@
 # formatter, the linter and the audit ignore; `vp run changelog -- --task <id>`
 # or `-- --scenario <id>` prints only the commits whose footers name it
 # (tools/changelog.ts). Git only: no remote, no links, no token (`--offline`).
-# Until a tag is cut, everything is "Unreleased".
+# Until a tag is cut, everything is "Unreleased". The history starts after
+# itos.yaml's `commits.since` when it names a commit, as verification does.
 
 [changelog]
 header = """
@@ -16,7 +17,8 @@ says why.
 """
 body = """
 {%- macro ids(commit) -%}
-  {%- for footer in commit.footers
+  {#- An unconventional commit has no footers at all. -#}
+  {%- for footer in commit.footers | default(value=[])
       | filter(attribute="breaking", value=false) -%}
     {%- if footer.token in ["Task", "Scenarios", "Refs"] %} · {{ footer.token }}: {{ footer.value }}{% endif -%}
   {%- endfor -%}

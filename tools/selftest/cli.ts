@@ -2,6 +2,8 @@
 // environment, and itos's own answers read from its command line (the
 // package ships no module to import).
 import { spawnSync } from "node:child_process";
+import { copyFileSync, mkdirSync, symlinkSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 // Hooks export GIT_DIR and friends, and CI changes what Playwright lists and
 // what itos plans.
@@ -33,6 +35,31 @@ export const gitIn =
 		if (run.status !== 0) throw new Error(`git ${command} failed:\n${run.output}`);
 		return run.stdout.trim();
 	};
+
+// A worktree of the current tree at `scratch`, detached at HEAD: every tracked
+// edit and the untracked files a gate could run are copied in, and the
+// checkout's node_modules linked. Nothing here touches the checkout.
+export function worktreeOfCurrentTree(root: string, scratch: string, env: NodeJS.ProcessEnv) {
+	gitIn(env, root)(`worktree add -q --detach ${word(scratch)} HEAD`);
+	const diff = sh("git diff HEAD --binary", { env, cwd: root }).stdout;
+	if (diff.trim()) {
+		const applied = spawnSync("git", ["apply", "--whitespace=nowarn", "-"], {
+			cwd: scratch,
+			env,
+			input: diff,
+			encoding: "utf8",
+		});
+		if (applied.status !== 0)
+			throw new Error(`could not copy the working tree:\n${applied.stderr}`);
+	}
+	const untracked =
+		"git ls-files --others --exclude-standard -- tools .vite-hooks src e2e features";
+	for (const file of sh(untracked, { env, cwd: root }).stdout.split("\n").filter(Boolean)) {
+		mkdirSync(dirname(join(scratch, file)), { recursive: true });
+		copyFileSync(join(root, file), join(scratch, file));
+	}
+	symlinkSync(join(root, "node_modules"), join(scratch, "node_modules"));
+}
 
 // A shell word, quoted for sh.
 export const word = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`;

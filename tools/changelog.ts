@@ -10,8 +10,15 @@
 // by footer, so a filtered run takes its context (the parsed commits as JSON),
 // keeps the commits that name the id and renders that. Always `--offline`: no
 // remote is read or linked.
+//
+// The history starts after itos.yaml's `commits.since` when it names a commit:
+// a project made from a template on GitHub begins with one squashed commit
+// that is not a Conventional Commit, and verification leaves it out too. A
+// commit git-cliff cannot parse has no footers at all, and reads as one with
+// none.
 import { spawnSync } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
+import { parse } from "yaml";
 
 const OUT = "docs/changelog/CHANGELOG.md";
 const CLIFF = "node_modules/.bin/git-cliff";
@@ -22,11 +29,19 @@ interface Footer {
 	value: string;
 }
 interface Release {
-	commits: { footers: Footer[] }[];
+	commits: { footers?: Footer[] }[];
 }
 
+// `<since>..HEAD` when commits.since names a commit, else everything.
+const since = (
+	parse(readFileSync(process.env.ITOS_CONFIG || "itos.yaml", "utf8")) as {
+		commits?: { since?: string };
+	}
+).commits?.since;
+const RANGE = since ? [`${since}..HEAD`] : [];
+
 function cliff(args: string[], input?: string): string {
-	const result = spawnSync(CLIFF, ["--offline", ...args], {
+	const result = spawnSync(CLIFF, ["--offline", ...args, ...RANGE], {
 		input,
 		encoding: "utf8",
 		maxBuffer: 256 * 1024 * 1024,
@@ -58,7 +73,7 @@ if (flag === undefined) {
 	let kept = 0;
 	for (const release of releases) {
 		release.commits = release.commits.filter((commit) =>
-			commit.footers.some((footer) => footer.token === token && names(footer, id)),
+			(commit.footers ?? []).some((footer) => footer.token === token && names(footer, id)),
 		);
 		kept += release.commits.length;
 	}
