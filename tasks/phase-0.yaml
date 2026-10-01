@@ -56,7 +56,7 @@
   done_when:
     - run: tools/bin/itos tests smoke check scenario
     - run: vp run e2e --grep @ID-APP-01
-    - run: vp run e2e:smoke
+    - run: tools/bin/itos tests smoke run scenario
     - run: node tools/selftest/e2e-scope.ts
 
 - id: T-006
@@ -114,7 +114,7 @@
   title: GitHub Actions CI
   why: >
     Every push runs the same gates as local development, through one local
-    command (`vp run ci`, `itos ci run`), so the workflow is a thin wrapper:
+    command (`tools/bin/itos ci run`), so the workflow is a thin wrapper:
     the range from the last green run, the named tasks' checks in cost order,
     one E2E run over the smoke set and what the range names, a prose-only
     shortcut. It re-checks every pushed commit with the commit-msg rules, so a
@@ -124,7 +124,7 @@
     - run: node tools/selftest/ci-scope.ts
     - run: tools/bin/itos verify "" HEAD
     - fails: tools/bin/itos verify HEAD "$(git commit-tree 'HEAD^{tree}' -p HEAD -m 'update things')"
-    - run: vp run ci
+    - run: tools/bin/itos ci run
 
 - id: T-009
   type: ci

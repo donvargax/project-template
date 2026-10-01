@@ -27,7 +27,7 @@ priority over new work.
 1. **<The next item>** (`<work item id>`): <what it is for, what is decided,
    what is waiting on whom>.
 2. **<The one after>** (`<work item id>`): <…>.
-3. Continue with what `vp run work` proposes. Ideas, deferred work and
+3. Continue with what `tools/bin/itos work` proposes. Ideas, deferred work and
    everything further out live only in `tasks/work-items.yaml`.
 
 ## User review

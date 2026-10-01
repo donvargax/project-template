@@ -15,13 +15,13 @@ What it gives a new project from its first commit:
   paths. The commit-msg hook enforces it, and CI re-checks every pushed
   commit.
 - **A ledger of tasks with executable checks** (`tasks/`): a task is done when
-  its `done_when` commands pass, `vp run task <id>` says so.
+  its `done_when` commands pass, `tools/bin/itos task <id>` says so.
 - **Gates that run themselves.** pre-commit formats, lints, runs the unit
   tests the change reaches and the audit; pre-push runs the unit tests the
   pushed commits reach; CI runs everything from the last green run, in cost
   order, with one E2E run over the smoke set and what the commits name; a
   nightly runs every scenario and opens an issue when it goes red.
-- **Work routing** (`tasks/work-items.yaml`, `CONTRIBUTORS.md`): `vp run work`
+- **Work routing** (`tasks/work-items.yaml`, `CONTRIBUTORS.md`): `tools/bin/itos work`
   says what the person a session works for can start next.
 - **A changelog from the commits**: `vp run changelog`.
 - **Agent instructions for what no command can check.** `AGENTS.md` is the
@@ -105,7 +105,7 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
    (`AGENTS.md`, `docs/ORCHESTRATING.md`) are written for any project and
    need no change to start; add a project's own rules to them as it finds
    them, each with its reason.
-8. **Check.** `vp run task --phase 0` runs every setup task's checks; push to
+8. **Check.** `tools/bin/itos task --phase 0` runs every setup task's checks; push to
    `main` and CI runs on GitHub Actions with no secrets to configure.
 
 ## itos, pinned

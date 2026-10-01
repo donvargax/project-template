@@ -47,7 +47,7 @@ was built; this section records what was decided and why.>
 
 Each phase ends with something a user can open and use while the next is
 being built. A phase is done when all its scenarios pass without `@wip` and
-`vp run task --phase <n>` reports every task done.
+`tools/bin/itos task --phase <n>` reports every task done.
 
 ### Phase 0: scaffold
 

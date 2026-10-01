@@ -64,7 +64,7 @@ Actions tab.
 
 The smoke set is the list in `smoke.yaml`, not a tag, so that live
 scenarios need not change to join it and each can say why it is there.
-`vp run e2e:smoke` runs exactly the list. The rule:
+`tools/bin/itos tests smoke run scenario` runs exactly the list. The rule:
 
 - **Every feature file with a live scenario has at least one smoke
   scenario**, listed under the file with the reason it was chosen. A file has

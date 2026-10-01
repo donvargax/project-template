@@ -13,7 +13,7 @@ A check **runs something that does real work** and uses its exit code:
 - a tool that validates its subject: `actionlint`, `vp check`, `vp build`,
   `fallow audit`, `tsc`;
 - the thing itself doing its job: the pre-commit hook rejecting a badly
-  formatted file in a scratch repository, `vp run ci` executing the same steps
+  formatted file in a scratch repository, `tools/bin/itos ci run` executing the same steps
   the workflow runs;
 - a negative proof: a command that **must fail**, such as a commit message
   without a footer, or a config with a misspelt key.
@@ -91,7 +91,7 @@ check passes.
   title: GitHub Actions CI
   why: Every push runs the same gates as local development.
   done_when:
-    - run: vp run ci # the workflow's steps, executed locally
+    - run: tools/bin/itos ci run # the workflow's steps, executed locally
     - run: actionlint # workflow syntax, expressions, action inputs, shellcheck of run steps
     - run: gh run list --branch main --workflow ci.yml --limit 1 --json conclusion --jq '.[0].conclusion == "success"' | grep -qx true
       after: push # only meaningful once pushed; reported as "pending" before that
@@ -122,9 +122,9 @@ the work registry or the smoke set.
 ## Commands
 
 ```sh
-vp run task T-008          # run one task's checks
-vp run task --phase 0      # every task of phase 0, as a done / pending / failing table
-vp run task --pending      # tasks that aren't done yet
+tools/bin/itos task T-008          # run one task's checks
+tools/bin/itos task --phase 0      # every task of phase 0, as a done / pending / failing table
+tools/bin/itos task --pending      # tasks that aren't done yet
 tools/bin/itos config check                 # the config and the ledger are sound
 tools/bin/itos ci plan <from> <to>          # what CI would run for a range, running nothing
 ```
@@ -133,7 +133,7 @@ CI's plan is `ci` in `itos.yaml`. It runs the checks of every task referenced
 by a `Task:` footer in the pushed commits; the pre-push hook does not, to keep
 pushes quick. CI does not replay what it has just done: a check the scenario
 kind's `recognize` reads as an E2E run (`vp run e2e`, with or without one
-`--grep`, or `vp run e2e:smoke`) joins CI's one Playwright run; a check that
+`--grep`, or `tools/bin/itos tests smoke run scenario`) joins CI's one Playwright run; a check that
 is one of `ci.steps`, or that `ci.covers` says a step has done (`vp test
 run`, whole or narrowed to paths, after the whole unit suite), is skipped; and
 a check in `ci.nightly_only` (the gates self-test) runs only in the nightly,
@@ -150,6 +150,6 @@ and, of the named tasks' checks, only the static ones and those marked
 finds the same on prose. The prose paths are Markdown, `docs/**` and the work
 registry (`tasks/work-items.yaml`): taking or closing an item is routing, and
 `itos config check`, a prose step, validates it. A push that also touches the
-ledger, a feature file or code runs everything. `vp run task <id>` runs every check, the gates
+ledger, a feature file or code runs everything. `tools/bin/itos task <id>` runs every check, the gates
 self-test included. A phase is complete when all its scenarios pass without
-`@wip` and `vp run task --phase <n>` reports every task done.
+`@wip` and `tools/bin/itos task --phase <n>` reports every task done.
