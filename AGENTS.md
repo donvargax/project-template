@@ -132,9 +132,8 @@ the same thing waste both. Take one by setting its `owner` and
 
 ## Code design
 
-How the code is written. A rule a command can decide names its gate here
-once one holds it: T-031 brings the test files'. A rule that names no gate
-has none yet, and is yours to keep.
+How the code is written. A rule a command can decide names its gate here.
+A rule that names no gate has none, and is yours to keep.
 
 - **A feature is a vertical slice**: one folder under `src/` holding the
   feature's file and its tests. Every layer lives inside that file, the pure
@@ -159,9 +158,16 @@ has none yet, and is yours to keep.
   `vite.config.ts`'s `mockBoundaries` names, each with the boundary it is:
   none in the template.
 - **Unit tests are for the pure part**, beside the file they test
-  (`<name>.test.ts` next to `<name>.ts`). The edge is covered by the
-  scenarios, and later by integration tests: a unit test of it would need
-  the mocks the rule above refuses.
+  (`<name>.test.ts` next to `<name>.ts`, in a slice; `tools/` keeps its own
+  beside its scripts). The edge is covered by the scenarios, and later by
+  integration tests: a unit test of it would need the mocks the rule above
+  refuses. The static check holds where a test sits
+  (`code-design(tests-beside-code)` in `tools/code-design.ts`, run by the
+  pre-commit hook and CI): a test with no file beside it, one outside a
+  slice and `tools/` (in `src/` itself, under `e2e/`), a file in a
+  `__tests__/`, `test/` or `tests/` folder, and any other spelling vitest
+  would run (`*.spec.ts`, `*.test.js`, `*.test.tsx`…) are refused, and
+  `vite.config.ts`'s `test.include` runs only `<name>.test.ts`.
 - **Property-based tests where an invariant says more than examples**, with
   fast-check. The demo's: for every string `s`, `greeting(s)` equals
   `greeting(s.trim())`, and when `s.trim()` is not empty the greeting
@@ -180,7 +186,7 @@ commit, and read what the gate says.
 | **commit-msg** | `tools/bin/itos hook commit-msg`: the type's path rules (`commits.scopes`), then outside `feat` and `fix` the scenario moving rule (`tests.scenario.range_checks`), then commitlint (`config-conventional`) and itos's footer rules (`commits.footers`: the footer is there, and every ID it names exists at the commit, a scenario live), both reported, then the static checks of each task the `Task:` footer names, up to its first late one: a failure rejects the commit when the task is `done`, and is only printed otherwise. When `itos.yaml`, a ledger file, `tasks/work-items.yaml` or `features/smoke.yaml` is staged, it first runs `itos config check`'s problems over the index (what is staged, not the working tree) and rejects the commit with them.                                                                                      |
 | **pre-push**   | `tools/bin/itos hook pre-push`: the unit tests the pushed commits reach (`vp test run --changed <remote sha>`; the whole unit suite when there is no remote commit to compare with), and nothing slow. The scenarios and task checks your commits name are CI's.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | **CI**         | `.github/workflows/ci.yml`, on every push to `main`. Its range starts at the last green run on `main` (`itos ci range`); `itos verify` re-checks every commit in it against the commit-msg rules; then `tools/bin/itos ci run` runs the plan `itos.yaml`'s `ci` states, in cost order, stopping at the first failure: `vp check`, `node tools/code-design.ts`, the smoke rule, `itos config check`, the static checks of the tasks the commits name, the whole unit suite with the coverage thresholds, `vp build`, the audit, T-007 (the commit rules), one E2E run over the smoke set (`features/smoke.yaml`) and the scenarios and task subsets the commits name, then the named tasks' other checks. A range of only Markdown, `docs/**` and the work registry runs `vp check`, `itos config check` and the named tasks' static and `prose: true` checks. |
-| **nightly**    | `.github/workflows/nightly.yml`, on `main` at 11:44 UTC or by hand: the whole E2E suite, then the gates self-test (`tools/selftest/gates.ts`), then, whatever their result, the vulnerability scan of `pnpm-lock.yaml` (`tools/bin/vuln-scan`). A red run opens one "Nightly red" issue, or comments on the open one; a green run closes it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **nightly**    | `.github/workflows/nightly.yml`, on `main` at 11:44 UTC or by hand: the whole E2E suite, then the gates and code design self-tests (`tools/selftest/gates.ts`, `tools/selftest/code-design.ts`), then, whatever their result, the vulnerability scan of `pnpm-lock.yaml` (`tools/bin/vuln-scan`). A red run opens one "Nightly red" issue, or comments on the open one; a green run closes it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 So: formatting, lint, types, the unit tests your change reaches, the audit,
 commit shape and the scenarios you named are **not your job to verify**. The

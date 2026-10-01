@@ -180,7 +180,13 @@
     scripts), so a slice moves or splits with its tests and a reader finds
     them where the code is. A test file anywhere else fails a static check
     that CI and the pre-commit hook run, rather than running unnoticed or
-    not at all.
+    not at all. What it found: vitest's default include runs every
+    *.{test,spec}.?(c|m)[jt]s?(x), so the rule refuses each spelling but
+    <name>.test.ts and vite.config.ts's test.include runs only that one,
+    under src/ and tools/; restricting include alone would leave another
+    spelling sitting unrun, and refusing alone would let one run as a test
+    the check rejects. The check now reads the whole tree, not src/ alone,
+    and names each problem's rule, code-design(<rule>), as lint does.
   done_when:
     - run: vp check
     - run: node tools/selftest/code-design.ts

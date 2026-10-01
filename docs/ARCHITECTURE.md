@@ -34,12 +34,13 @@ The template's own, in the shape AGENTS.md's "Code design" gives a feature:
   `no-restricted-imports`, because oxlint's `regex` there has no lookahead
   or backreference (and drops a pattern that uses one without a word), and
   a specifier's meaning depends on the file it is in. The static check:
-  `tools/code-design.ts` lists the files git tracks or has staged under
-  `src/` and refuses one directly in it but `main.ts`, of any kind, since
-  lint sees only the files it lints. The pre-commit hook runs it after
-  `vp staged`, and CI as a static step of its own, on every push. Each is a
-  list of rules the later code design gates join: the plugin's `rules`, the
-  script's `rules`.
+  `tools/code-design.ts` lists the files git tracks or has staged, the whole
+  tree, and its rule `slice-folders` refuses one directly in `src/` but
+  `main.ts`, of any kind, since lint sees only the files it lints. The
+  pre-commit hook runs it after `vp staged`, and CI as a static step of its
+  own, on every push. Each is a list of rules the later code design gates
+  join: the plugin's `rules`, the script's `rules`, each problem printed
+  under the rule's name (`code-design(<rule>)`), as lint prints its own.
 - **No mocks**, held by lint: the plugin's second rule, `code-design/no-mocks`,
   which `vite.config.ts` turns on for every module under `src/` and `tools/`
   (a helper a test imports included). It judges each member of vitest's `vi`
@@ -60,6 +61,19 @@ The template's own, in the shape AGENTS.md's "Code design" gives a feature:
   the template. `e2e/` is left out: it drives the built page in a browser,
   where no module can be mocked, and Playwright's fakes (`page.route`,
   `page.clock`) sit at the network's and the clock's edge.
+- **Unit tests beside the code they test**, held by the static check's
+  second rule, `tests-beside-code`. A unit test is `<name>.test.ts` beside
+  the `<name>.ts` it tests, in a slice under `src/` (beside the feature file
+  or an inner one) or in `tools/` at any depth, so a slice moves or splits
+  with its tests. The rule refuses a `.test.ts` with no `<name>.ts` tracked
+  beside it, one outside a slice and `tools/` (directly in `src/`, at the
+  root), a unit test under `e2e/`, which holds the scenarios' steps, any
+  file in a `__tests__/`, `test/` or `tests/` folder, and every other
+  spelling vitest's default `include` (`**/*.{test,spec}.?(c|m)[jt]s?(x)`)
+  would run. Both halves of the choice are taken: `vite.config.ts`'s
+  `test.include` runs only `src/**/*.test.ts` and `tools/**/*.test.ts`, so
+  vitest runs exactly the shape the rule allows, and the rule refuses the
+  rest, which would otherwise sit in the tree never running.
 
 ## The scenarios
 
@@ -169,7 +183,7 @@ the commands, `itos <command> --help` each one).
   (`prepare`, on `vp install`) points git at the folder.
   - **pre-commit** runs `vp staged` (each path's command in `vite.config.ts`'s
     `staged`), then the code design check (`tools/code-design.ts`, under
-    "The application"); then, unless every staged file is Markdown, under `docs/` or
+    "The application": what `src/` holds, where a unit test sits); then, unless every staged file is Markdown, under `docs/` or
     `tasks/`, or a feature file (no unit test reads them, and itos's data
     among them is the commit-msg hook's), `vp test run --changed HEAD` with coverage
     collected but no thresholds, then `fallow audit` on what is new against
@@ -266,7 +280,11 @@ the commands, `itos <command> --help` each one).
   and builds nothing.
 - **The nightly** (`.github/workflows/nightly.yml`, at 11:44 UTC on `main` or
   by hand) runs `itos ci run --nightly`: the whole E2E suite, then the gates
-  self-test. Then, in a step of its own, the vulnerability scan, whatever
+  self-test, then the code design self-test, which a push runs only when it
+  names a task that checks it, so a vite-plus release that leaves the lint
+  plugin loaded but silent shows the next morning (it is in
+  `ci.nightly.steps` but not `ci.nightly_only`, which would only take it out
+  of such a push). Then, in a step of its own, the vulnerability scan, whatever
   their result. A red run opens one issue labelled `nightly-red`, or comments
   on the open one with the failing scenarios and what the scan found; a green
   run closes it.
@@ -296,10 +314,14 @@ the commands, `itos <command> --help` each one).
   into a scratch worktree and shows that the code design gates (lint, the
   static check, the pre-commit hook) refuse and allow what they should (lint's
   no-mocks cases among them: each refused member of `vi`, `vi` reached every
-  way a test can, the clock allowed, a `mockBoundaries` file allowed), and
+  way a test can, the clock allowed, a `mockBoundaries` file allowed; and the
+  static check's test placement: a test beside its file allowed, an orphan,
+  one in the wrong place or a folder of tests refused, and each other
+  spelling vitest's default would run, generated from its pattern), and
   that CI runs them on every push: a table of cases, each the files it
-  writes, the gate that judges them and what a refusal must name, which the
-  later code design gates extend. They share `cli.ts`, which asks itos's
+  writes, the gate that judges them and what a refusal must name (the rule
+  that refused), which the later code design gates extend. It runs nightly
+  too. They share `cli.ts`, which asks itos's
   command line.
 - **The changelog** (`tools/changelog.ts`, `cliff.toml`): git-cliff groups
   the Conventional Commits by type, each with its footers and body, into
