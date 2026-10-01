@@ -58,7 +58,7 @@ work out and land it, not to build it. The rule that settles the split:
 subagent.**
 
 **Who works what.** `CONTRIBUTORS.md` lists who works on the project, by
-GitHub login; `docs/work-items.yaml` says who owns each phase and each work
+GitHub login; `tasks/work-items.yaml` says who owns each phase and each work
 item, and what each waits on; `docs/PHASES.md` explains it. Run `vp run work`
 to see what the person you work for (the account `gh` is signed in as, or
 `--as <handle>`) is doing and can start next. **Don't take an item someone
@@ -170,7 +170,7 @@ Run these yourself when they apply:
   `vp run task --phase <n>` shows the phase's non-feature work. A check
   marked `after: push` stays pending until the commit is on the remote.
 - `tools/bin/itos config check` after editing `itos.yaml`, the ledger
-  (`tasks/`), `docs/work-items.yaml` or `features/smoke.yaml`. No hook runs it, and
+  (`tasks/`), `tasks/work-items.yaml` or `features/smoke.yaml`. No hook runs it, and
   CI only when a pushed commit names the task that carries it.
 - `vp run e2e --grep @slice-<n>` once at the end of a slice, if your commits
   didn't already name every scenario in it between them.
@@ -241,7 +241,7 @@ push to `main` too, so expect the remote to have moved while you worked.
 
 There is no changelog to write: it is generated from the commits, so each
 commit's body is its entry: what changed and why. A gap the work leaves
-(what the next slice will find missing) goes into `docs/work-items.yaml` as a
+(what the next slice will find missing) goes into `tasks/work-items.yaml` as a
 `kind: idea` item (`status: todo`, a title, a short `why`, its owner or null,
 its `depends_on`) in the slice's last `docs` commit, never in a commit body
 or a list of its own: the registry is the one list of open work. One you are

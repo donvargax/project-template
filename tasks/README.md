@@ -140,7 +140,7 @@ after the whole E2E suite. Every other check runs as it is, in cost order: the
 static ones (see `cost:` above) right after the static steps, before the unit
 tests, the build and the Playwright run; the late ones after the Playwright
 run. CI stops at the first failure, a check's included. A task named while
-its work item is still `todo` in `docs/work-items.yaml` waits: nobody has
+its work item is still `todo` in `tasks/work-items.yaml` waits: nobody has
 started it, so its checks cannot pass yet.
 
 A prose-only push (only the paths of `ci.prose.paths`) runs `ci.prose.steps`

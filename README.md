@@ -21,7 +21,7 @@ What it gives a new project from its first commit:
   pushed commits reach; CI runs everything from the last green run, in cost
   order, with one E2E run over the smoke set and what the commits name; a
   nightly runs every scenario and opens an issue when it goes red.
-- **Work routing** (`docs/work-items.yaml`, `CONTRIBUTORS.md`): `vp run work`
+- **Work routing** (`tasks/work-items.yaml`, `CONTRIBUTORS.md`): `vp run work`
   says what the person a session works for can start next.
 - **A changelog from the commits**: `vp run changelog`.
 - **Agent instructions for what no command can check.** `AGENTS.md` is the
@@ -43,7 +43,7 @@ What it gives a new project from its first commit:
 | `AGENTS.md`             | The working rules for a session that implements.                                |
 | `docs/ORCHESTRATING.md` | The working rules for the session that coordinates.                             |
 | `docs/PHASES.md`        | Who owns which phase, and how work is routed.                                   |
-| `docs/work-items.yaml`  | The one list of open work: owners, statuses, dependencies, ideas.               |
+| `tasks/work-items.yaml` | The one list of open work: owners, statuses, dependencies, ideas.               |
 | `tasks/`                | The ledger: every non-feature task and the checks that prove it.                |
 | `features/`             | The scenarios: the behaviour a user can observe, and the smoke set.             |
 | `e2e/`                  | The Playwright harness that runs them: steps and page objects.                  |
@@ -65,8 +65,8 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
 2. **Rename.** Set `name` in `package.json`, the page's `<title>` in
    `index.html`, and this README's title and text.
 3. **Contributors.** Put the project's people in `CONTRIBUTORS.md` (their
-   GitHub logins are the owners `docs/work-items.yaml` names), and set the
-   phase owners in `docs/work-items.yaml` and `docs/PHASES.md`.
+   GitHub logins are the owners `tasks/work-items.yaml` names), and set the
+   phase owners in `tasks/work-items.yaml` and `docs/PHASES.md`.
 4. **Licence.** The template is 0BSD (`LICENSE`): replace it with the
    project's own. itos is not carried in the repository: it is installed
    from its release, under its own licence (AGPL-3.0).

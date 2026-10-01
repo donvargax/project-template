@@ -6,7 +6,7 @@ deliberately does not do.>
 This file holds the decisions and the order of the work. How the code is
 actually put together is `docs/ARCHITECTURE.md`; what has been built, and
 why, is the history (`vp run changelog`); who works which phase is
-`docs/PHASES.md`, and the open work is `docs/work-items.yaml`.
+`docs/PHASES.md`, and the open work is `tasks/work-items.yaml`.
 
 ---
 

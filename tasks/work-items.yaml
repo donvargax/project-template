@@ -6,10 +6,11 @@
 #
 # What an item is and when it is done stays where it already lives: a slice's
 # scenarios in features/, a task's checks in the ledger beside this file. This
-# file holds only the routing, and sits here, by the ledger, because it is data
-# itos reads (itos.yaml's `work.registry`), not prose. Change it in a `docs` commit: take an item by setting `owner`
-# and `status: doing` before starting it, mark it `done` in the commit that
-# lands it (or the next `docs` one), and add the items a slice discovers.
+# file holds only the routing, and sits by the ledger because it is data itos
+# reads (itos.yaml's `work.registry`), not prose. Change it in a `docs` commit:
+# take an item by setting `owner` and `status: doing` before starting it, mark
+# it `done` in the commit that lands it (or the next `docs` one), and add the
+# items a slice discovers.
 #
 # Keys of an item: `id` (a slice as `slice-<n>`, a task by its T- ID, anything
 # not yet numbered as `p<phase>-<name>`), `title`, `phase`, `owner` (a GitHub

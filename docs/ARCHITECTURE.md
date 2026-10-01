@@ -64,7 +64,7 @@ the commands, `itos <command> --help` each one).
   does not know, naming the one it misspells; `ITOS_CONFIG` or `--config`
   names another file. A project changes its policy here, not in code.
 - **What it reads.** The ledger is `tasks/phase-<n>.yaml` (`ledger.files`),
-  the registry `docs/work-items.yaml` (`work.registry`), the people
+  the registry `tasks/work-items.yaml` (`work.registry`), the people
   `CONTRIBUTORS.md` (`work.people`), the smoke set `features/smoke.yaml`
   (`tests.scenario.smoke`). `itos config check` validates all of them.
 - **One command line**: exit 0 on success, 1 for a policy failure (a check

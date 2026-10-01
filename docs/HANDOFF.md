@@ -3,11 +3,11 @@
 This file holds only what is ahead, for the next session to act on. It is
 the coordinator's to rewrite at the end of each session, and kept short on
 purpose: what was built, and why, is the history (`vp run changelog`), and
-open work beyond the next few steps is `docs/work-items.yaml`.
+open work beyond the next few steps is `tasks/work-items.yaml`.
 
 Read [AGENTS.md](../AGENTS.md), [PLAN.md](../PLAN.md),
 [docs/ARCHITECTURE.md](ARCHITECTURE.md) and
-[docs/work-items.yaml](work-items.yaml) before taking work; a coordinator
+[tasks/work-items.yaml](../tasks/work-items.yaml) before taking work; a coordinator
 reads [docs/ORCHESTRATING.md](ORCHESTRATING.md) too.
 
 Last rewritten <date>, after <what the last session landed, in a line>.
@@ -28,7 +28,7 @@ priority over new work.
    what is waiting on whom>.
 2. **<The one after>** (`<work item id>`): <…>.
 3. Continue with what `vp run work` proposes. Ideas, deferred work and
-   everything further out live only in `docs/work-items.yaml`.
+   everything further out live only in `tasks/work-items.yaml`.
 
 ## User review
 
