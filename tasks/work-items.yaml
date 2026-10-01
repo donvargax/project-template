@@ -240,7 +240,7 @@ items:
     title: itos 0.4.0
     phase: 1
     owner: donvargax
-    status: todo
+    status: doing
     depends_on: [T-021]
     kind: task
     refs: [tasks/phase-1.yaml]
