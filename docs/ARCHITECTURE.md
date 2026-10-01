@@ -66,7 +66,8 @@ the commands, `itos <command> --help` each one).
 - **What it reads.** The ledger is `tasks/phase-<n>.yaml` (`ledger.files`),
   the registry `tasks/work-items.yaml` (`work.registry`), the people
   `CONTRIBUTORS.md` (`work.people`), the smoke set `features/smoke.yaml`
-  (`tests.scenario.smoke`). `itos config check` validates all of them.
+  (`tests.scenario.smoke`). `itos config check` validates all of them, in
+  the pre-commit hook and as a CI step.
 - **One command line**: exit 0 on success, 1 for a policy failure (a check
   failed, a commit rejected, an unknown task), 2 for a usage or config error,
   3 for a missing environment. `--json` prints one object with
@@ -109,9 +110,14 @@ the commands, `itos <command> --help` each one).
   `itos hook pre-push`; `pre-commit` is the project's own. `vp config`
   (`prepare`, on `vp install`) points git at the folder.
   - **pre-commit** runs `vp staged` (each path's command in `vite.config.ts`'s
-    `staged`), then, unless every staged file is Markdown, under `tasks/` or
-    a feature file, `vp test run --changed HEAD` with coverage collected but
-    no thresholds, then `fallow audit` on what is new against HEAD. Vitest
+    `staged`); then `itos config check` when `itos.yaml`, a ledger file or
+    the smoke set is staged, and `itos work check` when the registry is,
+    since no unit test reads them and nothing else would before CI (both read
+    the working tree; they stay until itos runs them in its own commit-msg
+    hook); then, unless every staged file is Markdown, under `docs/` or
+    `tasks/`, or a feature file, `vp test run --changed HEAD` with coverage
+    collected but no thresholds, then `fallow audit` on what is new against
+    HEAD. Vitest
     follows the imports from every changed file; `forceRerunTriggers` reruns
     everything when the config, the lockfile or `itos.yaml` changes, written
     as the files themselves, since vitest's own defaults never match a changed
@@ -136,8 +142,9 @@ the commands, `itos <command> --help` each one).
   environment once, so the scope, the commit re-check and the plan read the
   same range. `itos verify` re-checks every commit of the range with the
   commit-msg rules, so a commit made with the hooks bypassed fails CI.
-  **The plan** (`itos ci plan <from> <to>` prints it, running nothing) is one sequence in cost order: the static steps of `ci.steps`
-  (`vp check`, the smoke rule) and every named task check that is static (its
+  **The plan** (`itos ci plan <from> <to>` prints it, running nothing) is
+  one sequence in cost order: the static steps of `ci.steps` (`vp check`,
+  the smoke rule, `itos config check`) and every named task check that is static (its
   own `cost: static`, else a pattern of `ci.cost.static`); then the late
   steps (the whole unit suite with the coverage thresholds, `vp build`, the
   audit, T-007); then **one Playwright run** over the smoke set, the
@@ -146,9 +153,10 @@ the commands, `itos <command> --help` each one).
   keep their written order. A check a step has just done is skipped
   (`ci.covers`), one in `ci.nightly_only` waits for the nightly, and a task
   whose work item is still `todo` waits (`ci.wait_on_status`). It stops at
-  the first failure. A range of only `ci.prose.paths` (Markdown, `docs/**`)
-  runs `ci.prose.steps` and the named tasks' static and `prose: true` checks,
-  installs no browser and builds nothing.
+  the first failure. A range of only `ci.prose.paths` (Markdown, `docs/**`,
+  the work registry) runs `ci.prose.steps` (`vp check`, `itos config check`)
+  and the named tasks' static and `prose: true` checks, installs no browser
+  and builds nothing.
 - **The nightly** (`.github/workflows/nightly.yml`, at 11:44 UTC on `main` or
   by hand) runs `itos ci run --nightly`: the whole E2E suite, then the gates
   self-test. A red run opens one issue labelled `nightly-red`, or comments on

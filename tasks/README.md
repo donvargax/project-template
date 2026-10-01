@@ -114,7 +114,8 @@ Keys:
 
 **Written order.** A task's checks never run before the ones written above
 them (`ci.cost.keep_written_order`), so a static check may not follow a late
-one: write it above, or it is late. `tools/bin/itos config check` rejects a
+one: write it above, or it is late. `tools/bin/itos config check` (run by
+the pre-commit hook when a ledger file is staged, and by CI) rejects a
 ledger that breaks this, beside anything else wrong in the config, the ledger,
 the work registry or the smoke set.
 
@@ -146,7 +147,9 @@ started it, so its checks cannot pass yet.
 A prose-only push (only the paths of `ci.prose.paths`) runs `ci.prose.steps`
 and, of the named tasks' checks, only the static ones and those marked
 `prose: true`: no build, no E2E subset, since a check that reads only code
-finds the same on prose. A push that also touches `tasks/**`, a feature file
-or code runs everything. `vp run task <id>` runs every check, the gates
+finds the same on prose. The prose paths are Markdown, `docs/**` and the work
+registry (`tasks/work-items.yaml`): taking or closing an item is routing, and
+`itos config check`, a prose step, validates it. A push that also touches the
+ledger, a feature file or code runs everything. `vp run task <id>` runs every check, the gates
 self-test included. A phase is complete when all its scenarios pass without
 `@wip` and `vp run task --phase <n>` reports every task done.
