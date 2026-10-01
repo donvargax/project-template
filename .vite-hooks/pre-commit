@@ -5,23 +5,9 @@ staged() {
 	shift
 	git diff --cached --name-only --diff-filter="$filter" -- "$@"
 }
-# What itos reads and no unit test does. The tests below are skipped for the
-# ledger, the registry and the smoke set, and nothing else reads them before
-# CI, so a broken one rejects the commit here: a duplicate task ID, a static
-# check below a late one, a registry item waiting on one that does not exist.
-# Both checks read the working tree. They stay here until itos runs them in its
-# own commit-msg hook.
-# The config, the ledger (itos.yaml's `ledger.files`) and the smoke set
-# (`tests.scenario.smoke.file`):
-if [ -n "$(staged ACMRD itos.yaml 'tasks/phase-*.yaml' features/smoke.yaml)" ]; then
-	tools/bin/itos config check || exit $?
-fi
-# The work registry (`work.registry`):
-if [ -n "$(staged ACMR tasks/work-items.yaml)" ]; then
-	tools/bin/itos work check || exit $?
-fi
-# Commits of only Markdown, docs/, tasks/ (the ledger and the registry) and
-# feature files need no test or audit gate: no unit test reads them.
+# Commits of only Markdown, docs/, tasks/ and feature files need no test or
+# audit gate: no unit test reads them, and itos's own data among them (the
+# ledger, the registry) is checked from the index by its commit-msg hook.
 if [ -z "$(staged ACMRD . ':(exclude)*.md' ':(exclude)docs/**' ':(exclude)tasks/**' ':(exclude)features/**/*.feature')" ]; then
 	exit 0
 fi

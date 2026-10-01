@@ -8,16 +8,17 @@
 //   - pre-push does the same against the remote commit it builds on, fails on
 //     that broken change, and passes a prose-only push;
 //   - pre-commit runs no unit test and no audit for a commit of only docs/,
-//     tasks/, Markdown and feature files, but rejects one that stages a ledger
-//     with a duplicate task ID (itos config check) or a registry item waiting
-//     on one that does not exist (itos work check);
+//     tasks/, Markdown and feature files;
 //   - pre-push runs neither the scenarios a commit's `Scenarios:` footer names
 //     nor the checks of the tasks its `Task:` footer names; CI reads those
 //     footers from the pushed range and runs them;
 //   - the commit-msg hook, a one-line shim calling `itos hook commit-msg`,
 //     rejects a commit whose type may not touch a staged path, a scenario
-//     renamed outside feat and fix, and a header commitlint rejects, and lets a
-//     sound commit through;
+//     renamed outside feat and fix, a header commitlint rejects, and itos's
+//     own data broken as it is staged: a ledger with a duplicate task ID (even
+//     when the working tree's copy has been fixed, since the hook reads the
+//     index) and a registry item waiting on one that does not exist; and it
+//     lets a sound commit through;
 //   - what the hooks leave out fails CI's own steps: a refactor that breaks
 //     every scenario passes both hooks and fails the push's E2E step, and a
 //     coverage threshold the tree misses passes pre-commit and fails
@@ -115,8 +116,9 @@ const prePush = (label: string, base: string, sha: string) =>
 		`refs/heads/main ${sha} refs/heads/main ${base}\n`,
 	);
 const messages = mkdtempSync(join(tmpdir(), "gates-selftest-msg-"));
-const commitMsg = (label: string, message: string) => {
-	git("add -A");
+// `stage: false` checks what is already staged, whatever the working tree holds.
+const commitMsg = (label: string, message: string, stage = true) => {
+	if (stage) git("add -A");
 	const file = join(messages, "COMMIT_EDITMSG");
 	writeFileSync(file, message);
 	return gate(`commit-msg, ${label}`, `sh .vite-hooks/commit-msg ${file}`);
@@ -197,8 +199,9 @@ try {
 	run = prePush("a prose-only push", base, sha);
 	expect(run.status === 0, `pre-push failed on a prose-only push:\n${run.output}`);
 
-	// 5. What itos reads and no unit test does. A commit of only docs/ (any
-	// file, not just Markdown) and tasks/ runs no unit test and no audit...
+	// 5. A commit of only docs/ (any file, not just Markdown) and tasks/ (the
+	// ledger and the registry) runs no unit test and no audit: no unit test
+	// reads them, and itos checks its own data at commit-msg (below).
 	git(`reset -q --hard ${base}`);
 	writeFileSync(join(scratch, "docs/gates-selftest.json"), "{}\n");
 	edit("tasks/work-items.yaml", "items:", "# gates self-test: a harmless change\nitems:");
@@ -207,30 +210,6 @@ try {
 	expect(
 		!/Test Files|fallow/i.test(plain(run.output)),
 		`pre-commit ran the unit tests or the audit for docs/ and tasks/:\n${run.output}`,
-	);
-	// ...but a ledger with a duplicate task ID is rejected...
-	git(`reset -q --hard ${base}`);
-	edit(
-		"tasks/phase-0.yaml",
-		"- id: T-002",
-		"- id: T-001\n  type: build\n  title: A duplicate\n  done_when: []\n\n- id: T-002",
-	);
-	run = preCommit("a ledger with a duplicate task ID");
-	expect(
-		run.status !== 0 && run.output.includes("T-001"),
-		`pre-commit passed a ledger with a duplicate task ID:\n${run.output}`,
-	);
-	// ...and so is a registry item that waits on one that does not exist.
-	git(`reset -q --hard ${base}`);
-	edit(
-		"tasks/work-items.yaml",
-		"items:",
-		"items:\n  - id: p0-gates-selftest\n    title: Waits on nothing that exists\n    phase: 0\n    owner: null\n    status: todo\n    depends_on: [p0-nowhere]\n    kind: idea\n",
-	);
-	run = preCommit("a registry item waiting on an unknown one");
-	expect(
-		run.status !== 0 && run.output.includes("p0-nowhere"),
-		`pre-commit passed a registry item waiting on an unknown one:\n${run.output}`,
 	);
 
 	// A commit that names a scenario and a task leaves both to CI...
@@ -285,6 +264,40 @@ try {
 	);
 	run = commitMsg("a sound docs commit", "docs: edit the readme\n\nTask: T-007\n");
 	expect(run.status === 0, `commit-msg rejected a sound docs commit:\n${run.output}`);
+
+	// What itos reads and no unit test does, checked from the index. A staged
+	// ledger with a duplicate task ID is rejected...
+	git(`reset -q --hard ${base}`);
+	const duplicate = "- id: T-001\n  type: build\n  title: A duplicate\n  done_when: []\n\n";
+	edit("tasks/phase-0.yaml", "- id: T-002", `${duplicate}- id: T-002`);
+	const ledgerMessage = "docs: duplicate a task\n\nTask: T-007\n";
+	run = commitMsg("a staged ledger with a duplicate task ID", ledgerMessage);
+	expect(
+		run.status === 1 && run.output.includes("T-001"),
+		`commit-msg passed a staged ledger with a duplicate task ID:\n${run.output}`,
+	);
+	// ...still when the working tree's copy has been fixed and not staged...
+	edit("tasks/phase-0.yaml", duplicate, "");
+	run = commitMsg("the same ledger, fixed only in the working tree", ledgerMessage, false);
+	expect(
+		run.status === 1 && run.output.includes("T-001"),
+		`commit-msg read the working tree, not the staged ledger:\n${run.output}`,
+	);
+	// ...and so is a staged registry item that waits on one that does not exist.
+	git(`reset -q --hard ${base}`);
+	edit(
+		"tasks/work-items.yaml",
+		"items:",
+		"items:\n  - id: p0-gates-selftest\n    title: Waits on nothing that exists\n    phase: 0\n    owner: null\n    status: todo\n    depends_on: [p0-nowhere]\n    kind: idea\n",
+	);
+	run = commitMsg(
+		"a staged registry item waiting on an unknown one",
+		"docs: add an item\n\nTask: T-007\n",
+	);
+	expect(
+		run.status === 1 && run.output.includes("p0-nowhere"),
+		`commit-msg passed a staged registry item waiting on an unknown one:\n${run.output}`,
+	);
 
 	// 6. What the hooks leave out, CI's steps catch. A refactor that changes the
 	// page's heading, which every scenario reads, passes both hooks...
