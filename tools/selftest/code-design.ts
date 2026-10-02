@@ -8,7 +8,10 @@
 //     `vp check` runs) refuses a slice, or src/main.ts, reaching another
 //     slice's inner file (slice-boundary.ts), and any of vitest's mocks,
 //     spies and stubs however `vi` is reached, the clock and a file
-//     mockBoundaries names aside (no-mocks.ts);
+//     mockBoundaries names aside (no-mocks.ts), and the browser's globals in
+//     a slice's logic, its tests and its view files however they are
+//     reached, a file browserEdges names, src/main.ts, a type, a shadowing
+//     local, the clock and a file the ratchet lists aside (no-browser.ts);
 //   - lint's size tripwire warns on a file over 400 lines of code, without
 //     failing, and finds none in the template's own tree (max-lines.ts);
 //   - the static check (tools/code-design.ts) refuses a file directly under
@@ -36,6 +39,7 @@ import { dirname, join, resolve } from "node:path";
 import { cleanEnv, gitIn, plan, sh, word, worktreeOfCurrentTree, type Run } from "./cli.ts";
 import type { Case, Gate } from "./code-design/case.ts";
 import { cases as maxLines } from "./code-design/max-lines.ts";
+import { cases as noBrowser } from "./code-design/no-browser.ts";
 import { cases as noMocks } from "./code-design/no-mocks.ts";
 import { cases as ratchet } from "./code-design/ratchet.ts";
 import { cases as sliceBoundary } from "./code-design/slice-boundary.ts";
@@ -45,6 +49,7 @@ import { cases as testsBesideCode } from "./code-design/tests-beside-code.ts";
 const cases: Case[] = [
 	...sliceBoundary,
 	...noMocks,
+	...noBrowser,
 	...maxLines,
 	...sliceFolders,
 	...testsBesideCode,
@@ -73,9 +78,10 @@ const run = (command: string) => sh(command, { cwd: scratch, env });
 // runs (GitHub's annotations on a runner, a terse one under an agent), and
 // only some of them print the rule's name beside its message.
 const gates: Record<Gate, (files: string[]) => Run> = {
-	// The case's TypeScript files, or, when it writes none, the whole tree.
+	// The case's TypeScript files (a view's .tsx among them), or, when it
+	// writes none, the whole tree.
 	lint: (files) =>
-		run(`vp lint --format default ${files.filter((f) => f.endsWith(".ts")).join(" ")}`),
+		run(`vp lint --format default ${files.filter((f) => /\.tsx?$/.test(f)).join(" ")}`),
 	static: () => run("node tools/code-design.ts"),
 	"pre-commit": () => run("sh .vite-hooks/pre-commit"),
 	"commit-msg": () => run(`tools/bin/itos hook commit-msg ${word(message)}`),
