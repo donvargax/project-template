@@ -20,8 +20,9 @@ What it gives a new project from its first commit:
   tests the change reaches and the audit; pre-push runs the unit tests the
   pushed commits reach; CI runs everything from the last green run, in cost
   order, with one E2E run over the smoke set and what the commits name; a
-  nightly runs every scenario and the gates' self-tests, scans the lockfile
-  for known vulnerabilities, and opens an issue when it goes red.
+  nightly runs every scenario, the gates' self-tests and every done task's
+  static checks, scans the lockfile for known vulnerabilities, and opens an
+  issue when it goes red.
 - **Work routing** (`tasks/work-items.yaml`, `CONTRIBUTORS.md`): `tools/bin/itos work`
   says what the person a session works for can start next.
 - **A changelog from the commits**: `vp run changelog`.

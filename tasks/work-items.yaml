@@ -609,7 +609,22 @@ items:
     title: itos 0.5.0
     phase: 3
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-036]
     kind: task
     refs: [tasks/phase-3.yaml]
+
+  - id: p3-nightly-late-done-checks
+    title: The nightly runs the done tasks' late checks too
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: [T-037]
+    kind: idea
+    why: >
+      The nightly's { tasks: done } step runs only the static checks, so a done task's late check
+      can still break unseen: the E2E scope self-test, a late check of T-005, T-014, T-015 and
+      T-020, was red from T-031's commit until T-037 ran it by hand. Without cost: static the step
+      runs every check of the done tasks, at a cost to weigh first: T-008's itos ci run is the
+      whole CI again, T-011 asks GitHub and needs a token the nightly's run step does not pass, and
+      the E2E subsets join the whole run already made.

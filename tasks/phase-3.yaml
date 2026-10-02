@@ -172,7 +172,30 @@
     with no footer and a feat naming an unknown scenario, and accepts a
     docs commit naming a task, and tasks/README.md's paragraph says where
     the line is; the self-tests that read itos's --json output are kept only
-    where they prove this project's plan.
+    where they prove this project's plan. Done so. Nothing here read the old
+    failure line: the nightly's red issue read only Playwright's failed
+    scenarios, and now quotes ci run's "CI failed at" lines too, so a red
+    task check reads as itself. In a shallow clone with only the nightly's
+    tools the done tasks' static checks were red only on actionlint (T-008,
+    T-009, T-023, T-025), which the nightly now installs as ci.yml does;
+    config check passed there because the template sets no commits.since,
+    but a project made from it sets one, so the nightly fetches the whole
+    history. Running the late self-tests the move reaches found e2e-scope red
+    since T-031 put the code design self-test in the nightly, unseen because
+    no push named T-005, T-014, T-015 or T-020; it now asks what the nightly
+    must run, not for the whole list. By the line, the scope self-tests keep
+    the prose paths, the smoke, named and merged runs against Playwright's
+    listing, the nightly running every scenario and the gates self-test, the
+    named tasks' checks merged, covered, left to the nightly or run as the
+    config says, and no browser step called static; they drop an empty range
+    not being prose, an unread range run whole and the count of vp build
+    among the steps, which could fail only if itos changed. The notes' step
+    3 does not apply: the smoke set is not empty, so a smoke-selected check
+    always joins a run. Of the known issues, p1-nightly-past-first-failure
+    does (stop_at_first_failure is true), hence the step last; a range start
+    beyond a shallow clone is met by ci.yml's fetch-depth: 0, and the
+    nightly reads no range; the patterns spell out tools/bin/itos; the
+    ledger's pattern does not reach the registry; nothing passes --data-at.
   done_when:
     - run: tools/bin/itos version --check
       cost: static

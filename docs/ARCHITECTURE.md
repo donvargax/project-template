@@ -363,9 +363,19 @@ the commands, `itos <command> --help` each one).
   names a task that checks it, so a vite-plus release that leaves the lint
   plugin loaded but silent shows the next morning (it is in
   `ci.nightly.steps` but not `ci.nightly_only`, which would only take it out
-  of such a push). Then, in a step of its own, the vulnerability scan, whatever
-  their result. A red run opens one issue labelled `nightly-red`, or comments
-  on the open one with the failing scenarios and what the scan found; a green
+  of such a push). Last, `{ tasks: done, cost: static }` runs the static
+  checks of every task whose work item is done, since a push runs a task's
+  checks only when a commit names it and a change elsewhere could break a
+  done one unseen; last because the plan stops at its first failure, so a
+  red task check never hides a red scenario (a red scenario hides the task
+  checks: itos's known issue `p1-nightly-past-first-failure`). The checks run
+  in the nightly's job, so it has what they need: the whole history
+  (`fetch-depth: 0`, for `itos config check` once `commits.since` is set) and
+  actionlint, installed as `ci.yml` installs it. Then, in a step of its own,
+  the vulnerability scan, whatever their result. A red run opens one issue
+  labelled `nightly-red`, or comments on the open one with the failing
+  scenarios, itos's `CI failed at` lines (the failing step, or
+  `T-… (<title>), its check: <command>`) and what the scan found; a green
   run closes it.
 - **The vulnerability scan** (`tools/bin/vuln-scan`) checks `pnpm-lock.yaml`,
   both its documents (pnpm's own and the project's), against the OSV
