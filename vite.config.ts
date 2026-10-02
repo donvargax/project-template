@@ -29,7 +29,18 @@ const lint: NonNullable<UserConfig["lint"]> = {
 		// The code design rules lint can decide (AGENTS.md, "Code design").
 		"./tools/lint/code-design.ts",
 	],
-	rules: { "vite-plus/prefer-vite-plus-imports": "error" },
+	rules: {
+		"vite-plus/prefer-vite-plus-imports": "error",
+		// A size tripwire on every linted file, src/, e2e/ and tools/ alike: a
+		// file over 400 lines is a prompt to look at its responsibilities, and
+		// the answer is a split by them (under src/, into more features), or a
+		// reason beside it for staying long. A warning, so it never fails a
+		// commit or CI, and none in the tree, so the next one is seen. Lines of
+		// code only: blank lines and comments are not counted, so the reasons
+		// a file gives are never what pushes it over, nor what is cut to get
+		// it under.
+		"max-lines": ["warn", { max: 400, skipBlankLines: true, skipComments: true }],
+	},
 	overrides: [
 		{
 			// A slice reaches another only through that slice's feature file,
