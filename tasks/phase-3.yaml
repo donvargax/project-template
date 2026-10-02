@@ -32,3 +32,53 @@
     every cell gets a decision. Lint cannot tell a rule restated from a rule
     read, so review is the proof.
   done_when: []
+
+- id: T-034
+  type: build
+  title: A size tripwire on every linted file
+  why: >
+    character-editor's view-model grew to 920 lines over six slices, each
+    adding behaviour where the related code already was, and no gate
+    noticed. A lint warning, not an error, on a TypeScript file over 400
+    lines, under src/, e2e/ and tools/ alike, is a prompt to look at the
+    file's responsibilities; AGENTS.md's "Code design" names it so: the
+    answer is a split by responsibility (under src/, into more features),
+    never lines squeezed out to pass. It is a warning so that a file may
+    stay long for a reason the next reader is told. The template starts
+    with none, since a warning on every run is noise
+    (p2-control-regex-warning): tools/selftest/code-design.ts, 552 lines
+    when this was written, splits by the rule its cases prove. The
+    self-test proves the warning lands on a file over the limit and not on
+    one at it, that it does not fail lint, and that the template's own tree
+    trips it nowhere, the case that fails before the split.
+  done_when:
+    - run: vp check
+    - run: node tools/selftest/code-design.ts
+
+- id: T-035
+  type: build
+  title: A ratchet for adopting a code design rule on code that breaks it
+  why: >
+    A project made from the template inherits the code design rules clean;
+    one that upgrades into them, or adopts a new one, has files that break
+    it on the first day, and neither turning the rule off for them for good
+    nor fixing them all in one commit is right. The ratchet lists those
+    files by name, each with the rule it breaks and the work item in
+    tasks/work-items.yaml for its fix; the rule is off for the listed files
+    and on everywhere else, for lint's rules and the static check's alike.
+    The list only shrinks: entries join only in the commit that brings
+    their rule into force, and afterwards a file joining that rule's list is
+    refused, at commit and in CI. An entry is refused too when its work item
+    is missing or done, its file is gone, or its file no longer breaks the
+    rule (it leaves the list, and its item closes). Unlike
+    vite.config.ts's mockBoundaries, a permanent exception that says which
+    boundary it is, an entry is a debt with an owner. Empty in the template.
+    The self-test proves each refusal and each allowance in a scratch tree,
+    and AGENTS.md's "Code design" names the gate and says how a rule is
+    adopted on existing code. How "in force" and "joining" are read across
+    a pushed range is the implementer's to settle; the scenario moving
+    rule's staged and range forms (tools/scenario-moves.ts) are a model.
+  done_when:
+    - run: vp check
+    - run: node tools/code-design.ts
+    - run: node tools/selftest/code-design.ts

@@ -532,3 +532,39 @@ items:
     depends_on: []
     kind: task
     refs: [tasks/phase-3.yaml]
+
+  - id: T-034
+    title: A size tripwire on every linted file
+    phase: 3
+    owner: donvargax
+    status: todo
+    depends_on: [T-031]
+    kind: task
+    refs: [tasks/phase-3.yaml]
+
+  - id: T-035
+    title: A ratchet for adopting a code design rule on code that breaks it
+    phase: 3
+    owner: donvargax
+    status: todo
+    depends_on: [T-034]
+    kind: task
+    refs: [tasks/phase-3.yaml]
+
+  - id: p3-browser-free-logic
+    title: "A slice's logic never touches the browser"
+    phase: 3
+    owner: donvargax
+    status: todo
+    depends_on: [T-035]
+    kind: idea
+    why: >
+      In character-editor a 920-line Aurelia view-model created and moved DOM elements itself (53
+      uses of browser globals), so it could not be unit-tested, and a rule it shared with its
+      template drifted and caused a bug; its fix is a lint rule refusing browser globals (window,
+      document, storage, fetch, requestAnimationFrame…) outside the view and a known folder of
+      browser services. The template is framework-neutral and AGENTS.md keeps every layer of a
+      slice in its feature file, so lint cannot tell the logic from the edge. Open for discussion
+      with the owner: whether it holds beyond frameworks whose view-models are plain classes, and
+      where the browser lives instead (an edge file per slice, infrastructure slices, or the files
+      a project names, as mockBoundaries does).
