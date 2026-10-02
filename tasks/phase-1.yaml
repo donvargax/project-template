@@ -22,7 +22,8 @@
     and, until itos 0.4.0 ran them itself (T-022), commitlint's footer rules,
     which asked the installed itos rather than import its modules. The checks
     that piped a message into itos commit check-message to see a footer
-    rejected and accepted went with T-032: they proved itos. The self-tests
+    rejected and accepted went with T-032, as checks of itos; T-037 put the
+    project's policy's back in T-007, where every push runs them. The self-tests
     read what they prove from the command line (ci plan --json, ci scope,
     tests smoke ids) instead of importing the tool's modules; which run the
     github range provider picks is itos's to prove. The checksum check
@@ -210,7 +211,8 @@
     checks are run once and any slow one marked late, since a commit naming a
     done task now runs them; the ledger checks that piped a message into
     commitlint to see a footer rejected piped it into itos commit
-    check-message instead, until T-032 dropped them as checks of itos; and
+    check-message instead, until T-032 dropped them as checks of itos (T-007
+    holds them since T-037); and
     itos verify over the range since the last green run passes before the
     first commit under the new rules. The gates self-test proves
     the footer rules through the hook as before, each problem reported once.

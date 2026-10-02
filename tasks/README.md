@@ -32,16 +32,22 @@ against the baseline **before** the work, and fails when it measured nothing.
 A `why` holds the reason for a task and what its check found; a reader looks
 there, not in the commits.
 
-A check proves **this project**: its code, its config, its ledger. It never
-proves itos itself: no synthetic config, ledger or registry handed to
-`itos config check`, no message piped into `itos commit check-message` or
-the commit-msg hook, no `itos verify` over a made-up or recorded range, least
-of all `verify <sha> HEAD`, whose range grows with every commit. Such a check
-passes whatever this project holds and fails only when itos regresses, which
-itos's conformance suite proves in its own repository; a regression met here
-is an issue raised there. `itos commit check-paths` over the project's own
-files stays, since it holds this project's `commits.scopes` to the table
-below. T-032 took the checks of itos out of the ledger.
+A check proves **this project**: its code, its config, its ledger. The line
+is what would make it fail. A check that fails when this project's code or
+config changes belongs here: `itos config check`; a message piped into
+`itos commit check-message -` or a path handed to `itos commit check-paths`,
+each judged against the project's own `itos.yaml`, which its policy must
+reject or accept (T-007's); `itos version --check`. A check that would fail
+only if itos changed tests itos, and never belongs here: a synthetic config,
+ledger or registry handed to itos (through `ITOS_CONFIG`, `--config` or
+`--ledger` on a scratch file) for its verdict, a message piped into the
+commit-msg hook under such a config, `itos verify` or `itos ci plan` over a
+recorded range (least of all `verify <sha> HEAD`, whose range grows with
+every commit), and the shape of a `--json` output. itos's conformance suite
+proves those in its own repository, against the tarball the pin installs; a
+regression met here is an issue raised there. T-032 took the checks of itos
+out of the ledger, and T-037 put back the messages T-032 took with them, by
+itos 0.5.0's notes, which draw the line here.
 
 ## Commit types and what drives them
 

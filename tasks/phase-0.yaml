@@ -93,13 +93,23 @@
     only what every project made from the template keeps (itos.yaml,
     package.json, the ledger, the README), never the demo's paths: a project
     that changes its source layout or drops the demo keeps them true. The
-    checks that piped messages into itos commit check-message and the
-    commit-msg hook went with T-032: they proved itos's footer rules, not
-    this project's; the path checks stay, since they hold commits.scopes to
-    what tasks/README.md says.
+    messages piped into itos commit check-message are judged against this
+    project's itos.yaml, so they hold its commit policy: a build commit needs
+    a Task: footer, a feat may not name a scenario the suite lacks, and a
+    docs commit may name a task the ledger has. T-032 took them out as checks
+    of itos; T-037 put them back, by itos 0.5.0's notes, which keep a
+    message the project's policy must reject or accept and drop only a
+    synthetic config or ledger handed to itos. The path checks hold
+    commits.scopes to what tasks/README.md says.
   done_when:
     - fails: "printf 'update things\\n' | vp exec commitlint"
     - run: "printf 'build: scaffold\\n\\nTask: T-001\\n' | vp exec commitlint"
+    - fails: "printf 'build: scaffold\\n' | tools/bin/itos commit check-message -"
+      cost: static
+    - fails: "printf 'feat: x\\n\\nScenarios: @ID-NOPE-01\\n' | tools/bin/itos commit check-message -"
+      cost: static
+    - run: "printf 'docs: x\\n\\nTask: T-007\\n' | tools/bin/itos commit check-message -"
+      cost: static
     - fails: tools/bin/itos commit check-paths --type build tasks/phase-0.yaml
     - fails: tools/bin/itos commit check-paths --type docs itos.yaml
     - run: tools/bin/itos commit check-paths --type docs README.md tasks/phase-0.yaml
