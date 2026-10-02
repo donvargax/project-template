@@ -97,8 +97,11 @@ try {
 	assert.ok(step, "a push naming a scenario ran no E2E step");
 	same(listed(step), new Set([...smoke, named]), `a range naming @${named}`);
 
-	// The nightly, and a range that can't be read, run every scenario.
-	assert.deepEqual(plan(["--nightly"]).steps, ["vp run e2e", GATES]);
+	// The nightly runs every scenario, and the gates self-test a push leaves to
+	// it; a range that can't be read runs every scenario too.
+	const nightly = plan(["--nightly"]);
+	assert.equal(e2eStep(nightly), "vp run e2e", "the nightly does not run every scenario");
+	assert.ok(nightly.steps.includes(GATES), "the nightly does not run the gates self-test");
 	assert.equal(e2eStep(plan(["", head])), "vp run e2e", "an unread range should run everything");
 
 	// A range naming tasks whose checks are E2E subsets and CI steps (T-003:
