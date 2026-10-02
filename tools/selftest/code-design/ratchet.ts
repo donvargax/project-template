@@ -53,8 +53,12 @@ const commented = (comment: string) => ({
 	"src/alpha/alpha.ts": `${comment}\nexport const alpha = 1;\n`,
 });
 
-// A history whose list never named no-mocks, with two slices breaking it.
-const unadopted = { ...list({}, ["no-mocks"]), ...mocking("alpha"), ...mocking("beta"), ...open };
+// A history whose list never named no-mocks, with a slice breaking it, and
+// the same with a second one. Every file that breaks the rule is listed in
+// the tree a commit-msg case commits: once T-035 is done, the hook runs its
+// `vp check` and rejects a tree with one left out.
+const unadopted = { ...list({}, ["no-mocks"]), ...mocking("alpha"), ...open };
+const unadoptedTwo = { ...unadopted, ...mocking("beta") };
 const adoption = list({ "no-mocks": [[alpha, "p9-alpha"]] });
 const adoptedLater = list({
 	"no-mocks": [
@@ -199,7 +203,7 @@ export const cases: Case[] = [
 	{
 		name: "a file a later commit adds to an adopted rule's list",
 		gate: "commit-msg",
-		history: [unadopted, adoption],
+		history: [unadopted, adoption, mocking("beta")],
 		fresh: true,
 		files: adoptedLater,
 		says: joins,
@@ -207,7 +211,7 @@ export const cases: Case[] = [
 	{
 		name: "a file a later commit adds to an adopted rule's list, in CI",
 		gate: "verify",
-		history: [unadopted, adoption],
+		history: [unadopted, adoption, mocking("beta")],
 		fresh: true,
 		files: adoptedLater,
 		says: joins,
@@ -215,7 +219,7 @@ export const cases: Case[] = [
 	{
 		name: "a file a later commit takes off an adopted rule's list, in CI",
 		gate: "verify",
-		history: [unadopted, adoptedLater],
+		history: [unadoptedTwo, adoptedLater, mocking("beta", false)],
 		fresh: true,
 		files: adoption,
 	},
@@ -229,7 +233,7 @@ export const cases: Case[] = [
 	{
 		name: "a file listed under a rule taken off the list and named again, in CI",
 		gate: "verify",
-		history: [unadopted],
+		history: [unadoptedTwo],
 		files: list({ "no-mocks": [[beta, "p9-beta"]] }),
 		says: joins,
 	},
