@@ -15,6 +15,14 @@
 //     src/ but main.ts (slice-folders.ts), and a unit test anywhere but
 //     beside the file it tests, or spelled any other way vitest would run
 //     (tests-beside-code.ts);
+//   - the ratchet (code-design-ratchet.yaml, held by the static check) lets a
+//     listed file off its rule, lint's or the static check's, and no other;
+//     refuses an entry whose item is missing or done, whose file is gone or
+//     no longer breaks the rule, a list that leaves out a rule the gates
+//     hold, and a comment that disables a code design rule or every rule;
+//     and its joining rule, in the commit-msg hook and CI's commit re-check,
+//     allows the files listed by the commit that brings a rule into force and
+//     refuses one a later commit adds (ratchet.ts);
 //   - the pre-commit hook runs that check, and CI runs both gates as steps.
 //
 // A case is the files it writes over the base tree, the gate that judges
@@ -25,10 +33,11 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { cleanEnv, gitIn, plan, sh, worktreeOfCurrentTree, type Run } from "./cli.ts";
+import { cleanEnv, gitIn, plan, sh, word, worktreeOfCurrentTree, type Run } from "./cli.ts";
 import type { Case, Gate } from "./code-design/case.ts";
 import { cases as maxLines } from "./code-design/max-lines.ts";
 import { cases as noMocks } from "./code-design/no-mocks.ts";
+import { cases as ratchet } from "./code-design/ratchet.ts";
 import { cases as sliceBoundary } from "./code-design/slice-boundary.ts";
 import { cases as sliceFolders } from "./code-design/slice-folders.ts";
 import { cases as testsBesideCode } from "./code-design/tests-beside-code.ts";
@@ -39,10 +48,17 @@ const cases: Case[] = [
 	...maxLines,
 	...sliceFolders,
 	...testsBesideCode,
+	...ratchet,
 ];
 
 const root = resolve(".");
 const scratch = mkdtempSync(join(tmpdir(), "code-design-selftest-"));
+// A commit message, kept outside the worktree so no case stages it.
+const message = join(mkdtempSync(join(tmpdir(), "code-design-selftest-message-")), "message");
+writeFileSync(
+	message,
+	"build: list the files that break a code design rule\n\nThe code design self-test's commit.\n\nTask: T-035\n",
+);
 const env = Object.assign(cleanEnv(), {
 	GIT_AUTHOR_NAME: "code design self-test",
 	GIT_AUTHOR_EMAIL: "selftest@localhost",
@@ -62,7 +78,29 @@ const gates: Record<Gate, (files: string[]) => Run> = {
 		run(`vp lint --format default ${files.filter((f) => f.endsWith(".ts")).join(" ")}`),
 	static: () => run("node tools/code-design.ts"),
 	"pre-commit": () => run("sh .vite-hooks/pre-commit"),
+	"commit-msg": () => run(`tools/bin/itos hook commit-msg ${word(message)}`),
+	verify: () => {
+		commit(["-F", message]);
+		return run("tools/bin/itos verify HEAD~1 HEAD");
+	},
 };
+
+// The staged tree as a commit on HEAD, or as the root of a history of its
+// own, checked out; no hook runs.
+function commit(args: string[], orphan = false) {
+	const parent = orphan ? "" : "-p HEAD";
+	const sha = git(`commit-tree ${git("write-tree")} ${parent} ${args.map(word).join(" ")}`);
+	git(`reset -q --hard ${sha}`);
+}
+
+// Files written over the tree, and staged.
+function write(files: Record<string, string>) {
+	for (const [file, text] of Object.entries(files)) {
+		mkdirSync(dirname(join(scratch, file)), { recursive: true });
+		writeFileSync(join(scratch, file), text);
+	}
+	git("add -A");
+}
 
 const problems: string[] = [];
 const lines: string[] = [];
@@ -80,11 +118,11 @@ try {
 	for (const c of cases) {
 		git(`reset -q --hard ${base}`);
 		git("clean -fdq -- src tools e2e");
-		for (const [file, text] of Object.entries(c.files)) {
-			mkdirSync(dirname(join(scratch, file)), { recursive: true });
-			writeFileSync(join(scratch, file), text);
-		}
-		git("add -A");
+		(c.history ?? []).forEach((files, i) => {
+			write(files);
+			commit(["-m", "chore: the case's history"], c.fresh && i === 0);
+		});
+		write(c.files);
 		const result = gates[c.gate](Object.keys(c.files));
 		const refuses = c.says !== undefined && !c.warns;
 		const verdict = refuses ? "refuses" : c.warns ? "warns" : "allows";
@@ -103,6 +141,7 @@ try {
 } finally {
 	sh(`git worktree remove --force ${scratch}`, { cwd: root, env });
 	rmSync(scratch, { recursive: true, force: true });
+	rmSync(dirname(message), { recursive: true, force: true });
 }
 
 console.log(lines.join("\n"));
