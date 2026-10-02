@@ -21,7 +21,9 @@ The template's own, in the shape AGENTS.md's "Code design" gives a feature:
   wires the slices to the page, each through its feature file, and holds
   nothing else, so the unit coverage leaves it out (`vite.config.ts`'s
   `coverage`: every module under `src/` but it) and the scenarios cover it.
-  `src/` holds it and the slice folders, nothing else.
+  `src/` holds it and the slice folders, nothing else. It is the template's
+  one browser edge (`browserEdges`, below): the page and the address are
+  read there and handed to the slice, which reads neither.
 - **The slice boundary**, held by two gates. Lint: `tools/lint/code-design.ts`
   is an oxlint JS plugin `vite.config.ts` loads for `src/**`, so `vp check`
   runs it wherever it runs (pre-commit, CI, the editor). Its rule
@@ -61,6 +63,35 @@ The template's own, in the shape AGENTS.md's "Code design" gives a feature:
   the template. `e2e/` is left out: it drives the built page in a browser,
   where no module can be mocked, and Playwright's fakes (`page.route`,
   `page.clock`) sit at the network's and the clock's edge.
+- **No browser in a slice's logic**, held by lint: the plugin's third rule,
+  `code-design/no-browser`, which `vite.config.ts` turns on for every file
+  under `src/` (`src/**`, so a test and a framework's `.tsx` or `.vue` view
+  file are held too) and off, in an override after it, for the files its
+  `browserEdges` list names: the project's edge, `src/main.ts` in the
+  template, beside which a project names its view files by glob and its
+  infrastructure slices, each wrapping one browser API behind an interface
+  the logic is handed. The rule's list of globals (`browser` in the plugin)
+  is what a page offers and no other runtime does: the page and the
+  address, the storages, the network (`fetch` among it), the window's
+  events, dialogs, viewport, scroll and styles, the frame clock, the
+  observers, and the DOM's classes as values (`instanceof HTMLElement`,
+  `new Image()`). The clock, and what Node offers too (`URL`, `Blob`,
+  `crypto`, `structuredClone`), are left out, so a unit test runs them as
+  the page does. It reads oxlint's scope analysis at the end of the file:
+  the global scope's unresolved references (`through`), and the references
+  to a global the linter declares and the file does not (ES's `globalThis`
+  is one, which oxlint resolves, and the browser's would be, under a lint
+  config that sets its env). A local that shadows a global resolves to the
+  local and passes; a name whose parent is a TypeScript type node (a type
+  reference, `typeof document`, `typeof window.localStorage`) names nothing
+  at run time and passes, while one under an `as`, `satisfies` or `!`
+  expression, or an enum's or a namespace's code, is read. `globalThis` and
+  `self` are followed as no-mocks follows `vi`: a member, a destructured
+  property or an alias's member that is one of the globals is refused,
+  named through them (`globalThis.fetch`); handed on, or read by a computed
+  key, they pass, being the runtime's too. `window` is one of the globals
+  itself, refused however it is used, and named with its member when it is
+  read (`window.localStorage`).
 - **Unit tests beside the code they test**, held by the static check's
   second rule, `tests-beside-code`. A unit test is `<name>.test.ts` beside
   the `<name>.ts` it tests, in a slice under `src/` (beside the feature file
@@ -368,7 +399,11 @@ the commands, `itos <command> --help` each one).
   per rule, named after it and saying what its cases prove:
   `slice-boundary.ts`, `no-mocks.ts` (each refused member of `vi`, `vi`
   reached every way a test can, the clock allowed, a `mockBoundaries` file
-  allowed), `max-lines.ts` (the warning on a file over the limit in `src/`,
+  allowed), `no-browser.ts` (the globals refused in a slice's logic, its
+  test and a view file browserEdges does not name, however they are
+  reached; a slice handed an adapter, a `browserEdges` file and only it, a
+  view file named by its kind, `src/main.ts`, a type, a shadowing local, the
+  clock and a file the ratchet lists allowed), `max-lines.ts` (the warning on a file over the limit in `src/`,
   `e2e/` and `tools/`, lint still passing, none at the limit or over the
   template's own tree), `slice-folders.ts` and `tests-beside-code.ts` (a
   test beside its file allowed, an orphan, one in the wrong place or a

@@ -108,7 +108,11 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
 7. **The demo.** The page (`index.html`, `src/`), its scenario
    (`features/app.feature`) and their steps and page object (`e2e/`) are a
    demo for the gates to run against; replace them with the project's own,
-   each feature a slice of `src/` as AGENTS.md's "Code design" says.
+   each feature a slice of `src/` as AGENTS.md's "Code design" says. If the
+   project's framework renders views from files of its own (`.tsx`, `.vue`,
+   `.svelte`), add their glob to `browserEdges` in `vite.config.ts` beside
+   `src/main.ts`: lint refuses the browser's globals everywhere else under
+   `src/`, and the views are where the page is drawn.
    The setup checks name none of it, except the gates self-test
    (`tools/selftest/gates.ts`, T-009, run nightly), which edits a module and
    its unit test, `src/main.ts` and a scenario to prove what the hooks run:
@@ -142,6 +146,9 @@ gates hold, `tools/code-design.ts` and `tools/code-design-ratchet.ts`, the
 override in `vite.config.ts`, and the `code-design-ratchet` range check and
 the prose step in `itos.yaml`. Its history never named a rule, so that
 commit may list files under any of them, each one that still breaks it.
+For `no-browser`, name the project's edge in `browserEdges` first (its view
+files, its infrastructure slices): only the logic that reaches the browser
+is a debt to list.
 `AGENTS.md` says how, and which gates hold it.
 
 ## itos, pinned

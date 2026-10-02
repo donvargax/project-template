@@ -136,11 +136,11 @@ How the code is written. A rule a command can decide names its gate here.
 A rule that names no gate has none, and is yours to keep.
 
 - **A feature is a vertical slice**: one folder under `src/` holding the
-  feature's file and its tests. Every layer lives inside that file, the pure
-  part first and the edge that touches the page, the network or the clock
-  after it, until the file grows; then it splits into more features, never
-  into layer folders. A slice moves, splits or goes as one, and a reader
-  finds all of a feature where its code is.
+  feature's file and its tests. Every layer of its logic lives inside that
+  file, the pure part first, until the file grows; then it splits into more
+  features, never into layer folders. A slice moves, splits or goes as one,
+  and a reader finds all of a feature where its code is. The browser is not
+  one of its layers (below).
 - **A slice reaches another only through that slice's feature file**
   (`src/<slice>/<slice>.ts`), never another file of its folder, so what a
   slice keeps to itself can change without breaking its neighbours.
@@ -149,6 +149,20 @@ A rule that names no gate has none, and is yours to keep.
   holds the imports (`tools/lint/code-design.ts`, which `vite.config.ts`
   loads), and a static check what `src/` holds (`tools/code-design.ts`, run
   by the pre-commit hook and CI).
+- **A slice's logic never touches the browser.** The page, the address,
+  the storages, the network, the window's events and viewport live only in
+  the edge files `vite.config.ts` names in `browserEdges`: the composition
+  root (`src/main.ts`, the template's one), a project's framework view files
+  (`src/**/*.tsx`, `src/**/*.vue`), and infrastructure slices that each wrap
+  one browser API behind a small interface. The logic is handed what it
+  needs, that interface as a parameter, and its tests hand it a fake, as
+  "No mocks" asks; a view-model, hook, store or composable that reads
+  `localStorage` or listens on `window` itself cannot be unit-tested. Lint
+  holds it under `src/`, tests included (`code-design/no-browser` in
+  `tools/lint/code-design.ts`, the globals it refuses listed there). The
+  clock is not the browser's: vitest's fake clock is its edge. A project
+  whose framework renders views from files of its own adds their glob to
+  `browserEdges`; an infrastructure slice is added by its feature file.
 - **A file over 400 lines is a prompt to look at what it does.** Lint warns
   on one, and never fails on it (`max-lines` in `vite.config.ts`'s
   `lint.rules`, lines of code only). The answer is a split by
@@ -208,9 +222,10 @@ A rule that names no gate has none, and is yours to keep.
   design rule or none. Its range form, a range check in `itos.yaml` that the
   commit-msg hook and CI's `itos verify` run, refuses a file joining a
   rule's list in any commit after the one that brought the rule into force.
-  The list and `vite.config.ts`'s `mockBoundaries` are the only ways a code
-  design rule is off for a file: a `mockBoundaries` entry is a permanent
-  exception that names its boundary, a ratchet entry a debt with an owner.
+  The list and `vite.config.ts`'s `mockBoundaries` and `browserEdges` are
+  the only ways a code design rule is off for a file: a `mockBoundaries` or
+  `browserEdges` entry is a permanent exception that names its boundary or
+  its edge, a ratchet entry a debt with an owner.
 
 ## The gates run themselves
 

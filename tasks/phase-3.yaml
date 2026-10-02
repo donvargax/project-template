@@ -131,7 +131,18 @@
     proves a logic file using document, window.localStorage or
     globalThis.fetch refused, naming the rule; a slice handed an adapter, a
     file in browserEdges, src/main.ts, a type-only use and a shadowing
-    local allowed; and a file the ratchet lists allowed.
+    local allowed; and a file the ratchet lists allowed. Settled so: the
+    rule is on for src/** whatever a file's kind, so a view file is held
+    until browserEdges names it. The list took the other names of the same
+    things (pageXOffset, scroll, scrollBy, cancelIdleCallback), screen,
+    visualViewport and getSelection, and the DOM's classes as values (Node,
+    Element, Document, Window, HTML*Element, SVG*Element, DOMParser, Image,
+    Audio), since instanceof HTMLElement in logic needs the page as much as
+    document does; what Node offers too (URL, Blob, crypto, structuredClone)
+    stays out with the clock. oxlint resolves globalThis, ES's own, to a
+    global it declares, so the rule reads those references beside the
+    unresolved ones; globalThis and self handed on, or read by a computed
+    key, pass, being the runtime's too.
   done_when:
     - run: vp check
     - run: node tools/selftest/code-design.ts

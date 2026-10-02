@@ -585,7 +585,22 @@ items:
     title: "A slice's logic never touches the browser"
     phase: 3
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-035]
     kind: task
     refs: [tasks/phase-3.yaml]
+
+  - id: p3-edge-out-of-coverage
+    title: The unit coverage leaves the browser's edge out, as it does src/main.ts
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: [T-036]
+    kind: idea
+    why: >
+      vite.config.ts's coverage leaves src/main.ts out because the scenarios cover it, but not the
+      other files browserEdges names. An infrastructure slice listed there (src/storage/storage.ts,
+      wrapping localStorage) is an edge AGENTS.md says the scenarios cover and a unit test would
+      need a fake browser for, yet it counts against the coverage thresholds. coverage.exclude
+      could read browserEdges, src/main.ts among it; whether leaving a file out of coverage by that
+      list weakens the gate is the decision to make first.
