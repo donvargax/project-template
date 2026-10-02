@@ -86,6 +86,14 @@ tests: # named tests, each kind behind an adapter
         except_types: [feat, fix]
         staged: "node tools/scenario-moves.ts --type {type}"
         range: "node tools/scenario-moves.ts {from} {to}"
+      # The code design ratchet's joining rule, for every type: a file joins a
+      # rule's list in code-design-ratchet.yaml only in the commit that brings
+      # the rule into force. Not the scenarios' own rule: it rides here because
+      # itos runs a range check only as a test kind's, in the commit-msg hook
+      # and in verify, where a commit made without the hooks is judged too.
+      - name: code-design-ratchet
+        staged: "node tools/code-design.ts --staged"
+        range: "node tools/code-design.ts {from} {to}"
 
 ci:
   env: { CI: "1" }
@@ -104,7 +112,9 @@ ci:
     # The work registry is routing, not code: a push that only takes or closes
     # an item stays a prose push, and the config check validates the registry.
     paths: ["**/*.md", "docs/**", tasks/work-items.yaml]
-    steps: [vp check, tools/bin/itos config check]
+    # The code design check too: closing a work item the ratchet still lists
+    # is a registry change alone.
+    steps: [vp check, node tools/code-design.ts, tools/bin/itos config check]
   cost:
     # Checks with no `cost:` of their own: static if a pattern matches, else
     # late. Only commands static by what they are: `sh -c` wraps anything, so a

@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { parse } from "yaml";
 import { defineConfig, type UserConfig } from "vite-plus";
+import codeDesign from "./tools/lint/code-design.ts";
 
 // What the pre-commit hook's `vp staged` formats and lints, by path.
 const staged = {
@@ -15,6 +18,24 @@ const staged = {
 // A fake handed in at the edge needs no entry: it is plain code. Empty in the
 // template.
 const mockBoundaries: string[] = [];
+
+// The code design ratchet (code-design-ratchet.yaml): each of lint's code
+// design rules is off for the files listed under it, each a debt with a work
+// item, while a project adopts the rule on code that breaks it.
+// tools/code-design.ts holds the list itself, and asks lint what a listed
+// file still breaks with CODE_DESIGN_RATCHET=ignore, which leaves it out.
+const ratchet = (
+	process.env.CODE_DESIGN_RATCHET === "ignore"
+		? {}
+		: (parse(readFileSync(new URL("code-design-ratchet.yaml", import.meta.url), "utf8")) ?? {})
+) as Record<string, unknown>;
+const ratcheted = Object.keys(codeDesign.rules).flatMap((rule) => {
+	const list = ratchet[rule];
+	const files = (Array.isArray(list) ? list : []).flatMap((entry: { file?: unknown } | null) =>
+		typeof entry?.file === "string" ? [entry.file] : [],
+	);
+	return files.length ? [{ files, rules: { [`code-design/${rule}`]: "off" as const } }] : [];
+});
 
 const lint: NonNullable<UserConfig["lint"]> = {
 	ignorePatterns: [
@@ -60,6 +81,7 @@ const lint: NonNullable<UserConfig["lint"]> = {
 			rules: { "code-design/no-mocks": "error" },
 		},
 		{ files: mockBoundaries, rules: { "code-design/no-mocks": "off" } },
+		...ratcheted,
 		{
 			// E2E tests drive the browser, never the production modules.
 			files: ["e2e/**/*.ts"],

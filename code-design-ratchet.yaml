@@ -1,0 +1,26 @@
+# The code design ratchet (AGENTS.md, "Code design"): the files that break a
+# code design rule, listed under the rule, each with the work item in
+# tasks/work-items.yaml for its fix. The rule is off for the files listed under
+# it and on everywhere else; vite.config.ts turns a lint rule off for them,
+# and tools/code-design.ts leaves them out of its own rules.
+#
+# Every rule the gates hold is a key here, so the list says which rules are in
+# force: a rule comes into force in the commit that adds it to the gates and
+# its key here, and only that commit may list files under it. After that the
+# list only shrinks. tools/code-design.ts refuses an entry whose file is gone
+# or no longer breaks the rule (it leaves the list, and its item closes), and
+# one whose work item is missing or done; its range form, run by the
+# commit-msg hook and by CI's commit re-check, refuses a file joining the list
+# of a rule that an earlier commit already named.
+#
+# An entry is a debt with an owner, unlike vite.config.ts's mockBoundaries, a
+# permanent exception that names its boundary:
+#
+#   no-mocks:
+#     - { file: src/sync/sync.test.ts, item: p4-sync-without-mocks }
+#
+# Empty in the template, whose code breaks no rule.
+slice-boundary: []
+no-mocks: []
+slice-folders: []
+tests-beside-code: []
