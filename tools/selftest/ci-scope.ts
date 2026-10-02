@@ -6,9 +6,9 @@
 // given (objects only: no branch moves, nothing in the working tree).
 //
 // What a prose-only range plans (the prose steps, the named tasks' static and
-// `prose: true` checks, nothing late) and what waits for a task not started
-// are the tool's behaviour, whatever the config: itos's own repository proves
-// them.
+// `prose: true` checks, nothing late), what waits for a task not started, and
+// that a range it cannot read is never prose are the tool's behaviour,
+// whatever the config: itos's own repository proves them.
 import { strict as assert } from "node:assert";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -52,9 +52,6 @@ try {
 	assert.equal(docsOnly(["features/app.feature"]), false);
 	assert.equal(docsOnly(["package.json"]), false);
 	assert.equal(docsOnly([".github/workflows/ci.yml"]), false);
-
-	// Nothing known changed (a first push, a shallow clone): run everything.
-	assert.equal(sh('tools/bin/itos ci scope "" HEAD').stdout.trim(), "docs_only=false");
 } finally {
 	rmSync(scratch, { recursive: true, force: true });
 }

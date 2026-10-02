@@ -6,17 +6,19 @@
 //   - the smoke run (`itos tests smoke run scenario`) runs exactly the smoke
 //     set;
 //   - a range naming one scenario runs the smoke set plus that one;
-//   - the nightly, and a range CI can't read, run every scenario;
+//   - the nightly runs every scenario, and the gates self-test;
 //   - a range naming the ledger's tasks whose checks are E2E subsets and CI
 //     steps (T-003, T-005, T-009) runs one Playwright run, selecting the smoke
-//     set and each subset, and no second build; the tasks' other checks still
-//     run, and the gates self-test is left to the nightly;
+//     set and each subset; the tasks' other checks still run, and the gates
+//     self-test is left to the nightly;
 //   - the smoke rule holds today, and the config calls no step that builds or
 //     runs a browser static.
 //
-// What the plan does whatever the repository — the cost order, the written
-// order, the prose shortcut, merging, covering, the smoke rule's failures —
-// is itos's, proven in its own repository.
+// Each would fail if this project's config, ledger or suite changed. What the
+// plan does whatever the repository — the cost order, the written order, the
+// prose shortcut, merging, covering, a range it cannot read run whole, the
+// smoke rule's failures, the shape of its --json — is itos's, proven in its
+// own repository.
 import { strict as assert } from "node:assert";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -98,11 +100,10 @@ try {
 	same(listed(step), new Set([...smoke, named]), `a range naming @${named}`);
 
 	// The nightly runs every scenario, and the gates self-test a push leaves to
-	// it; a range that can't be read runs every scenario too.
+	// it.
 	const nightly = plan(["--nightly"]);
 	assert.equal(e2eStep(nightly), "vp run e2e", "the nightly does not run every scenario");
 	assert.ok(nightly.steps.includes(GATES), "the nightly does not run the gates self-test");
-	assert.equal(e2eStep(plan(["", head])), "vp run e2e", "an unread range should run everything");
 
 	// A range naming tasks whose checks are E2E subsets and CI steps (T-003:
 	// `vp test run` and the coverage step; T-005: the smoke check, the smoke
@@ -110,7 +111,6 @@ try {
 	p = plan([head, range("ci: name three tasks\n\nTask: T-003, T-005, T-009\n")]);
 	const runs = p.steps.filter(isE2eRun);
 	assert.equal(runs.length, 1, `expected one Playwright run, got:\n${runs.join("\n")}`);
-	assert.equal(p.steps.filter((s) => s === "vp build").length, 1, "the build runs twice");
 	const checks = p.order.filter((o) => o.check);
 	for (const planned of checks) {
 		const { task, command } = planned.check!;
