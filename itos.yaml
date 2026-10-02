@@ -7,7 +7,7 @@
 # a path list stands for `commits.path_sets.<name>`. The range, the identity
 # and the people are providers.
 version: 1
-requires: ">=0.4.0" # the oldest itos that runs the footer rules beside commitlint
+requires: ">=0.5.0" # the oldest itos that runs the nightly's { tasks: done } step
 shell: [sh, -c]
 
 ledger:

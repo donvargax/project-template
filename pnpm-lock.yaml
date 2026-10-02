@@ -213,8 +213,8 @@ importers:
         specifier: 2.14.2
         version: 2.14.2
       itos:
-        specifier: https://github.com/donvargax/itos/releases/download/v0.4.0/itos-0.4.0.tgz
-        version: https://github.com/donvargax/itos/releases/download/v0.4.0/itos-0.4.0.tgz
+        specifier: https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz
+        version: https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz
       playwright:
         specifier: ^1.63.0
         version: 1.63.0
@@ -1493,9 +1493,9 @@ packages:
     resolution: {integrity: sha512-HGYWWS/ehqTV3xN10i23tkPkpH46MLCIMFNCaaKNavAXTF1RkqxawEPtnjnGZ6XKSInBKkiOA5BKS+aZiY3AvA==}
     engines: {node: '>=8'}
 
-  itos@https://github.com/donvargax/itos/releases/download/v0.4.0/itos-0.4.0.tgz:
-    resolution: {integrity: sha512-ACfoH/D9h2EIjI3snfRA2qBchJsDsXXb5w/ljtGyfI1Cczq9Jb+kC3p0El77apHp7PtPIzTW6wY2cRkBeXJKBA==, tarball: https://github.com/donvargax/itos/releases/download/v0.4.0/itos-0.4.0.tgz}
-    version: 0.4.0
+  itos@https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz:
+    resolution: {integrity: sha512-2gikpklpi3XHiqBd/XSVk/msYawqtaT7VYGwxRNPzRVOixNe+ryE7AxNfUXdOLgu6W1KMsbD0gUjXTkJYy0WlA==, tarball: https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz}
+    version: 0.5.0
     engines: {node: '>=24'}
     hasBin: true
 
@@ -2928,7 +2928,7 @@ snapshots:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
 
-  itos@https://github.com/donvargax/itos/releases/download/v0.4.0/itos-0.4.0.tgz: {}
+  itos@https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz: {}
 
   jiti@2.6.1: {}
 
