@@ -146,3 +146,41 @@
   done_when:
     - run: vp check
     - run: node tools/selftest/code-design.ts
+
+- id: T-037
+  type: build
+  title: itos 0.5.0
+  why: >
+    itos 0.5.0 adds a nightly step, { tasks: done }, that runs the checks of
+    every done task, so a change elsewhere cannot break one unseen; names a
+    failing check's task by its title; and reports a missing ledger folder
+    and a shallow clone's missing commits.since as problems. The pin moves to
+    the v0.5.0 tarball, checked against its SHA-256, and the release notes'
+    "Upgrading" steps that apply here are made: requires ">=0.5.0"; anything
+    that reads itos's output reads the new "CI failed at T-… (<title>), its
+    check:" line; { tasks: done, cost: static } goes last in
+    ci.nightly.steps, after the whole scenario run, and the nightly's job
+    gets what those checks need (the whole history, actionlint), seen first
+    by running the done tasks' static checks in a shallow clone with only
+    the nightly's tools; a red one turns the nightly red and its issue names
+    it. The notes' step 5 draws the line T-032 drew, a check proves this
+    project and never itos, more narrowly: a message piped into itos commit
+    check-message against the project's own itos.yaml checks its commit
+    policy, and stays; only a synthetic config, ledger or registry, a
+    recorded range, and the shape of a --json output test itos. So T-007
+    gets back its checks that the project's policy rejects a build commit
+    with no footer and a feat naming an unknown scenario, and accepts a
+    docs commit naming a task, and tasks/README.md's paragraph says where
+    the line is; the self-tests that read itos's --json output are kept only
+    where they prove this project's plan.
+  done_when:
+    - run: tools/bin/itos version --check
+      cost: static
+    - run: tools/bin/itos config check
+    - run: vp install --frozen-lockfile
+    - run: actionlint
+    - run: tools/bin/itos task T-007
+    - run: >-
+        u=$(node -p 'require("./package.json").devDependencies.itos') &&
+        d=$(mktemp -d) && cd "$d" && curl -fsSLO "$u" &&
+        curl -fsSLO "${u%/*}/checksums.txt" && sha256sum -c checksums.txt
