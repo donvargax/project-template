@@ -85,6 +85,15 @@
     adopted on existing code. How "in force" and "joining" are read across
     a pushed range is the implementer's to settle; the scenario moving
     rule's staged and range forms (tools/scenario-moves.ts) are a model.
+    Settled so: code-design-ratchet.yaml names every rule the gates hold,
+    so a rule is in force once any commit's list has named it, and an entry
+    joins only with the commit that first names its rule; the joining rule
+    is tools/code-design.ts's range form, which itos runs as a range check
+    beside the moving rule (itos runs one only as a test kind's), in the
+    commit-msg hook and in CI's verify. The check found that oxlint honours
+    a directive in a line or a block comment, oxlint's or ESLint's
+    spelling, but not in a JSDoc comment or in another case; the refusal
+    reads all of them, by TypeScript's parser so a string is not a comment.
   done_when:
     - run: vp check
     - run: node tools/code-design.ts

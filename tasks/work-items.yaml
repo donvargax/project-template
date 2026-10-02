@@ -548,7 +548,7 @@ items:
     title: A ratchet for adopting a code design rule on code that breaks it
     phase: 3
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-034]
     kind: task
     refs: [tasks/phase-3.yaml]
@@ -563,9 +563,23 @@ items:
     why: >
       AGENTS.md has a file kept over 400 lines say why at its head, in
       `// oxlint-disable max-lines -- <the reason>`, but nothing refuses the comment without its
-      reason. A static check that every disable comment carries one after `--` would hold it. A
-      disable that names a code design rule is T-035's to refuse, since it would bypass the
-      ratchet.
+      reason. A static check that every disable comment carries one after `--` would hold it.
+      T-035's static check already reads every disable comment (`disables` in
+      tools/code-design-ratchet.ts) and refuses one that names a code design rule or none; this is
+      one more filter over what it reads.
+
+  - id: p3-range-checks-outside-a-kind
+    title: A range check of the project's own, not a test kind's
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: []
+    kind: idea
+    why: >
+      itos runs a range check, staged in the commit-msg hook and over a range in verify, only as
+      a test kind's (`tests.<kind>.range_checks`), so the code design ratchet's joining rule rides
+      on the scenario kind though it has nothing to do with scenarios. A commit-level list of range
+      checks in itos would hold it where it belongs; an issue for itos, then a move here.
 
   - id: T-036
     title: "A slice's logic never touches the browser"

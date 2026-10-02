@@ -83,6 +83,36 @@ The template's own, in the shape AGENTS.md's "Code design" gives a feature:
   carry the code's reasons, and counted they would be what pushes a file
   over and the first thing cut to get it under. The template's tree trips it
   nowhere, so the next warning is seen.
+- **The ratchet**, for a rule adopted on code that breaks it.
+  `code-design-ratchet.yaml` at the root maps every code design rule the
+  gates hold to the files it is off for, each `{ file, item }`, the item the
+  work item for its fix; empty lists in the template. `vite.config.ts`
+  reads it and adds, after the overrides that turn lint's rules on, one
+  that turns each plugin rule off for the files listed under it;
+  `tools/code-design.ts` leaves its own rules' listed files out. The static
+  check then holds the list on the tree, under `code-design(ratchet)`: its
+  keys are exactly the rules the gates hold (the script's `rules` and the
+  plugin's, imported), so the list says which rules are in force; an entry's
+  file is tracked and still breaks its rule, which for a lint rule is asked
+  of lint itself (`vp lint --format json` over the listed files, with
+  `CODE_DESIGN_RATCHET=ignore` making `vite.config.ts` leave the list out,
+  a switch that can only make lint stricter); and its item is in the
+  registry (`work.registry`) and not `done`. It also reads every comment of
+  every file lint lints, by TypeScript's parser, and refuses an
+  `oxlint-disable` or `eslint-disable` (file, line, next line, block; any
+  case, a JSDoc star) that names a code design rule or no rule at all, since
+  either would turn a rule off past the list; a component file (`.vue`,
+  `.svelte`, `.astro`) is read by its comment markers. The pure part, the
+  list's reading, the joining rule and the comment reader, is
+  `tools/code-design-ratchet.ts`, with its unit test. **The joining rule**
+  is the script's range form: a file joins a rule's list only in the commit
+  that brings the rule into force, and a rule is in force once any earlier
+  commit's list named it (`git rev-list --full-history` over the list's
+  versions), so taking a rule off and naming it again lets no file in.
+  `node tools/code-design.ts --staged` judges HEAD against the index, and
+  `node tools/code-design.ts <from> <to>` each commit of a range, a merge
+  against every parent, leaving out `commits.since` and its ancestors. A
+  commit whose list adds no entry is passed without reading the history.
 
 ## The scenarios
 
@@ -152,10 +182,15 @@ the commands, `itos <command> --help` each one).
   templates are how CI reads a task check as a selection of tests and merges
   every selection into one command; nothing else knows Gherkin or
   Playwright.
-- **What the project adds to itos.** One piece the config names and the
-  package does not ship, kept as the project's own: the scenario moving rule
-  (`tools/scenario-moves.ts`, with its unit test), the scenario kind's range
-  check. It reads each tree with the scenario kind of that tree's own
+- **What the project adds to itos.** Two range checks the config names and
+  the package does not ship, kept as the project's own. The code design
+  ratchet's joining rule (`tools/code-design.ts`, under "The application")
+  rides on the scenario kind for every commit type, though it is not the
+  scenarios' rule: itos runs a range check only as a test kind's, in the
+  commit-msg hook and in `itos verify`, which is where a commit made without
+  the hooks is judged too. The scenario moving rule
+  (`tools/scenario-moves.ts`, with its unit test) is the scenario kind's own
+  range check. It reads each tree with the scenario kind of that tree's own
   `itos.yaml`, so a commit that moves the feature files to a new root along
   with the root moves every scenario unchanged; in a range it skips the
   check's `except_types` and leaves out `commits.since` and its ancestors, as
@@ -192,7 +227,8 @@ the commands, `itos <command> --help` each one).
   (`prepare`, on `vp install`) points git at the folder.
   - **pre-commit** runs `vp staged` (each path's command in `vite.config.ts`'s
     `staged`), then the code design check (`tools/code-design.ts`, under
-    "The application": what `src/` holds, where a unit test sits); then, unless every staged file is Markdown, under `docs/` or
+    "The application": what `src/` holds, where a unit test sits, the
+    ratchet); then, unless every staged file is Markdown, under `docs/` or
     `tasks/`, or a feature file (no unit test reads them, and itos's data
     among them is the commit-msg hook's), `vp test run --changed HEAD` with coverage
     collected but no thresholds, then `fallow audit` on what is new against
@@ -207,8 +243,9 @@ the commands, `itos <command> --help` each one).
     the smoke set is staged, runs `itos config check`'s problems over the
     index, so a file broken as it is staged is rejected though its copy on
     disk is sound; then it applies the type's path rules (`commits.scopes`), then
-    outside `feat` and `fix` the scenario moving rule
-    (`tools/scenario-moves.ts`), then the header lint and the footer rules,
+    the range checks' staged forms: outside `feat` and `fix` the scenario
+    moving rule (`tools/scenario-moves.ts`), and for every type the
+    ratchet's joining rule (`tools/code-design.ts --staged`); then the header lint and the footer rules,
     both reported; then the static checks of each task the `Task:` footer
     names, read from the staged ledger and run in the working tree, in
     written order up to the task's first late check (CI's cost rule), each
@@ -284,9 +321,11 @@ the commands, `itos <command> --help` each one).
   (`ci.covers`), one in `ci.nightly_only` waits for the nightly, and a task
   whose work item is still `todo` waits (`ci.wait_on_status`). It stops at
   the first failure. A range of only `ci.prose.paths` (Markdown, `docs/**`,
-  the work registry) runs `ci.prose.steps` (`vp check`, `itos config check`)
-  and the named tasks' static and `prose: true` checks, installs no browser
-  and builds nothing.
+  the work registry) runs `ci.prose.steps` (`vp check`, the code design
+  check, `itos config check`) and the named tasks' static and `prose: true`
+  checks, installs no browser and builds nothing; the code design check is
+  among them because closing a work item the ratchet still lists is a
+  registry change alone.
 - **The nightly** (`.github/workflows/nightly.yml`, at 11:44 UTC on `main` or
   by hand) runs `itos ci run --nightly`: the whole E2E suite, then the gates
   self-test, then the code design self-test, which a push runs only when it
@@ -334,8 +373,14 @@ the commands, `itos <command> --help` each one).
   template's own tree), `slice-folders.ts` and `tests-beside-code.ts` (a
   test beside its file allowed, an orphan, one in the wrong place or a
   folder of tests refused, and each other spelling vitest's default would
-  run, generated from its pattern); `case.ts` holds a case's shape. A new
-  rule adds a file of cases and joins the runner's list. It runs nightly
+  run, generated from its pattern), and `ratchet.ts` (a listed file let off
+  its rule and its neighbour not, each refused entry, the list's keys, each
+  form of disable comment, and the joining rule); `case.ts` holds a case's
+  shape. A case may commit a history before its files, as the root of a
+  history of its own when the template's must not count, and be judged by
+  two more gates: the commit-msg hook over its files staged as a `build`
+  commit, and `itos verify` over them committed, as CI re-checks a push. A
+  new rule adds a file of cases and joins the runner's list. It runs nightly
   too. They share `cli.ts`, which asks itos's
   command line.
 - **The changelog** (`tools/changelog.ts`, `cliff.toml`): git-cliff groups

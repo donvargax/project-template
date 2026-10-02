@@ -82,9 +82,10 @@ decision.
 Enforcement: the rules are `commits` in `itos.yaml`. The scope column above
 is `commits.scopes`; the footers are `commits.footers` (a `Task:` or
 `Scenarios:` ID must exist at the commit itself); the moving rule is the
-scenario kind's range check (`tests.scenario.range_checks`). The commit-msg
-hook (`tools/bin/itos hook commit-msg`) applies the path rules, then the
-moving rule to HEAD and the index, then the header lint
+scenario kind's range check (`tests.scenario.range_checks`), and the code
+design ratchet's joining rule (AGENTS.md, "Code design") rides beside it for
+every type. The commit-msg hook (`tools/bin/itos hook commit-msg`) applies
+the path rules, then both range checks to HEAD and the index, then the header lint
 (`commits.header_lint`: commitlint, `config-conventional`) and itos's footer
 rules, then the static checks of the tasks the `Task:` footer names (see
 "Commands"). CI re-checks every pushed commit the same way with

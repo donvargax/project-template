@@ -36,19 +36,20 @@ What it gives a new project from its first commit:
 
 ## Where things are
 
-| File                    | What it holds                                                                   |
-| ----------------------- | ------------------------------------------------------------------------------- |
-| `PLAN.md`               | The decisions, the intended architecture, the phases and the references.        |
-| `docs/ARCHITECTURE.md`  | How the code is put together as built, the task tooling and the gates included. |
-| `docs/HANDOFF.md`       | Only what the next session should do; the coordinator rewrites it.              |
-| `AGENTS.md`             | The working rules for a session that implements.                                |
-| `docs/ORCHESTRATING.md` | The working rules for the session that coordinates.                             |
-| `docs/PHASES.md`        | Who owns which phase, and how work is routed.                                   |
-| `tasks/work-items.yaml` | The one list of open work: owners, statuses, dependencies, ideas.               |
-| `tasks/`                | The ledger: every non-feature task and the checks that prove it.                |
-| `features/`             | The scenarios: the behaviour a user can observe, and the smoke set.             |
-| `e2e/`                  | The Playwright harness that runs them: steps and page objects.                  |
-| `itos.yaml`             | The policy every gate reads.                                                    |
+| File                       | What it holds                                                                          |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| `PLAN.md`                  | The decisions, the intended architecture, the phases and the references.               |
+| `docs/ARCHITECTURE.md`     | How the code is put together as built, the task tooling and the gates included.        |
+| `docs/HANDOFF.md`          | Only what the next session should do; the coordinator rewrites it.                     |
+| `AGENTS.md`                | The working rules for a session that implements.                                       |
+| `docs/ORCHESTRATING.md`    | The working rules for the session that coordinates.                                    |
+| `docs/PHASES.md`           | Who owns which phase, and how work is routed.                                          |
+| `tasks/work-items.yaml`    | The one list of open work: owners, statuses, dependencies, ideas.                      |
+| `tasks/`                   | The ledger: every non-feature task and the checks that prove it.                       |
+| `features/`                | The scenarios: the behaviour a user can observe, and the smoke set.                    |
+| `e2e/`                     | The Playwright harness that runs them: steps and page objects.                         |
+| `itos.yaml`                | The policy every gate reads.                                                           |
+| `code-design-ratchet.yaml` | The files a code design rule is off for while they are fixed, each with its work item. |
 
 ## Create a project from it
 
@@ -127,6 +128,21 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
     `docs/ARCHITECTURE.md`). It pushes to `main` as everyone else does, so
     `main` must not require pull requests. Until it is installed, nothing
     moves the dependencies.
+
+## A code design rule on code that breaks it
+
+The template's code is clean under every code design rule in `AGENTS.md`'s
+"Code design". A project that takes a rule the template added after it was
+made, or adds one of its own, usually has files that break it: it lists
+them under the rule in `code-design-ratchet.yaml`, each with a work item
+for its fix, in the one `build` commit that brings the rule and its key in
+the list, and fixes them one by one; the list only shrinks. A project made
+before the ratchet takes it whole: the list, with a key for every rule its
+gates hold, `tools/code-design.ts` and `tools/code-design-ratchet.ts`, the
+override in `vite.config.ts`, and the `code-design-ratchet` range check and
+the prose step in `itos.yaml`. Its history never named a rule, so that
+commit may list files under any of them, each one that still breaks it.
+`AGENTS.md` says how, and which gates hold it.
 
 ## itos, pinned
 
