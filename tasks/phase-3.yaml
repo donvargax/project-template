@@ -18,3 +18,17 @@
     project's own files holds its commits.scopes to the README's table. Prose
     and ledger only, so review is the proof.
   done_when: []
+
+- id: T-033
+  type: docs
+  title: A rule over several states, written once and table-tested
+  why: >
+    In character-editor a rule over several boolean states ("is the drawing
+    on screen?", over hidden, folded and popped) was written in a
+    view-model and again in its template; the two drifted, and a combination
+    nobody had decided was a bug. AGENTS.md's "Code design" asks for such a
+    rule in one pure function or getter that the view and the logic both
+    read, and for a unit test that drives every combination as a table, so
+    every cell gets a decision. Lint cannot tell a rule restated from a rule
+    read, so review is the proof.
+  done_when: []

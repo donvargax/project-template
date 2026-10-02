@@ -173,6 +173,15 @@ A rule that names no gate has none, and is yours to keep.
   `greeting(s.trim())`, and when `s.trim()` is not empty the greeting
   contains it. Two examples check two names; the property checks every
   string, the whitespace nobody thought to try among them.
+- **A rule over several states is written once and table-tested.** When
+  something has several boolean states (hidden, folded, popped…), what
+  follows from them (is it on screen? may it move?) lives in one place, a
+  pure function or getter that the view and the logic both read and neither
+  restates; its unit test drives every combination as a table (`it.each`
+  over every row). Writing the table forces a decision for each cell: the
+  bug is in the cell nobody decided, and a rule restated in two places
+  drifts until one of them is that cell. No gate holds it: lint cannot tell
+  a rule restated from a rule read.
 
 ## The gates run themselves
 

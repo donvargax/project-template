@@ -523,3 +523,12 @@ items:
     depends_on: []
     kind: task
     refs: [tasks/phase-3.yaml]
+
+  - id: T-033
+    title: A rule over several states, written once and table-tested
+    phase: 3
+    owner: donvargax
+    status: done
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-3.yaml]
