@@ -91,9 +91,11 @@ The template's own too (`tasks/phase-3.yaml`), from what a project made from
 it met on 2026-10-01: a task's checks prove the project, never itos; a rule
 over several boolean states is written once and table-tested; a lint warning
 on a file over 400 lines, as a prompt to look at its responsibilities; and a
-ratchet for adopting a code design rule on code that breaks it. Whether a
-slice's logic may touch the browser, and where the browser lives instead, is
-an idea in the registry, open for discussion. No scenario changes.
+ratchet for adopting a code design rule on code that breaks it; and a
+slice's logic never touches the browser, which lives only in the files a
+project names as its edge (the composition root, its framework's view files,
+infrastructure slices that each wrap one browser API), so the template stays
+framework-neutral. No scenario changes.
 
 - **Usable:** the page opens, as in phase 0.
 

@@ -563,25 +563,15 @@ items:
     why: >
       AGENTS.md has a file kept over 400 lines say why at its head, in
       `// oxlint-disable max-lines -- <the reason>`, but nothing refuses the comment without its
-      reason, nor a disable of a code design rule, which would turn a refusal off as quietly as
-      the ratchet (T-035) is meant to make it loud. A static check of disable comments (a reason
-      after `--`; the code-design rules never disabled, only ratcheted or listed in
-      mockBoundaries) would hold both.
+      reason. A static check that every disable comment carries one after `--` would hold it. A
+      disable that names a code design rule is T-035's to refuse, since it would bypass the
+      ratchet.
 
-  - id: p3-browser-free-logic
+  - id: T-036
     title: "A slice's logic never touches the browser"
     phase: 3
     owner: donvargax
     status: todo
     depends_on: [T-035]
-    kind: idea
-    why: >
-      In character-editor a 920-line Aurelia view-model created and moved DOM elements itself (53
-      uses of browser globals), so it could not be unit-tested, and a rule it shared with its
-      template drifted and caused a bug; its fix is a lint rule refusing browser globals (window,
-      document, storage, fetch, requestAnimationFrame…) outside the view and a known folder of
-      browser services. The template is framework-neutral and AGENTS.md keeps every layer of a
-      slice in its feature file, so lint cannot tell the logic from the edge. Open for discussion
-      with the owner: whether it holds beyond frameworks whose view-models are plain classes, and
-      where the browser lives instead (an edge file per slice, infrastructure slices, or the files
-      a project names, as mockBoundaries does).
+    kind: task
+    refs: [tasks/phase-3.yaml]

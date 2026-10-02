@@ -74,7 +74,10 @@
     their rule into force, and afterwards a file joining that rule's list is
     refused, at commit and in CI. An entry is refused too when its work item
     is missing or done, its file is gone, or its file no longer breaks the
-    rule (it leaves the list, and its item closes). Unlike
+    rule (it leaves the list, and its item closes). The list and
+    mockBoundaries are the only ways a code design rule is turned off for a
+    file: an oxlint-disable comment that names one (or disables every rule)
+    is refused the same way, or the ratchet is bypassed in one line. Unlike
     vite.config.ts's mockBoundaries, a permanent exception that says which
     boundary it is, an entry is a debt with an owner. Empty in the template.
     The self-test proves each refusal and each allowance in a scratch tree,
@@ -85,4 +88,41 @@
   done_when:
     - run: vp check
     - run: node tools/code-design.ts
+    - run: node tools/selftest/code-design.ts
+
+- id: T-036
+  type: build
+  title: "A slice's logic never touches the browser"
+  why: >
+    In character-editor a 920-line Aurelia view-model created and moved DOM
+    elements itself (53 uses of browser globals), so it could not be
+    unit-tested, and a rule it shared with its template drifted into a bug.
+    Any framework leaks the same way, if less often where JSX or templates
+    mediate the DOM: a hook, a composable or a store that reads storage or
+    the viewport, listens on window or fetches. So code-design/no-browser
+    refuses the browser's globals (window, document, navigator, location,
+    history, the storages, indexedDB, fetch, XMLHttpRequest, WebSocket,
+    addEventListener, open, innerWidth and innerHeight, getComputedStyle,
+    matchMedia, requestAnimationFrame, the observers, and any of them
+    reached through globalThis, self or window) in every file under src/,
+    tests included, except the files vite.config.ts names in browserEdges:
+    the browser lives at the project's edge, by name, as mockBoundaries
+    names the files allowed to mock. The template's list is src/main.ts,
+    the composition root, so the demo already passes; a project adds its
+    framework's view files (src/**/*.tsx, src/**/*.vue) and its
+    infrastructure slices, each wrapping one browser API behind a small
+    interface the logic is handed and its tests hand a fake, as "No mocks"
+    asks. A type names nothing at run time, so `HTMLElement` as a type
+    passes, and a local binding that shadows a global is not the global.
+    The clock stays outside (vitest's fake clock is its edge), and so do
+    e2e/ and tools/, which drive a browser or run in Node. AGENTS.md's
+    "Code design" says the browser is no longer a layer of the feature
+    file, and where it goes; the ratchet (T-035) covers the rule, so a
+    project upgrading into it lists its offending files. The self-test
+    proves a logic file using document, window.localStorage or
+    globalThis.fetch refused, naming the rule; a slice handed an adapter, a
+    file in browserEdges, src/main.ts, a type-only use and a shadowing
+    local allowed; and a file the ratchet lists allowed.
+  done_when:
+    - run: vp check
     - run: node tools/selftest/code-design.ts
