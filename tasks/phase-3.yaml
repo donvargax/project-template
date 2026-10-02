@@ -1,0 +1,20 @@
+# Phase 3: code design learned downstream, from what character-editor (a
+# project made from the template) met on 2026-10-01, mapped onto the
+# template's own slices, lint plugin and self-tests. No scenario changes.
+
+- id: T-032
+  type: docs
+  title: A task's checks prove this project, not itos
+  why: >
+    The ledger held checks that proved itos rather than this project:
+    synthetic configs, ledgers and registries handed to itos config check,
+    messages piped into itos commit check-message and the commit-msg hook,
+    and itos verify over a made-up commit and over the whole history, whose
+    range grew with every commit. They passed whatever the project held and
+    could fail only on an itos regression, which itos's conformance suite
+    proves in its own repository. They go from T-006, T-007, T-008, T-014 and
+    T-022, each why saying so, and tasks/README.md's "What a check may be"
+    states the rule. The path checks stay: itos commit check-paths over the
+    project's own files holds its commits.scopes to the README's table. Prose
+    and ledger only, so review is the proof.
+  done_when: []

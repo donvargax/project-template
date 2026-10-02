@@ -32,6 +32,17 @@ against the baseline **before** the work, and fails when it measured nothing.
 A `why` holds the reason for a task and what its check found; a reader looks
 there, not in the commits.
 
+A check proves **this project**: its code, its config, its ledger. It never
+proves itos itself: no synthetic config, ledger or registry handed to
+`itos config check`, no message piped into `itos commit check-message` or
+the commit-msg hook, no `itos verify` over a made-up or recorded range, least
+of all `verify <sha> HEAD`, whose range grows with every commit. Such a check
+passes whatever this project holds and fails only when itos regresses, which
+itos's conformance suite proves in its own repository; a regression met here
+is an issue raised there. `itos commit check-paths` over the project's own
+files stays, since it holds this project's `commits.scopes` to the table
+below. T-032 took the checks of itos out of the ledger.
+
 ## Commit types and what drives them
 
 | Type           | Driven by                                               | Scope rule (checked by the commit-msg hook)                                                                                   | Extra checks, in CI                                     |

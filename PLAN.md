@@ -85,6 +85,18 @@ registry. No scenario changes.
 - **Usable:** the page opens, as in phase 0, from the demo moved into a
   slice.
 
+### Phase 3: code design learned downstream
+
+The template's own too (`tasks/phase-3.yaml`), from what a project made from
+it met on 2026-10-01: a task's checks prove the project, never itos; a rule
+over several boolean states is written once and table-tested; a lint warning
+on a file over 400 lines, as a prompt to look at its responsibilities; and a
+ratchet for adopting a code design rule on code that breaks it. Whether a
+slice's logic may touch the browser, and where the browser lives instead, is
+an idea in the registry, open for discussion. No scenario changes.
+
+- **Usable:** the page opens, as in phase 0.
+
 ### Phase <n>: <name>
 
 <A project's own phases follow the template's. What each builds, its slices

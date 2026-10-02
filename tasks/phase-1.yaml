@@ -21,19 +21,15 @@
     moving rule (tools/scenario-moves.ts, the scenario kind's range check),
     and, until itos 0.4.0 ran them itself (T-022), commitlint's footer rules,
     which asked the installed itos rather than import its modules. The checks
-    that a footer is rejected and accepted pipe the message into itos commit
-    check-message, which runs the header lint and then the footer rules, as
-    the commit-msg hook does. The self-tests read what they prove from the
-    command line (ci plan --json, ci scope, tests smoke ids) instead of
-    importing the tool's modules; which run the github range provider picks is
-    itos's to prove. The checksum check downloads the tarball package.json
-    pins and holds it to the release's checksums.txt.
+    that piped a message into itos commit check-message to see a footer
+    rejected and accepted went with T-032: they proved itos. The self-tests
+    read what they prove from the command line (ci plan --json, ci scope,
+    tests smoke ids) instead of importing the tool's modules; which run the
+    github range provider picks is itos's to prove. The checksum check
+    downloads the tarball package.json pins and holds it to the release's
+    checksums.txt.
   done_when:
     - run: tools/bin/itos version --check
-      cost: static
-    - fails: "printf 'docs: x\\n\\nTask: T-000\\n' | tools/bin/itos commit check-message -"
-      cost: static
-    - run: "printf 'docs: x\\n\\nTask: T-014\\n' | tools/bin/itos commit check-message -"
       cost: static
     - run: node tools/selftest/ci-scope.ts
     - run: vp install --frozen-lockfile
@@ -136,9 +132,10 @@
     harness without it. T-006 ran itos's fixtures and corpus, which went with
     the copy; it now proves that the pinned itos refuses the project's own
     policy with a misspelt key, its own ledger with every task twice, and a
-    registry with a cycle. T-011 expected 0BSD, so it failed in any project
-    that relicensed; package.json's license names the licence, and the check
-    asks GitHub whether it detects the same. What cannot be generic is in the
+    registry with a cycle (checks of itos itself, which went with T-032).
+    T-011 expected 0BSD, so it failed in any project that relicensed;
+    package.json's license names the licence, and the check asks GitHub
+    whether it detects the same. What cannot be generic is in the
     README's first steps: the gates self-test edits the demo's module and
     scenario, and a project that drops the demo points it at its own.
   done_when:
@@ -212,18 +209,15 @@
     config that sets them) and requires ">=0.4.0"; the done tasks' static
     checks are run once and any slow one marked late, since a commit naming a
     done task now runs them; the ledger checks that piped a message into
-    commitlint to see a footer rejected pipe it into itos commit check-message
-    instead; and itos verify over the range since the last green run passes
-    before the first commit under the new rules. The gates self-test proves
+    commitlint to see a footer rejected piped it into itos commit
+    check-message instead, until T-032 dropped them as checks of itos; and
+    itos verify over the range since the last green run passes before the
+    first commit under the new rules. The gates self-test proves
     the footer rules through the hook as before, each problem reported once.
   done_when:
     - run: tools/bin/itos version --check
       cost: static
     - run: tools/bin/itos config check
-    - fails: "printf 'docs: x\\n\\nTask: T-000\\n' | tools/bin/itos commit check-message -"
-      cost: static
-    - run: "printf 'docs: x\\n\\nTask: T-022\\n' | tools/bin/itos commit check-message -"
-      cost: static
     - fails: grep -q 'check-message' commitlint.config.ts
       cost: static
     - run: vp install --frozen-lockfile

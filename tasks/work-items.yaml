@@ -38,6 +38,7 @@ phases:
   0: donvargax
   1: donvargax
   2: donvargax
+  3: donvargax
 
 items:
   # ---- phase 0 ----------------------------------------------------------------
@@ -512,3 +513,13 @@ items:
       that strips ANSI colours from a hook's output. A warning every run reads as noise, so the next
       real one is missed. Pinning the hook's colour off (NO_COLOR, FORCE_COLOR=0) would make the
       regex unnecessary; failing that, a disable comment on the line saying why.
+
+  # ---- phase 3 ----------------------------------------------------------------
+  - id: T-032
+    title: "A task's checks prove this project, not itos"
+    phase: 3
+    owner: donvargax
+    status: done
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-3.yaml]

@@ -68,22 +68,15 @@
     changes it without forking code. itos is a dev dependency pinned to a
     release (README, Install), and tools/bin/itos runs it; what itos does is
     proven in its own repository. These checks prove the pin in this project:
-    the installed itos satisfies the config's `requires`, accepts the
-    project's policy, and refuses it with a misspelt key (exit 2), the
-    project's own ledger with every task twice, and a registry whose items
-    wait on each other (exit 1).
+    the installed itos satisfies the config's `requires` and accepts the
+    project's policy. The checks that it refused a synthetic config with a
+    misspelt key, the ledger with every task twice, a registry whose items
+    wait on each other and an unknown task went with T-032: they proved itos,
+    which its conformance suite does.
   done_when:
     - run: tools/bin/itos version --check
       cost: static
     - run: tools/bin/itos config check
-    - fails: tools/bin/itos task T-000
-      cost: static
-    - run: 'sh -c ''f=$(mktemp) && sed "s/^ledger:/ledgr:/" itos.yaml > "$f" && { ITOS_CONFIG="$f" tools/bin/itos config check; test $? -eq 2; }'''
-      cost: static
-    - run: 'sh -c ''f=$(mktemp) && cat tasks/phase-0.yaml tasks/phase-0.yaml > "$f" && { tools/bin/itos config check --ledger "$f"; test $? -eq 1; }'''
-      cost: static
-    - run: 'sh -c ''f=$(mktemp) && printf "phases: {0: null}\nitems:\n  - {id: a, title: A, phase: 0, owner: null, status: todo, depends_on: [b]}\n  - {id: b, title: B, phase: 0, owner: null, status: todo, depends_on: [a]}\n" > "$f" && { tools/bin/itos work check "$f"; test $? -eq 1; }'''
-      cost: static
 
 - id: T-007
   type: build
@@ -99,22 +92,18 @@
     pushed commits reach. CI runs this task on every push, so its checks name
     only what every project made from the template keeps (itos.yaml,
     package.json, the ledger, the README), never the demo's paths: a project
-    that changes its source layout or drops the demo keeps them true.
+    that changes its source layout or drops the demo keeps them true. The
+    checks that piped messages into itos commit check-message and the
+    commit-msg hook went with T-032: they proved itos's footer rules, not
+    this project's; the path checks stay, since they hold commits.scopes to
+    what tasks/README.md says.
   done_when:
     - fails: "printf 'update things\\n' | vp exec commitlint"
     - run: "printf 'build: scaffold\\n\\nTask: T-001\\n' | vp exec commitlint"
-    - fails: "printf 'build: scaffold\\n' | tools/bin/itos commit check-message -"
-      cost: static
-    - fails: "printf 'feat: x\\n\\nScenarios: @ID-NOPE-01\\n' | tools/bin/itos commit check-message -"
-      cost: static
     - fails: tools/bin/itos commit check-paths --type build tasks/phase-0.yaml
     - fails: tools/bin/itos commit check-paths --type docs itos.yaml
     - run: tools/bin/itos commit check-paths --type docs README.md tasks/phase-0.yaml
     - run: tools/bin/itos commit check-paths --type build itos.yaml package.json
-    - fails: 'sh -c ''f=$(mktemp) && printf "build: x\n" > "$f" && tools/bin/itos hook commit-msg "$f"'''
-      cost: static
-    - run: 'sh -c ''f=$(mktemp) && printf "docs: x\n" > "$f" && tools/bin/itos hook commit-msg "$f"'''
-      cost: static
 
 - id: T-008
   type: ci
@@ -125,16 +114,13 @@
     the range from the last green run, the named tasks' checks in cost order,
     one E2E run over the smoke set and what the range names, a prose-only
     shortcut. It re-checks every pushed commit with the commit-msg rules, so a
-    commit made with the hooks bypassed fails CI. Verifying the whole history
-    is late: it re-checks commits already checked, so it says nothing at
-    commit time, and its time grows with the history (24 s over 48 commits)
-    toward the commit-msg hook's 60-second cap on a named task's check.
+    commit made with the hooks bypassed fails CI. The checks that ran itos
+    verify over a made-up commit and over the whole history went with T-032:
+    they proved itos, and the second grew with every commit (24 s over 48)
+    toward the commit-msg hook's 60-second cap.
   done_when:
     - run: actionlint
     - run: node tools/selftest/ci-scope.ts
-    - fails: tools/bin/itos verify HEAD "$(git commit-tree 'HEAD^{tree}' -p HEAD -m 'update things')"
-    - run: tools/bin/itos verify "" HEAD
-      cost: late
     - run: tools/bin/itos ci run
 
 - id: T-009
