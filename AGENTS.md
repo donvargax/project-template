@@ -149,6 +149,13 @@ A rule that names no gate has none, and is yours to keep.
   holds the imports (`tools/lint/code-design.ts`, which `vite.config.ts`
   loads), and a static check what `src/` holds (`tools/code-design.ts`, run
   by the pre-commit hook and CI).
+- **A file over 400 lines is a prompt to look at what it does.** Lint warns
+  on one, and never fails on it (`max-lines` in `vite.config.ts`'s
+  `lint.rules`, lines of code only). The answer is a split by
+  responsibility, under `src/` into more features, never lines squeezed out
+  to pass. A file kept long stays so for a reason written beside it, at its
+  head (`// oxlint-disable max-lines -- <the reason>`), so the tree carries
+  no standing warning and the next one is seen.
 - **No mocks.** A test drives the real code. Where the code meets a true
   outer boundary (the network, the clock), the test hands in a fake written
   for that edge; vitest's fake clock is one. A test that mocks a module or

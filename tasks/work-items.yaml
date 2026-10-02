@@ -512,7 +512,9 @@ items:
       Every vp check prints one warning, no-control-regex at tools/selftest/gates.ts, from the regex
       that strips ANSI colours from a hook's output. A warning every run reads as noise, so the next
       real one is missed. Pinning the hook's colour off (NO_COLOR, FORCE_COLOR=0) would make the
-      regex unnecessary; failing that, a disable comment on the line saying why.
+      regex unnecessary; failing that, a disable comment on the line saying why. Once it is gone,
+      the code design self-test's whole-tree lint case (max-lines.ts) can forbid any warning, not
+      only max-lines's, so the next rule at warn starts clean too.
 
   # ---- phase 3 ----------------------------------------------------------------
   - id: T-032
@@ -537,7 +539,7 @@ items:
     title: A size tripwire on every linted file
     phase: 3
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-031]
     kind: task
     refs: [tasks/phase-3.yaml]
@@ -550,6 +552,21 @@ items:
     depends_on: [T-034]
     kind: task
     refs: [tasks/phase-3.yaml]
+
+  - id: p3-disable-says-why
+    title: A lint disable comment always says why
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: []
+    kind: idea
+    why: >
+      AGENTS.md has a file kept over 400 lines say why at its head, in
+      `// oxlint-disable max-lines -- <the reason>`, but nothing refuses the comment without its
+      reason, nor a disable of a code design rule, which would turn a refusal off as quietly as
+      the ratchet (T-035) is meant to make it loud. A static check of disable comments (a reason
+      after `--`; the code-design rules never disabled, only ratcheted or listed in
+      mockBoundaries) would hold both.
 
   - id: p3-browser-free-logic
     title: "A slice's logic never touches the browser"

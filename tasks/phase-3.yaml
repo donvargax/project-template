@@ -50,7 +50,11 @@
     when this was written, splits by the rule its cases prove. The
     self-test proves the warning lands on a file over the limit and not on
     one at it, that it does not fail lint, and that the template's own tree
-    trips it nowhere, the case that fails before the split.
+    trips it nowhere, the case that fails before the split. It did: lint
+    over the tree warned on the self-test, 498 lines of code in 552, and
+    on nothing once its cases were split into a file per rule. Lines of
+    code are counted, comments and blank lines aside, so the reasons a
+    file gives never push it over, nor are cut to get it under.
   done_when:
     - run: vp check
     - run: node tools/selftest/code-design.ts

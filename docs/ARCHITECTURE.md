@@ -74,6 +74,15 @@ The template's own, in the shape AGENTS.md's "Code design" gives a feature:
   `test.include` runs only `src/**/*.test.ts` and `tools/**/*.test.ts`, so
   vitest runs exactly the shape the rule allows, and the rule refuses the
   rest, which would otherwise sit in the tree never running.
+- **A size tripwire**, lint's `max-lines` at `warn` (max 400) in
+  `vite.config.ts`'s `lint.rules`, so it reaches every file lint reads:
+  `src/`, `e2e/`, `tools/` and the root configs. A warning, which fails
+  neither a commit nor CI: a long file is a prompt to look at its
+  responsibilities, and may stay long with its reason beside it in a disable
+  comment. Blank lines and comments are not counted, since the comments here
+  carry the code's reasons, and counted they would be what pushes a file
+  over and the first thing cut to get it under. The template's tree trips it
+  nowhere, so the next warning is seen.
 
 ## The scenarios
 
@@ -312,15 +321,21 @@ the commands, `itos <command> --help` each one).
   only prose and that the plan's E2E command selects exactly what it claims,
   against Playwright's own listing; `code-design.ts` writes slices of its own
   into a scratch worktree and shows that the code design gates (lint, the
-  static check, the pre-commit hook) refuse and allow what they should (lint's
-  no-mocks cases among them: each refused member of `vi`, `vi` reached every
-  way a test can, the clock allowed, a `mockBoundaries` file allowed; and the
-  static check's test placement: a test beside its file allowed, an orphan,
-  one in the wrong place or a folder of tests refused, and each other
-  spelling vitest's default would run, generated from its pattern), and
-  that CI runs them on every push: a table of cases, each the files it
-  writes, the gate that judges them and what a refusal must name (the rule
-  that refused), which the later code design gates extend. It runs nightly
+  static check, the pre-commit hook) refuse, warn and allow as they should,
+  and that CI runs them on every push. It is a runner over a table of cases,
+  each the files it writes, the gate that judges them and what the gate
+  must say, refusing or warning, or must not (a refusal or a warning counts
+  only when it names the rule). The cases sit in `code-design/`, one file
+  per rule, named after it and saying what its cases prove:
+  `slice-boundary.ts`, `no-mocks.ts` (each refused member of `vi`, `vi`
+  reached every way a test can, the clock allowed, a `mockBoundaries` file
+  allowed), `max-lines.ts` (the warning on a file over the limit in `src/`,
+  `e2e/` and `tools/`, lint still passing, none at the limit or over the
+  template's own tree), `slice-folders.ts` and `tests-beside-code.ts` (a
+  test beside its file allowed, an orphan, one in the wrong place or a
+  folder of tests refused, and each other spelling vitest's default would
+  run, generated from its pattern); `case.ts` holds a case's shape. A new
+  rule adds a file of cases and joins the runner's list. It runs nightly
   too. They share `cli.ts`, which asks itos's
   command line.
 - **The changelog** (`tools/changelog.ts`, `cliff.toml`): git-cliff groups
