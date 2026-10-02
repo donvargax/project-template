@@ -19,6 +19,18 @@ const staged = {
 // template.
 const mockBoundaries: string[] = [];
 
+// The files under src/ allowed the browser's globals, which
+// code-design/no-browser refuses everywhere else: the project's edge, where
+// the page, the address, the storages and the network are reached, and the
+// logic is handed what it needs. The template's is the composition root. A
+// project adds its framework's view files, which render the page, as in
+//   "src/**/*.tsx", // the views: React's components
+//   "src/**/*.vue", // the views: Vue's single-file components
+// and its infrastructure slices, each wrapping one browser API behind a small
+// interface its logic is handed, and its tests hand a fake:
+//   "src/storage/storage.ts", // localStorage, behind the Store the slices take
+const browserEdges: string[] = ["src/main.ts"];
+
 // The code design ratchet (code-design-ratchet.yaml): each of lint's code
 // design rules is off for the files listed under it, each a debt with a work
 // item, while a project adopts the rule on code that breaks it.
@@ -81,6 +93,15 @@ const lint: NonNullable<UserConfig["lint"]> = {
 			rules: { "code-design/no-mocks": "error" },
 		},
 		{ files: mockBoundaries, rules: { "code-design/no-mocks": "off" } },
+		{
+			// A slice's logic never touches the browser: its globals are refused in
+			// every file under src/, tests included, whatever its kind (a
+			// framework's view files among them), but the edge's. The clock stays
+			// outside; e2e/ drives a browser, and tools/ runs in Node.
+			files: ["src/**"],
+			rules: { "code-design/no-browser": "error" },
+		},
+		{ files: browserEdges, rules: { "code-design/no-browser": "off" } },
 		...ratcheted,
 		{
 			// E2E tests drive the browser, never the production modules.

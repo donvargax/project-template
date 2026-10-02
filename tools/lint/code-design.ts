@@ -19,6 +19,18 @@
 // destructured, or as a global. no-restricted-properties cannot: it names an
 // object by its text, so a renamed or destructured `vi` escapes it. A file
 // vite.config.ts allows (`mockBoundaries`) has the rule turned off there.
+//
+// no-browser: a slice's logic never touches the browser. It refuses the
+// browser's globals (the page, the address, the storages, the network, the
+// window's events and viewport, the frame clock, the observers, the DOM's
+// classes) as values, whether named bare or reached through globalThis, self
+// or window, by member, destructuring or an alias. It reads oxlint's scope
+// analysis: only a reference the file leaves unresolved is the global, so a
+// local binding that shadows one passes, and so does a name in a type, which
+// names nothing at run time. globalThis and self handed on, or read by a
+// computed key, pass: they are the runtime's too, and hold the clock and the
+// rest the rule leaves alone. The files vite.config.ts names (`browserEdges`)
+// have the rule turned off there: the browser lives at the project's edge.
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 
 const root = resolve(import.meta.dirname, "../..");
@@ -38,6 +50,7 @@ interface Node {
 }
 interface Variable {
 	name: string;
+	defs?: unknown[];
 	references: { identifier: Node; isRead(): boolean }[];
 }
 interface Context {
@@ -45,7 +58,9 @@ interface Context {
 	report(problem: { node: Literal | Node; message: string }): void;
 	sourceCode: {
 		getDeclaredVariables(node: Node): Variable[];
-		scopeManager: { globalScope: { through: { identifier: Node }[] } | null };
+		scopeManager: {
+			globalScope: { through: { identifier: Node }[]; variables: Variable[] } | null;
+		};
 	};
 }
 
@@ -290,7 +305,189 @@ const noMocks = {
 	create: noMocksIn,
 };
 
+// The browser's globals, each what a page, and no other runtime, offers.
+// The clock (Date, setTimeout, performance) is not among them: vitest's fake
+// clock is its edge. Nor is what Node offers too (URL, fetch's Request and
+// Response, Blob, TextEncoder, crypto, structuredClone, EventTarget), which
+// a unit test runs as the page does; fetch itself is here, since a slice that
+// calls it reaches the network, an edge handed in.
+const browser = new Set([
+	// The page and the address.
+	"window",
+	"document",
+	"navigator",
+	"location",
+	"history",
+	"customElements",
+	"getSelection",
+	// Storage.
+	"localStorage",
+	"sessionStorage",
+	"indexedDB",
+	"caches",
+	// The network.
+	"fetch",
+	"XMLHttpRequest",
+	"WebSocket",
+	"EventSource",
+	// The window's events, its dialogs and other windows.
+	"addEventListener",
+	"removeEventListener",
+	"dispatchEvent",
+	"open",
+	"alert",
+	"confirm",
+	"prompt",
+	// The viewport, its scroll and its styles.
+	"innerWidth",
+	"innerHeight",
+	"outerWidth",
+	"outerHeight",
+	"devicePixelRatio",
+	"screen",
+	"visualViewport",
+	"scrollX",
+	"scrollY",
+	"pageXOffset",
+	"pageYOffset",
+	"scroll",
+	"scrollTo",
+	"scrollBy",
+	"getComputedStyle",
+	"matchMedia",
+	// The frame clock and idle time, the page's and not the timers'.
+	"requestAnimationFrame",
+	"cancelAnimationFrame",
+	"requestIdleCallback",
+	"cancelIdleCallback",
+	// The observers.
+	"ResizeObserver",
+	"IntersectionObserver",
+	"MutationObserver",
+	// The DOM's classes as values (instanceof, new, extends); as types they
+	// pass.
+	"Node",
+	"Element",
+	"Document",
+	"Window",
+	"DOMParser",
+	"Image",
+	"Audio",
+]);
+const isBrowser = (name: string) => browser.has(name) || /^(HTML|SVG)\w*Element$/.test(name);
+// The names the global object goes by, besides window, which is the
+// browser's itself.
+const globalObjects = new Set(["globalThis", "self"]);
+
+// TypeScript's nodes that run: an expression with a type beside it, and the
+// declarations whose bodies or values are code. Every other TS node is a
+// type, and a name directly inside one names nothing at run time.
+const runtimeTS = new Set([
+	...wrappers,
+	"TSInstantiationExpression",
+	"TSEnumDeclaration",
+	"TSEnumMember",
+	"TSModuleDeclaration",
+	"TSModuleBlock",
+	"TSExportAssignment",
+	"TSParameterProperty",
+	"TSImportEqualsDeclaration",
+	"TSExternalModuleReference",
+]);
+const inType = (node: Node) => {
+	const type = node.parent?.type ?? "";
+	return type.startsWith("TS") && !runtimeTS.has(type);
+};
+
+const edge =
+	'a slice\'s logic is handed what it needs, behind an interface its tests hand a fake; the browser lives in the files vite.config.ts names in browserEdges (AGENTS.md, "Code design")';
+
+function noBrowserIn(context: Context) {
+	const report = (node: Node, what: string) =>
+		context.report({ node, message: `${what} is the browser's: ${edge}` });
+
+	// A value known to be the global object, named `via`: what the code reads
+	// of it.
+	const follow = (variable: Variable | undefined, via: string) => {
+		for (const reference of variable?.references ?? [])
+			if (reference.isRead()) use(reference.identifier, via);
+	};
+	const destructure = (pattern: Node, via: string, declarator: Node): void => {
+		if (pattern.type === "Identifier")
+			return follow(
+				context.sourceCode.getDeclaredVariables(declarator).find((v) => v.name === pattern.name),
+				via,
+			);
+		if (pattern.type === "AssignmentPattern")
+			return destructure(pattern.left as Node, via, declarator);
+		if (pattern.type !== "ObjectPattern") return;
+		for (const property of pattern.properties as Node[]) {
+			if (property.type === "RestElement") continue;
+			const name = nameOf(property.key, property.computed);
+			if (name === undefined) continue;
+			if (isBrowser(name)) report(property, `${via}.${name}`);
+			else if (globalObjects.has(name))
+				destructure(property.value as Node, `${via}.${name}`, declarator);
+		}
+	};
+	function use(node: Node, via: string): void {
+		const parent = node.parent;
+		if (!parent || inType(node)) return;
+		if (parent.type === "MemberExpression" && parent.object === node) {
+			const name = nameOf(parent.property, parent.computed);
+			if (name === undefined) return;
+			if (isBrowser(name)) report(parent, `${via}.${name}`);
+			else if (globalObjects.has(name)) use(parent, `${via}.${name}`);
+		} else if (wrappers.has(parent.type)) use(parent, via);
+		else if (parent.type === "VariableDeclarator" && parent.init === node)
+			destructure(parent.id as Node, via, parent);
+	}
+
+	// The references to the globals: those no binding of the file resolves,
+	// and those resolved to a global the linter declares (globalThis, ES's
+	// own; the browser's, where a project's lint config sets its env), which
+	// the file never declares.
+	const globals = () => {
+		const scope = context.sourceCode.scopeManager.globalScope;
+		const declared = (scope?.variables ?? []).filter((v) => !v.defs?.length);
+		return [
+			...(scope?.through ?? []).map((r) => r.identifier),
+			...declared.flatMap((v) => v.references.map((r) => r.identifier)),
+		];
+	};
+
+	return {
+		"Program:exit"() {
+			for (const identifier of globals()) {
+				const name = identifier.name ?? "";
+				if (inType(identifier)) continue;
+				if (globalObjects.has(name)) {
+					use(identifier, name);
+					continue;
+				}
+				if (!isBrowser(name)) continue;
+				// window.fetch is named so, window alone as itself.
+				const parent = identifier.parent;
+				const member =
+					name === "window" && parent?.type === "MemberExpression" && parent.object === identifier
+						? nameOf(parent.property, parent.computed)
+						: undefined;
+				if (member !== undefined && parent) report(parent, `window.${member}`);
+				else report(identifier, name);
+			}
+		},
+	};
+}
+
+const noBrowser = {
+	meta: {
+		type: "problem",
+		docs: { description: "A slice's logic never touches the browser, which lives at the edge" },
+	},
+	create: noBrowserIn,
+};
+
 export default {
 	meta: { name: "code-design" },
-	rules: { "slice-boundary": sliceBoundary, "no-mocks": noMocks },
+	rules: { "slice-boundary": sliceBoundary, "no-mocks": noMocks, "no-browser": noBrowser },
 };
