@@ -13,8 +13,8 @@
 # commit-msg hook and by CI's commit re-check, refuses a file joining the list
 # of a rule that an earlier commit already named.
 #
-# An entry is a debt with an owner, unlike vite.config.ts's mockBoundaries, a
-# permanent exception that names its boundary:
+# An entry is a debt with an owner, unlike vite.config.ts's mockBoundaries and
+# browserEdges, permanent exceptions that name their boundary or their edge:
 #
 #   no-mocks:
 #     - { file: src/sync/sync.test.ts, item: p4-sync-without-mocks }

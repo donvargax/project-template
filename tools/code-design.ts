@@ -20,8 +20,8 @@
 //     script's and lint's; each entry's file is there and still breaks its
 //     rule (asked of lint with the list left out, for a lint rule), and its
 //     work item is open; and no comment turns a code design rule off, or
-//     every rule, since the list and mockBoundaries are the only ways a file
-//     is let off one.
+//     every rule, since the list, mockBoundaries and browserEdges are the
+//     only ways a file is let off one.
 //
 //   node tools/code-design.ts               the tree (pre-commit hook, CI step)
 //   node tools/code-design.ts --staged      the ratchet's joining rule, HEAD
@@ -218,7 +218,7 @@ function disableProblems(files: string[]): string[] {
 				.filter(bypasses)
 				.map(
 					({ line, rules, directive }) =>
-						`${file}:${line} turns ${rules.length ? rules.join(", ") : "every rule"} off by an ${directive} comment: a code design rule is off for a file only by ${RATCHET} or vite.config.ts's mockBoundaries`,
+						`${file}:${line} turns ${rules.length ? rules.join(", ") : "every rule"} off by an ${directive} comment: a code design rule is off for a file only by ${RATCHET}, or vite.config.ts's mockBoundaries or browserEdges`,
 				);
 		});
 }
