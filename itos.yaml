@@ -134,12 +134,18 @@ ci:
   # The code design self-test runs here too, so a vite-plus release that leaves
   # the lint plugin loaded but silent shows the next morning; it is fast, so a
   # push naming a task that checks it still runs it (not nightly_only).
+  # Then every done task's static checks: a push runs a task's checks only when
+  # it names the task, so a change elsewhere could break a done one unseen.
+  # Last, since the plan stops at its first failure: a red task check never
+  # hides a red scenario (a red scenario hides the task checks, itos's known
+  # issue p1-nightly-past-first-failure).
   nightly:
     steps:
       [
         { tests: scenario, whole: true },
         node tools/selftest/gates.ts,
         node tools/selftest/code-design.ts,
+        { tasks: done, cost: static },
       ]
   wait_on_status: [todo] # a named task nobody has started waits
   stop_at_first_failure: true
