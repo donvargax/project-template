@@ -632,7 +632,7 @@ items:
     title: Renovate run from the repository's own workflow
     phase: 3
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-026, T-038]
     kind: task
     refs: [tasks/phase-3.yaml]
@@ -652,18 +652,30 @@ items:
       whole CI again, T-011 asks GitHub and needs a token the nightly's run step does not pass, and
       the E2E subsets join the whole run already made.
 
-  - id: p3-action-moves-check-runtime
-    title: A moved action pin runs the action-runtime check
+  - id: p3-renovate-token-expiry
+    title: A reminder or a check before RENOVATE_TOKEN expires
     phase: 3
     owner: null
     status: todo
-    depends_on: [T-038]
+    depends_on: [T-039]
     kind: idea
     why: >
-      T-038's check (node tools/action-runtimes.ts) is late, so a push runs it only when a commit
-      names T-038, and the nightly runs only the done tasks' static checks. An action moved by
-      hand under another task, or by Renovate (T-039), whose commits name T-026 alone, can land on
-      a Node runtime older than 24 unseen until a run warns. Either the actions group's commit
-      names T-038 too (commitTrailers for the github-actions rule in .github/renovate.json5), or
-      the nightly runs it, which p3-nightly-late-done-checks would, with GH_TOKEN passed to the
-      nightly's itos step, which has none today.
+      Renovate runs with RENOVATE_TOKEN, a fine-grained token of the owner's (T-039), and a
+      fine-grained token expires. Once it has, every renovate.yml run fails, and nothing says so
+      but a red run in the Actions tab: no issue is opened, as the nightly opens one, and the
+      dependencies stop moving unseen. A check of the token's expiry (or of the workflow's last
+      run) that opens an issue ahead of time, or a dated reminder, would hold it.
+
+  - id: p3-major-commit-subjects
+    title: A major group's commit says it is the majors
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: [T-039]
+    kind: idea
+    why: >
+      Renovate's npm groups land as `build: update npm dependencies` whether the branch holds the
+      minors or the majors (renovate/major-npm-dependencies), so the history and the changelog
+      cannot tell a major update from its subject; only the pull request's title, opened when CI is
+      red, adds "(major)". A commitMessageSuffix for major updates in .github/renovate.json5 would
+      say it, its message checked against the commit rules as T-039's were.
