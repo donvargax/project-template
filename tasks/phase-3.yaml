@@ -207,3 +207,58 @@
         u=$(node -p 'require("./package.json").devDependencies.itos') &&
         d=$(mktemp -d) && cd "$d" && curl -fsSLO "$u" &&
         curl -fsSLO "${u%/*}/checksums.txt" && sha256sum -c checksums.txt
+
+- id: T-038
+  type: ci
+  title: The workflows' actions on the Node 24 runtime
+  why: >
+    GitHub deprecated the Node 20 runtime for actions and forces the actions
+    that still target it onto Node 24, warning on every run: CI's and the
+    nightly's latest runs on 2026-10-03 named actions/checkout v4.4.0, and
+    actions/upload-artifact v4.6.2 targets Node 20 too. A forced action runs
+    on a runtime it was never released for, and stops running when GitHub
+    removes Node 20. Nothing moves them while Renovate does not run here
+    (T-039), so they move by hand to their current majors (v7.0.1 for both on
+    that day), pinned to the commit with the tag beside it as T-025 has it,
+    their release notes' breaking changes met in the workflows.
+    voidzero-dev/setup-vp v1.21.0 already targets node24. The check resolves
+    every action the workflows use at the commit they pin, through GitHub's
+    API, and fails on one whose action.yml targets a Node runtime older than
+    24, so the next deprecation is caught the same way.
+  done_when:
+    - run: actionlint
+    - run: node tools/action-runtimes.ts
+
+- id: T-039
+  type: ci
+  title: Renovate run from the repository's own workflow
+  why: >
+    T-026 configured Renovate for its hosted app, which needs an account
+    with Mend, the app installed on the repository and a Dependency
+    Dashboard issue; the owner wants none of the three (2026-10-03).
+    Renovate is open source and runs as well from a workflow here:
+    .github/workflows/renovate.yml runs renovatebot/github-action, pinned to
+    a commit as T-025 has it, on a schedule and by hand
+    (workflow_dispatch), never on a push or a pull request. A self-hosted
+    Renovate lands a branch only when it runs again and finds the branch's
+    CI green, so the schedule runs often enough after the weekly window
+    for an update to land the same day, the window itself staying in
+    .github/renovate.json5. The token is a fine-grained personal access
+    token of the owner's, limited to this repository, in the secret
+    RENOVATE_TOKEN (contents, workflows, pull requests and issues read and
+    write; commit statuses and checks read): GITHUB_TOKEN will not do,
+    because a push made with it starts no workflow, so CI would never run
+    on renovate/** and nothing would land, and it cannot be given the
+    workflows permission the actions' updates need. The config turns the
+    Dependency Dashboard and onboarding off, so Renovate opens no issue
+    and no pull request unless CI goes red on a branch. Majors keep landing
+    on green CI as T-026 has them: the owner chose it on 2026-10-03, over
+    int128's practice (github.com/int128/renovate-base) of holding majors
+    for a human unless a package is on an allowlist.
+  done_when:
+    - run: npx --yes --package renovate -- renovate-config-validator --strict
+    - run: actionlint
+    - run: >-
+        gh run list --workflow renovate.yml --branch main --limit 1
+        --json conclusion --jq '.[0].conclusion == "success"' | grep -qx true
+      after: push

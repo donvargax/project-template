@@ -414,6 +414,8 @@ items:
       (enabledManagers) and @types/node's majors are disabled in .github/renovate.json5. The update
       bot should move both together, the file's major to the next LTS and the types with it, as one
       grouped update, or a check should hold the types' major to the file's.
+      int128's typescript-action-renovate-config does the first: node and @types/node matched by
+      depName in one group, allowedVersions capped at the major chosen, the cap raised by hand.
 
   - id: p2-run-step-pins-updated
     title: The versions pinned inside run steps, moved by the update bot
@@ -443,6 +445,8 @@ items:
       the hour before Monday's run, a hijacked one among them, is on main before anyone has had the
       time to pull it. A minimum release age (Renovate's minimumReleaseAge, or pnpm's own for every
       install) would make the bot wait some days after a release before it takes it.
+      int128's renovate-base holds every update 7 days (minimumReleaseAge, with
+      minimumReleaseAgeBehaviour timestamp-optional for releases that carry no timestamp).
 
   - id: p2-lockfile-maintenance
     title: The lockfile's transitive dependencies refreshed by the update bot
@@ -456,6 +460,7 @@ items:
       moves need, so a transitive dependency stays at the version first locked until something
       above it moves. Its lock file maintenance, on the same weekly schedule and landed the same
       way, would re-resolve the whole lockfile, which T-027's scan would otherwise find stale.
+      int128's renovate-base runs it in the same weekly window as the other updates.
 
   - id: p2-actionlint-binary-hash
     title: actionlint's binary checked against its release's hash
@@ -611,6 +616,25 @@ items:
     owner: donvargax
     status: done
     depends_on: [T-036]
+    kind: task
+    refs: [tasks/phase-3.yaml]
+
+  - id: T-038
+    title: The workflows' actions on the Node 24 runtime
+    phase: 3
+    owner: donvargax
+    status: todo
+    depends_on: [T-025]
+    kind: task
+    refs: [tasks/phase-3.yaml]
+
+  - id: T-039
+    title: Renovate run from the repository's own workflow
+    phase: 3
+    owner: donvargax
+    status: blocked
+    depends_on: [T-026, T-038]
+    blocked_by: the owner creates the RENOVATE_TOKEN secret (a fine-grained token for this repository)
     kind: task
     refs: [tasks/phase-3.yaml]
 
