@@ -129,11 +129,18 @@ The template's own, in the shape AGENTS.md's "Code design" gives a feature:
   `CODE_DESIGN_RATCHET=ignore` making `vite.config.ts` leave the list out,
   a switch that can only make lint stricter); and its item is in the
   registry (`work.registry`) and not `done`. It also reads every comment of
-  every file lint lints, by TypeScript's parser, and refuses an
-  `oxlint-disable` or `eslint-disable` (file, line, next line, block; any
-  case, a JSDoc star) that names a code design rule or no rule at all, since
-  either would turn a rule off past the list; a component file (`.vue`,
-  `.svelte`, `.astro`) is read by its comment markers. The pure part, the
+  every file lint lints, by oxc's parser (rolldown's `parseSync`, from
+  `vite/rolldown/utils`, which the catalog's `vite` brings), the one oxlint
+  reads its directives with, so a directive's words in a string, a
+  template, a regex or JSX text are not a comment, as they are not to
+  oxlint; and it refuses an `oxlint-disable` or `eslint-disable` (file,
+  line, next line, block; any case, a JSDoc star) that names a code design
+  rule or no rule at all, since either would turn a rule off past the list.
+  A component file (`.vue`, `.svelte`, `.astro`), and a script that does
+  not parse, is read by its comment markers, so a syntax error hides no
+  comment; a `.js` file is parsed with JSX on, as oxlint lints one. The
+  reader once used TypeScript's compiler API, which TypeScript 7 does not
+  ship (T-041): no tool here imports `typescript`. The pure part, the
   list's reading, the joining rule and the comment reader, is
   `tools/code-design-ratchet.ts`, with its unit test. **The joining rule**
   is the script's range form: a file joins a rule's list only in the commit
@@ -389,7 +396,12 @@ the commands, `itos <command> --help` each one).
   update would leave stale (`p2-run-step-pins-updated`). What is pending is the
   `renovate/**` branches, and a red one's pull request.
 - **The type check** is `vp check`'s, over one `tsconfig.json` that covers
-  `src/`, `e2e/`, `tools/` and the root `*.config.ts` alike. Beside `strict`
+  `src/`, `e2e/`, `tools/` and the root `*.config.ts` alike. It runs through
+  tsgolint on TypeScript 7, the compiler rewritten in Go (`typeCheck` in
+  `vite.config.ts`'s lint options), and the `typescript` package is 7 too,
+  for `tsc` and the version the tools report; TypeScript 7 has no
+  JavaScript compiler API, so a tool that needs to parse a script uses
+  oxc's parser, as the ratchet's comment reader does. Beside `strict`
   it turns on `noUncheckedIndexedAccess` (an index may be undefined, so it is
   narrowed before use), `exactOptionalPropertyTypes` (an optional property is
   absent, not undefined; one that may be handed on undefined says

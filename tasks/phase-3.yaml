@@ -332,6 +332,19 @@
     hand, with whatever TypeScript 7 asks of tsconfig.json and the code, so
     the move is proven rather than left to Renovate's branch, which then
     has nothing to do and closes.
+
+    Settled so: the reader is oxc's parser as rolldown exposes it,
+    parseSync from vite/rolldown/utils, already in the tree through the
+    catalog's vite (vite-plus-core), so no dependency was added; it is the
+    parser oxlint reads its directives with, so the gate reads what oxlint
+    reads. TypeScript's scan had also taken a directive's words in JSX text
+    for a comment, which oxlint does not honour; oxc does not. Kept by hand
+    where oxc differs from TypeScript: a .js file is parsed with JSX on and a
+    .cjs one as CommonJS, a hashbang is not a comment, and a script that
+    does not parse is read by its comment markers, so a syntax error hides
+    no comment. TypeScript 7 asked nothing of tsconfig.json, which uses none
+    of the options it removed and sets the defaults it changed; the type
+    check was already TypeScript 7's, through tsgolint.
   done_when:
     - run: node tools/selftest/code-design.ts
     - run: vp exec tsc --version | grep -q 'Version 7\.'

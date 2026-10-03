@@ -619,10 +619,26 @@ items:
     title: TypeScript 7
     phase: 3
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-040]
     kind: task
     refs: [tasks/phase-3.yaml]
+
+  - id: p3-release-age-on-main
+    title: Renovate's seven-day wait holds a release off main
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: [T-040]
+    kind: idea
+    why: >
+      The presets wait seven days on every release, and the owner's pnpm refuses any release under
+      seven days old (minimumReleaseAge), yet Renovate's 9b2cf16 landed fallow 3.31.0 and
+      @types/node 24.19.1 on main three and two days after they were published. Until they age, the
+      owner's `vp install` refuses main's lockfile and cannot resolve a change to it either, so
+      T-041 edited the lockfile by hand. Why the wait did not hold them is to be found (the central
+      run's options, the presets' minimumReleaseAge, what the branch automerge waits on), and a
+      check could compare each landed version's publish time with its commit's.
 
   - id: p3-major-commit-subjects
     title: A major group's commit says it is the majors
