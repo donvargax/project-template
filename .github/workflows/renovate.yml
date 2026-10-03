@@ -1,0 +1,87 @@
+name: Renovate
+
+# Renovate, run here rather than as Mend's hosted app: no Renovate account, no
+# app installed on the repository, no Dependency Dashboard issue (T-039). It
+# reads .github/renovate.json5, makes its branches in the weekly window there,
+# and lands each one on main once CI is green on it (branch automerge), as one
+# build commit. A self-hosted Renovate sees CI's result only when it runs
+# again, so it lands nothing between runs: the schedule below is what decides
+# how soon a green branch reaches main.
+on:
+  schedule:
+    # Hourly all Monday (UTC). The window in renovate.json5 is Monday 00:00 to
+    # 05:59, when branches are made; CI on a branch takes minutes, so the next
+    # hourly run lands it, the same morning. Each time main moves past a
+    # branch before it lands, one run rebases it, CI runs again on it, and the
+    # next run lands it: two hours a move, so even a busy Monday leaves the
+    # rest of the day to land the week's updates.
+    - cron: "17 * * * 1"
+    # Every four hours the rest of the week, for what Monday left: a branch
+    # main moved past later, or one that went green once a fix landed on main.
+    # Hourly every day would land those sooner, at six times the runs for
+    # what is, most weeks, nothing to do.
+    - cron: "17 */4 * * 0,2-6"
+  # By hand, from the Actions tab or `gh workflow run renovate.yml`. Such a
+  # run keeps to the window like a scheduled one, so outside it it only rebases
+  # and lands; outside-window makes the week's branches now too
+  # (`gh workflow run renovate.yml -f outside-window=true`).
+  workflow_dispatch:
+    inputs:
+      outside-window:
+        description: Make branches now, outside the weekly window in renovate.json5
+        type: boolean
+        default: false
+
+# The job's own GITHUB_TOKEN gets nothing: Renovate works with RENOVATE_TOKEN
+# (below), and the image it pulls is public.
+permissions: {}
+
+# One run at a time: a run that starts while another is still pushing could
+# rebase or land the same branch twice. A newer scheduled run waits for the
+# running one instead of cancelling it.
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    # A run takes a few minutes; one that hangs is stopped well before the
+    # next hourly run is due.
+    timeout-minutes: 30
+    steps:
+      # Renovate clones the repository itself, so there is no checkout.
+      - uses: renovatebot/github-action@6d26fcf0275dc65624cbc3d51fe78bc773f98321 # v46.3.6
+        with:
+          # The owner's fine-grained token, for this repository alone: contents,
+          # workflows, pull requests and issues read and write; commit statuses
+          # and checks read. GITHUB_TOKEN will not do. A push made with it
+          # starts no workflow, so CI would never run on renovate/** and branch
+          # automerge would never see a green branch to land; and it cannot be
+          # given the workflows permission a commit that changes
+          # .github/workflows/** needs, which every move of an action's pin is.
+          token: ${{ secrets.RENOVATE_TOKEN }}
+          # The Renovate release the action runs, pinned rather than the action's
+          # default (a major tag, so whatever release is newest on the day).
+          # Renovate moves it itself, in the workflow actions group.
+          renovate-version: 44.132.4
+        env:
+          # This repository alone; autodiscover stays off (its default).
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          # Global options, which renovate.json5 may not hold. No onboarding
+          # pull request: the config is already here. And no run without it: a
+          # repository whose renovate.json5 is gone is left alone, not updated
+          # with Renovate's defaults.
+          RENOVATE_ONBOARDING: "false"
+          RENOVATE_REQUIRE_CONFIG: required
+          # A dispatched run asked to make branches outside the window overrides
+          # renovate.json5's schedule, through force, the one global option a
+          # repository's config cannot override back. Empty, Renovate ignores it.
+          RENOVATE_FORCE: ${{ inputs.outside-window && '{"schedule":["at any time"]}' || '' }}
+          # The author of Renovate's commits. Unset, Renovate takes the token
+          # owner's name and email, and its commits would read as the owner's
+          # own. Named Renovate, so the history says what wrote them; with the
+          # repository owner's no-reply address, the account whose token pushed
+          # them and who answers for them, and no one else's (not Mend's
+          # renovate-bot, which did not make them).
+          RENOVATE_GIT_AUTHOR: Renovate <${{ github.repository_owner_id }}+${{ github.repository_owner }}@users.noreply.github.com>
