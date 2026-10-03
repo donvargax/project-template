@@ -595,7 +595,7 @@ items:
     title: Renovate's shared rules from the owner's presets
     phase: 3
     owner: donvargax
-    status: todo
+    status: done
     depends_on: [T-039]
     kind: task
     refs: [tasks/phase-3.yaml]
