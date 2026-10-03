@@ -5,11 +5,13 @@
 // static check's, and no other file is; an entry is refused when its work
 // item is missing or done, or its file is gone or no longer breaks the rule;
 // a list must name every rule the gates hold, and no other; a comment that
-// disables a code design rule, or every rule, is refused, and one that
-// disables another rule allowed. The files a commit lists with a rule's
-// adoption are allowed, at commit and in CI; one a later commit adds is
-// refused, and so is one listed under a rule taken off the list and named
-// again, while a commit that takes a file off is allowed.
+// disables a code design rule, or every rule, is refused, in JSX too, and
+// one that disables another rule allowed, and so are a directive's words in
+// a string, a template, a regex or JSX text, where oxlint reads none (T-041).
+// The files a commit lists with a rule's adoption are allowed, at commit and
+// in CI; one a later commit adds is refused, and so is one listed under a
+// rule taken off the list and named again, while a commit that takes a file
+// off is allowed.
 import { readFileSync } from "node:fs";
 import { parse, stringify } from "yaml";
 import { slice, type Case } from "./case.ts";
@@ -178,13 +180,23 @@ export const cases: Case[] = [
 		files: commented("// oxlint-disable max-lines -- a reason"),
 	},
 	{
-		name: "a disable comment's words in a string and a template",
+		name: "a disable comment's words in a string, a template, a regex and JSX text",
 		gate: "static",
 		files: {
 			...slice("alpha"),
 			"src/alpha/alpha.ts":
-				'export const alpha = "// oxlint-disable";\nexport const beta = `/* eslint-disable */`;\n',
+				'export const alpha = "// oxlint-disable";\nexport const beta = `/* eslint-disable */`;\nexport const gamma = /[/*] oxlint-disable/;\n',
+			"src/alpha/view.tsx": "export const view = (\n\t<p>\n\t\t// oxlint-disable\n\t</p>\n);\n",
 		},
+	},
+	{
+		name: "a comment that disables every rule, in JSX",
+		gate: "static",
+		files: {
+			...slice("alpha"),
+			"src/alpha/view.tsx": "export const view = (\n\t<p>{/* oxlint-disable */}</p>\n);\n",
+		},
+		says: "src/alpha/view.tsx:2 turns every rule off by an oxlint-disable comment",
 	},
 	{
 		name: "the files listed by the commit that brings a rule into force",

@@ -124,10 +124,65 @@ describe("disables", () => {
 		expect(of(text)).toEqual([[1, "oxlint-disable", ""]]);
 	});
 
+	it("reads a comment inside a template's substitution, and not its literal text", () => {
+		const text = [
+			"const t = `// oxlint-disable ${",
+			"\t/* eslint-disable code-design/no-mocks */ 1",
+			"} /* oxlint-disable */`;",
+		].join("\n");
+		expect(of(text)).toEqual([[2, "eslint-disable", "code-design/no-mocks"]]);
+	});
+
+	it("leaves out a directive's words in a regex's class and after a string's */", () => {
+		const text = [
+			"const r = /[/*] oxlint-disable/;",
+			'const s = "*/ oxlint-disable"; // eslint-disable-line max-lines',
+		].join("\n");
+		expect(of(text)).toEqual([[2, "eslint-disable-line", "max-lines"]]);
+	});
+
+	it("reads a comment in a type, and leaves out a hashbang", () => {
+		const text = "#!oxlint-disable\ntype T = /* oxlint-disable */ string;";
+		expect(of(text, "a.mts")).toEqual([[2, "oxlint-disable", ""]]);
+	});
+
+	it("counts lines across CRLF endings and characters outside ASCII", () => {
+		const text = 'const é = "ü";\r\n// ä\r\n// oxlint-disable';
+		expect(of(text)).toEqual([[3, "oxlint-disable", ""]]);
+	});
+
+	it("reads a JSX comment, and not JSX text, in .tsx, .jsx and .js", () => {
+		const text = [
+			"const x = <div>",
+			"\t// oxlint-disable",
+			"\t{/* oxlint-disable code-design/no-browser */}",
+			"</div>;",
+		].join("\n");
+		for (const file of ["a.tsx", "a.jsx", "a.js"])
+			expect(of(text, file)).toEqual([[3, "oxlint-disable", "code-design/no-browser"]]);
+	});
+
+	it("reads a CommonJS file's top-level return as CommonJS allows it", () => {
+		const text = 'if (x) return; // oxlint-disable\nconst s = "// eslint-disable";';
+		expect(of(text, "a.cjs")).toEqual([[1, "oxlint-disable", ""]]);
+	});
+
+	it("reads a script that does not parse by its comment markers", () => {
+		expect(of("const = ;\n// oxlint-disable code-design/no-mocks", "a.cts")).toEqual([
+			[2, "oxlint-disable", "code-design/no-mocks"],
+		]);
+	});
+
 	it("reads a component file's scripts by their comment markers", () => {
 		expect(
 			of("<script>\n// oxlint-disable-next-line code-design/no-browser\n</script>", "a.vue"),
 		).toEqual([[2, "oxlint-disable-next-line", "code-design/no-browser"]]);
+		expect(
+			of("<script>\nf(); /* eslint-disable code-design/no-mocks */ g();\n</script>", "a.svelte"),
+		).toEqual([[2, "eslint-disable", "code-design/no-mocks"]]);
+		expect(of("---\n// oxlint-disable\n---\n<p>oxlint-disable</p>", "a.astro")).toEqual([
+			[2, "oxlint-disable", ""],
+		]);
 	});
 });
 

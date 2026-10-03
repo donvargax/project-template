@@ -4,7 +4,9 @@
 // gate that runs them over the tree, the index and a pushed range is
 // tools/code-design.ts.
 import { parse } from "yaml";
-import ts from "typescript";
+// oxc's parser, as rolldown exposes it: the parser oxlint itself is built on,
+// already in the tree through vite-plus (the catalog's `vite`).
+import { parseSync, type ParserOptions } from "vite/rolldown/utils";
 
 export const RATCHET = "code-design-ratchet.yaml";
 
@@ -76,9 +78,11 @@ export interface Disable {
 }
 
 // The files whose comments are read: every kind oxlint lints. A script's
-// comments are found by TypeScript's parser, so a directive's words inside a
-// string, a template or a regular expression are not one; a component file's
-// (its scripts inside markup) by any `//` or `/*` that starts one.
+// comments are found by oxc's parser, the one oxlint reads its directives
+// with, so a directive's words inside a string, a template, a regular
+// expression or JSX text are not one, and a script that does not parse is
+// read as a component file is; a component file's (its scripts inside
+// markup) by any `//` or `/*` that starts one.
 export const scripts = /\.[cm]?[jt]sx?$/;
 export const components = /\.(?:vue|svelte|astro)$/;
 
@@ -98,27 +102,29 @@ function read(body: string, line: number): Disable | undefined {
 	return { line, directive: match[1]!, rules: names.split(/[\s,]+/).filter(Boolean) };
 }
 
+// The line a position is on, by every line break a script may hold.
+const lineOf = (text: string, position: number) =>
+	text.slice(0, position).split(/\r\n?|[\n\u2028\u2029]/).length;
+
+// How a JavaScript file is parsed: with JSX, which oxc leaves off for a .js
+// file, and as CommonJS for a .cjs one, and a module or a script by what the
+// file holds otherwise. TypeScript's files by their extension alone.
+const javascript = (fileName: string): ParserOptions =>
+	/\.[cm]?js$/.test(fileName)
+		? { lang: "jsx", sourceType: fileName.endsWith(".cjs") ? "commonjs" : "unambiguous" }
+		: {};
+
 // The disable comments of a file oxlint lints, by line.
 export function disables(fileName: string, text: string): Disable[] {
 	if (!scripts.test(fileName)) return inMarkup(text);
-	const source = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, false);
-	const seen = new Set<number>();
-	const found: Disable[] = [];
-	const comment = (range: ts.CommentRange) => {
-		if (seen.has(range.pos)) return;
-		seen.add(range.pos);
-		const block = range.kind === ts.SyntaxKind.MultiLineCommentTrivia;
-		const body = text.slice(range.pos + 2, range.end - (block ? 2 : 0));
-		const disable = read(body, source.getLineAndCharacterOfPosition(range.pos).line + 1);
-		if (disable) found.push(disable);
-	};
-	const visit = (node: ts.Node) => {
-		for (const range of ts.getLeadingCommentRanges(text, node.pos) ?? []) comment(range);
-		for (const range of ts.getTrailingCommentRanges(text, node.end) ?? []) comment(range);
-		for (const child of node.getChildren(source)) visit(child);
-	};
-	visit(source);
-	return found.sort((a, b) => a.line - b.line);
+	const { comments, errors } = parseSync(fileName, text, javascript(fileName));
+	if (errors.length) return inMarkup(text);
+	return comments.flatMap(({ value, start }) => {
+		// A hashbang is reported as a line comment, and is not one.
+		if (text.startsWith("#!", start)) return [];
+		const disable = read(value, 0);
+		return disable ? [{ ...disable, line: lineOf(text, start) }] : [];
+	});
 }
 
 // Whether a disable comment turns a code design rule off: it names one, or
