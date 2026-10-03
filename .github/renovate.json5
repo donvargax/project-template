@@ -7,8 +7,8 @@
 	$schema: "https://docs.renovatebot.com/renovate-schema.json",
 	// The owner's shared presets (github.com/donvargax/renovate-config): the
 	// weekly window (Mondays 00:00-05:59 UTC), a seven-day wait on every
-	// release, lockfile maintenance, automerge on green CI, no Dependency
-	// Dashboard; and node with @types/node as one update, capped at the major
+	// release, lockfile maintenance, automerge on green CI, a Dependency
+	// Dashboard issue (from v1.1.0); and node with @types/node as one update, capped at the major
 	// the preset's release allows. Pinned by tag: the renovate-config manager
 	// moves the pin, and a new Node major arrives as a new major of the preset.
 	extends: [

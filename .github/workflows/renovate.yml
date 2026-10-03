@@ -1,7 +1,7 @@
 name: Renovate
 
-# Renovate, run here rather than as Mend's hosted app: no Renovate account, no
-# app installed on the repository, no Dependency Dashboard issue (T-039). It
+# Renovate, run here rather than as Mend's hosted app: no Renovate account and
+# no app installed on the repository (T-039). It
 # reads .github/renovate.json5, makes its branches in the weekly window there,
 # and lands each one on main once CI is green on it (branch automerge), as one
 # build commit. A self-hosted Renovate sees CI's result only when it runs
