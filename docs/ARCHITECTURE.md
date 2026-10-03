@@ -289,11 +289,11 @@ the commands, `itos <command> --help` each one).
     commit to compare with. Nothing else: the scenarios and the task checks
     are CI's.
 - **The Node version** is written once, in `.node-version`: Vite+ reads it
-  first when it resolves a project's Node, and both workflows hand it to
+  first when it resolves a project's Node, and CI and the nightly hand it to
   setup-vp (`node-version-file`), which runs `vp env use` with it and keys
   the dependency cache on it. No workflow names a version of its own.
 - **The workflows' actions** are pinned to commits, because a tag can be
-  moved to other code: every `uses:` in `ci.yml` and `nightly.yml` names the
+  moved to other code: every `uses:` in the workflows names the
   full 40-character SHA of the commit its release tag pointed at, with that
   precise release beside it as a comment
   (`uses: actions/checkout@<sha> # v7.0.1`), for the reader and the update
@@ -313,24 +313,57 @@ the commands, `itos <command> --help` each one).
   nightly's GitHub CLI comes from its release tarball, checked against the
   release's SHA-256, as is the vulnerability scan's osv-scanner (below).
 - **Dependency updates** arrive through Renovate (`.github/renovate.json5`),
-  weekly, early on Monday (UTC), for the npm dependencies, `packageManager`,
-  the catalog in `pnpm-workspace.yaml` and the workflows' `uses:` pins,
-  which it moves SHA and comment together. One branch holds the npm updates
-  and one the actions, with majors on a branch of their own in each
-  (`renovate/npm-dependencies`, `renovate/major-npm-dependencies`, and the
-  same for `workflow-actions`). It lands them by branch automerge: CI runs
-  on `renovate/**` pushes too, and once it is green there Renovate
-  fast-forwards `main` to the branch, so an update is one commit on `main`
-  with no pull request and no merge commit; it opens a pull request only
-  when CI is red. Each commit is written for the rules `itos verify`
-  re-checks: `build: update <group>` (`semanticCommitType`, scope off), a
-  body listing what moved from which version (`commitBody`), and
-  `Task: T-026` as a trailer (`commitTrailers`). Left out: the itos tarball
-  (`ignoreDeps`), which moves by hand ("itos, pinned" in the README);
-  `.node-version` (only the `npm` and `github-actions` managers are on);
-  `@types/node`'s majors, held to the runtime's; and the versions pinned
-  inside `run:` steps and `tools/bin/vuln-scan`. Its Dependency Dashboard
-  issue lists what is pending.
+  run by the repository's own workflow, `.github/workflows/renovate.yml`
+  (T-039): no Renovate account, no app installed, no Dependency Dashboard. It
+  runs `renovatebot/github-action`, pinned to a commit like every action, with
+  the Renovate release pinned too (`renovate-version`, which Renovate moves
+  in the actions group), on a schedule and by hand, never on a push, against
+  this repository alone, one run at a time (`concurrency`), 30 minutes at
+  most. It pushes with `RENOVATE_TOKEN`, the owner's fine-grained token for
+  this repository (contents, workflows, pull requests and issues read and
+  write; commit statuses and checks read): a push made with `GITHUB_TOKEN`
+  starts no workflow, so CI would never run on Renovate's branches, and it
+  cannot change `.github/workflows/**`, which an action's move edits. The
+  job's own `GITHUB_TOKEN` gets no permissions. The workflow passes the
+  global options `renovate.json5` may not hold: no onboarding, the config
+  required (a repository without it is left alone), and the git author,
+  `Renovate <id+owner@users.noreply.github.com>` from the repository owner,
+  so the history says what wrote a commit and the account whose token pushed
+  it answers for it, rather than the commit reading as the owner's own.
+  Renovate updates the npm dependencies, `packageManager`, the catalog in
+  `pnpm-workspace.yaml` and the workflows' `uses:` pins, which it moves SHA
+  and comment together. It makes branches weekly, in the window early on
+  Monday (UTC, `schedule`): one holds the npm updates and one the actions,
+  with majors on a branch of their own in each (`renovate/npm-dependencies`,
+  `renovate/major-npm-dependencies`, and the same for `workflow-actions`).
+  Majors land on green CI like the rest. It lands them by branch automerge:
+  CI runs on `renovate/**` pushes too, and when a later run of the workflow
+  finds CI green there, Renovate fast-forwards `main` to the branch, so an
+  update is one commit on `main` with no pull request and no merge commit; it
+  opens a pull request only when CI is red. A self-hosted Renovate sees CI's
+  result only when it runs again, so the cron decides how soon a green branch
+  lands: hourly all Monday, so the week's branches land the same day, a
+  branch `main` moved past is rebased by one run and landed by the next; then
+  every four hours on the other days, for what Monday left. Rebasing and
+  landing are not held to the window (`updateNotScheduled`, and
+  `automergeSchedule` at any time). A run dispatched by hand keeps to the
+  window too, unless asked with `outside-window`
+  (`gh workflow run renovate.yml -f outside-window=true`), which overrides the
+  schedule through the `force` global option. Each commit is written for the
+  rules `itos verify` re-checks: `build: update <group>`, or for a group
+  that moves one package `build: update <package> … to <version>`
+  (`semanticCommitType`, scope off), a body listing what moved from which
+  version (`commitBody`), and one `Task:` trailer (`commitTrailers`):
+  `Task: T-026` for the npm groups, `Task: T-026, T-038` for the actions, so
+  CI runs T-038's runtime check on every action Renovate moves. The trailer
+  is one top-level template that picks T-038 by the branch's manager, not a
+  group rule's: the option is merged by concatenation and Renovate applies
+  the rules more than once, so a rule's trailer is written twice. Left out: the itos
+  tarball (`ignoreDeps`), which moves by hand ("itos, pinned" in the
+  README); `.node-version` (only the `npm` and `github-actions` managers are
+  on); `@types/node`'s majors, held to the runtime's; and the versions pinned
+  inside `run:` steps and `tools/bin/vuln-scan`. What is pending is the
+  `renovate/**` branches, and a red one's pull request.
 - **The type check** is `vp check`'s, over one `tsconfig.json` that covers
   `src/`, `e2e/`, `tools/` and the root `*.config.ts` alike. Beside `strict`
   it turns on `noUncheckedIndexedAccess` (an index may be undefined, so it is

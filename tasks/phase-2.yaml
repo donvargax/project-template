@@ -73,8 +73,11 @@
     automerge lands an update on main with no pull request, as a build
     commit whose body says what moved and carries the Task footer every
     commit needs, and CI checks it as it checks any push. The itos tarball is
-    left out: it moves by its release notes' upgrading steps, by hand. The
-    Renovate app is installed on the repository by its owner.
+    left out: it moves by its release notes' upgrading steps, by hand.
+    Renovate runs from the repository's own scheduled workflow, with a token
+    of the owner's (T-039); the Renovate app this task first meant, installed
+    by the owner, was dropped on 2026-10-03 with its account and Dependency
+    Dashboard.
   done_when:
     - run: npx --yes --package renovate -- renovate-config-validator --strict
 

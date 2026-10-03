@@ -126,13 +126,19 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
    them, each with its reason.
 9. **Check.** `tools/bin/itos task --phase 0` runs every setup task's checks; push to
    `main` and CI runs on GitHub Actions with no secrets to configure.
-10. **Dependency updates.** Install the [Renovate](https://github.com/apps/renovate)
-    GitHub app on the repository (its owner does, once). From then on it lands
-    the week's updates on `main` by itself, each as one `build` commit once CI
-    is green on its branch (`.github/renovate.json5`, explained in
+10. **Dependency updates.** Renovate runs from the repository's own workflow
+    (`.github/workflows/renovate.yml`), with no Renovate account or app. Create
+    a fine-grained personal access token limited to the repository (contents,
+    workflows, pull requests and issues read and write; commit statuses and
+    checks read) and save it as the repository secret `RENOVATE_TOKEN`; the
+    owner does, once, and renews it before it expires. From then on Renovate
+    lands the week's updates on `main` by itself, each as one `build` commit
+    once CI is green on its branch (`.github/renovate.json5`, explained in
     `docs/ARCHITECTURE.md`). It pushes to `main` as everyone else does, so
-    `main` must not require pull requests. Until it is installed, nothing
-    moves the dependencies.
+    `main` must not require pull requests. Until the secret exists, its runs
+    fail and nothing moves the dependencies. To make the week's branches now
+    rather than in Monday's window:
+    `gh workflow run renovate.yml -f outside-window=true`.
 
 ## A code design rule on code that breaks it
 
