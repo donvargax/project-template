@@ -623,7 +623,7 @@ items:
     title: The workflows' actions on the Node 24 runtime
     phase: 3
     owner: donvargax
-    status: todo
+    status: doing
     depends_on: [T-025]
     kind: task
     refs: [tasks/phase-3.yaml]
@@ -632,9 +632,9 @@ items:
     title: Renovate run from the repository's own workflow
     phase: 3
     owner: donvargax
-    status: blocked
+    status: todo
     depends_on: [T-026, T-038]
-    blocked_by: the owner creates the RENOVATE_TOKEN secret (a fine-grained token for this repository)
+    deferred: the owner creates the RENOVATE_TOKEN secret, a fine-grained token for this repository
     kind: task
     refs: [tasks/phase-3.yaml]
 
