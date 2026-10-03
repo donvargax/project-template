@@ -49,9 +49,19 @@ jobs:
     # A run takes a few minutes; one that hangs is stopped well before the
     # next hourly run is due.
     timeout-minutes: 30
+    # A repository whose Renovate runs centrally, from a workflow of its
+    # owner's elsewhere (donvargax's github-admin, for this one), leaves the
+    # secret unset, and this run does nothing: two Renovates over one
+    # repository would rebase and land the same branches. A project with no
+    # such central run sets it (README, "First steps", step 10).
+    env:
+      HAS_TOKEN: ${{ secrets.RENOVATE_TOKEN != '' }}
     steps:
+      - if: env.HAS_TOKEN != 'true'
+        run: echo "RENOVATE_TOKEN is not set, so Renovate runs elsewhere, or not at all, for this repository."
       # Renovate clones the repository itself, so there is no checkout.
-      - uses: renovatebot/github-action@6d26fcf0275dc65624cbc3d51fe78bc773f98321 # v46.3.6
+      - if: env.HAS_TOKEN == 'true'
+        uses: renovatebot/github-action@6d26fcf0275dc65624cbc3d51fe78bc773f98321 # v46.3.6
         with:
           # The owner's fine-grained token, for this repository alone: contents,
           # workflows, pull requests and issues read and write; commit statuses
