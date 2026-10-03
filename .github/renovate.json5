@@ -1,7 +1,8 @@
 // Renovate: how the dependencies, the pnpm catalog and the workflows' pinned
 // actions stay current (T-026; docs/ARCHITECTURE.md, "The gates and CI").
 // Every update lands on main as one build commit, with no pull request, once
-// CI is green on its branch.
+// CI is green on its branch. Renovate runs from .github/workflows/renovate.yml
+// (T-039), which passes it the global options this file may not hold.
 {
 	$schema: "https://docs.renovatebot.com/renovate-schema.json",
 	extends: ["config:recommended"],
@@ -16,10 +17,16 @@
 	// (README, "itos, pinned").
 	ignoreDeps: ["itos"],
 
-	// Weekly: early on Monday, UTC. A branch made in the window is still
-	// rebased and landed after it.
+	// No Dependency Dashboard issue: what is pending is the renovate/** branches,
+	// and a branch CI fails on gets its pull request.
+	dependencyDashboard: false,
+
+	// Weekly: early on Monday, UTC. The window is for making branches; a branch
+	// made in it is still rebased (updateNotScheduled, on by default) and
+	// landed after it, on whichever run of the workflow finds it green.
 	timezone: "Etc/UTC",
 	schedule: ["* 0-5 * * 1"],
+	automergeSchedule: ["at any time"], // the default, written so no preset narrows it to the window
 
 	// Branch automerge: Renovate fast-forwards main to its branch once CI is
 	// green there (ci.yml runs on renovate/** for that), so no pull request is
@@ -28,10 +35,11 @@
 	automergeType: "branch",
 
 	// Every commit passes the commit-msg rules CI re-checks (itos verify):
-	// `build: <lowercase subject>`, a body saying what moved, the Task footer.
+	// `build: <lowercase subject>`, a body saying what moved, the Task footer
+	// (commitTrailers, in each group's rule below). A pinned action's new commit
+	// follows its version; the Renovate release the workflow runs has none.
 	semanticCommits: "enabled",
-	commitBody: "Renovate's weekly update, landed on main once CI passed on its branch.\n\n{{#each upgrades}}{{#unless @first}}\n{{/unless}}- {{{depName}}} {{{currentVersion}}} to {{{newVersion}}}{{#if (equals manager 'github-actions')}} ({{{newDigestShort}}}){{/if}}{{/each}}",
-	commitTrailers: ["Task: T-026"],
+	commitBody: "Renovate's weekly update, landed on main once CI passed on its branch.\n\n{{#each upgrades}}{{#unless @first}}\n{{/unless}}- {{{depName}}} {{{currentVersion}}} to {{{newVersion}}}{{#if newDigestShort}} ({{{newDigestShort}}}){{/if}}{{/each}}",
 
 	packageRules: [
 		{
@@ -45,12 +53,26 @@
 			// apart from the rest in each (separateMajorMinor).
 			matchManagers: ["npm"],
 			groupName: "npm dependencies",
+			commitTrailers: ["Task: T-026"],
 		},
 		{
 			matchManagers: ["github-actions"],
 			groupName: "workflow actions",
 			// uses: <sha> # vX.Y.Z, as T-025 wrote them: the SHA and the comment move together.
 			pinDigests: true,
+			// T-038 too, so CI runs its check that every action targets Node 24 on
+			// each move. One footer line, as a hand-written commit naming two tasks
+			// has it: commitTrailers is merged by concatenation, so the npm rule and
+			// this one each set their own rather than adding to a shared one.
+			commitTrailers: ["Task: T-026, T-038"],
+		},
+		{
+			// The Renovate release renovate.yml runs (renovate-version), which the
+			// action makes the image's tag: it moves by version alone, since Renovate
+			// cannot read back a digest written beside it.
+			matchManagers: ["github-actions"],
+			matchDatasources: ["docker"],
+			pinDigests: false,
 		},
 		{
 			// The Node types follow the runtime's major in .node-version, which
