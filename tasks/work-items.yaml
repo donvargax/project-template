@@ -400,23 +400,6 @@ items:
       a new project from the template's current rules and tooling may replace the GitHub template.
       To be discussed before it is specified.
 
-  - id: p2-node-types-follow-runtime
-    title: "@types/node moving with .node-version"
-    phase: 2
-    owner: donvargax
-    status: todo
-    depends_on: [T-026]
-    kind: idea
-    why: >
-      .node-version holds Node 24, and package.json's @types/node (^24) says the same major again,
-      so a move to Node 26 that leaves the types behind type-checks against an API the runtime no
-      longer matches. T-026 holds the line by leaving both still: Renovate's nodenv manager is off
-      (enabledManagers) and @types/node's majors are disabled in .github/renovate.json5. The update
-      bot should move both together, the file's major to the next LTS and the types with it, as one
-      grouped update, or a check should hold the types' major to the file's.
-      int128's typescript-action-renovate-config does the first: node and @types/node matched by
-      depName in one group, allowedVersions capped at the major chosen, the cap raised by hand.
-
   - id: p2-run-step-pins-updated
     title: The versions pinned inside run steps, moved by the update bot
     phase: 2
@@ -432,35 +415,6 @@ items:
       tools/bin/vuln-scan's osv-scanner version and the four platforms' hashes beside it. Without
       a custom manager for each they stay where they were pinned while everything around them
       moves.
-
-  - id: p2-update-release-age
-    title: A release old enough before the update bot takes it
-    phase: 2
-    owner: donvargax
-    status: todo
-    depends_on: [T-026]
-    kind: idea
-    why: >
-      Renovate lands an update on main as soon as CI is green on its branch, so a release published
-      the hour before Monday's run, a hijacked one among them, is on main before anyone has had the
-      time to pull it. A minimum release age (Renovate's minimumReleaseAge, or pnpm's own for every
-      install) would make the bot wait some days after a release before it takes it.
-      int128's renovate-base holds every update 7 days (minimumReleaseAge, with
-      minimumReleaseAgeBehaviour timestamp-optional for releases that carry no timestamp).
-
-  - id: p2-lockfile-maintenance
-    title: The lockfile's transitive dependencies refreshed by the update bot
-    phase: 2
-    owner: donvargax
-    status: todo
-    depends_on: [T-026]
-    kind: idea
-    why: >
-      Renovate moves what package.json and the catalog name, and the lockfile only as far as those
-      moves need, so a transitive dependency stays at the version first locked until something
-      above it moves. Its lock file maintenance, on the same weekly schedule and landed the same
-      way, would re-resolve the whole lockfile, which T-027's scan would otherwise find stale.
-      int128's renovate-base runs it in the same weekly window as the other updates.
 
   - id: p2-actionlint-binary-hash
     title: actionlint's binary checked against its release's hash
@@ -634,6 +588,15 @@ items:
     owner: donvargax
     status: done
     depends_on: [T-026, T-038]
+    kind: task
+    refs: [tasks/phase-3.yaml]
+
+  - id: T-040
+    title: Renovate's shared rules from the owner's presets
+    phase: 3
+    owner: donvargax
+    status: todo
+    depends_on: [T-039]
     kind: task
     refs: [tasks/phase-3.yaml]
 

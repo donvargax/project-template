@@ -276,3 +276,40 @@
         gh run list --workflow renovate.yml --branch main --status completed --limit 1
         --json conclusion --jq '.[0].conclusion == "success"' | grep -qx true
       after: push
+
+- id: T-040
+  type: build
+  title: Renovate's shared rules from the owner's presets
+  why: >
+    The owner's repositories share how they take updates, and int128's
+    setup (github.com/int128/renovate-base and
+    typescript-action-renovate-config, studied on 2026-10-03) keeps such
+    rules in versioned presets that every repository extends by tag.
+    renovate.json5 now extends github>donvargax/renovate-config and its
+    :vite-plus, pinned at v1.0.0, and keeps only what is this project's:
+    the managers, itos left out, branch automerge, the commit shape itos
+    checks, and the groups. The presets bring three ideas of phase 2: a
+    seven-day wait on every release (p2-update-release-age), lockfile
+    maintenance in the weekly window (p2-lockfile-maintenance), and node
+    with @types/node as one update under the major the preset allows, with
+    the nodenv manager on for .node-version (p2-node-types-follow-runtime).
+    Renovate's renovate-config manager moves the pin, so a new Node major
+    reaches every repository as a new major of the preset. Two flaws a dry
+    run showed before they landed: an npm group rule here would take
+    @types/node out of the preset's node group, so it leaves it out; and
+    lockfile maintenance names no package, so no package rule gave its
+    commit the build type, which lockFileMaintenance now does (the footer is
+    the top-level template). Majors now come one per branch, except the
+    toolchain the catalog pins together (vite, an alias of
+    @voidzero-dev/vite-plus-core, vite-plus, vitest and its coverage): the
+    first run grouped TypeScript 7, which drops the compiler API
+    tools/code-design-ratchet.ts reads, with vite-plus 1.0 and vitest 5, and
+    its red held all three back. The second check runs Renovate over the
+    repository: it exits 0 on an invalid config, so the check asks for the
+    line it prints only once the presets resolved and the dependencies were
+    extracted.
+  done_when:
+    - run: npx --yes --package renovate -- renovate-config-validator --strict
+    - run: >-
+        t=$(mktemp) && npx --yes --package renovate -- renovate --platform=local
+        --dry-run=extract > "$t" 2>&1; grep -q 'Extracted dependencies' "$t"
