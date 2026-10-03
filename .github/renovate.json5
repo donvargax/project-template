@@ -5,33 +5,36 @@
 // (T-039), which passes it the global options this file may not hold.
 {
 	$schema: "https://docs.renovatebot.com/renovate-schema.json",
-	extends: ["config:recommended"],
+	// The owner's shared presets (github.com/donvargax/renovate-config): the
+	// weekly window (Mondays 00:00-05:59 UTC), a seven-day wait on every
+	// release, lockfile maintenance, automerge on green CI, no Dependency
+	// Dashboard; and node with @types/node as one update, capped at the major
+	// the preset's release allows. Pinned by tag: the renovate-config manager
+	// moves the pin, and a new Node major arrives as a new major of the preset.
+	extends: [
+		"github>donvargax/renovate-config#v1.0.0",
+		"github>donvargax/renovate-config:vite-plus#v1.0.0",
+	],
 
 	// npm covers package.json, packageManager and the catalog in
-	// pnpm-workspace.yaml; github-actions the uses: lines. .node-version is left
-	// to p2-node-types-follow-runtime, the pins inside run: steps to
-	// p2-run-step-pins-updated.
-	enabledManagers: ["npm", "github-actions"],
+	// pnpm-workspace.yaml; github-actions the uses: lines; nodenv .node-version;
+	// renovate-config the presets' pins above. The pins inside run: steps are
+	// left to p2-run-step-pins-updated: each has a hash beside it that a
+	// version-only update would leave stale.
+	enabledManagers: ["npm", "github-actions", "nodenv", "renovate-config"],
 
 	// The itos tarball moves by its release notes' upgrading steps, by hand
 	// (README, "itos, pinned").
 	ignoreDeps: ["itos"],
 
-	// No Dependency Dashboard issue: what is pending is the renovate/** branches,
-	// and a branch CI fails on gets its pull request.
-	dependencyDashboard: false,
-
-	// Weekly: early on Monday, UTC. The window is for making branches; a branch
-	// made in it is still rebased (updateNotScheduled, on by default) and
-	// landed after it, on whichever run of the workflow finds it green.
-	timezone: "Etc/UTC",
-	schedule: ["* 0-5 * * 1"],
+	// The presets' window is for making branches; a branch made in it is still
+	// rebased (updateNotScheduled, on by default) and landed after it, on
+	// whichever run of the workflow finds it green.
 	automergeSchedule: ["at any time"], // the default, written so no preset narrows it to the window
 
 	// Branch automerge: Renovate fast-forwards main to its branch once CI is
 	// green there (ci.yml runs on renovate/** for that), so no pull request is
 	// opened unless CI goes red. main takes no merge commits.
-	automerge: true,
 	automergeType: "branch",
 
 	// Every commit passes the commit-msg rules CI re-checks (itos verify):
@@ -49,6 +52,15 @@
 	// twice.
 	commitTrailers: ["Task: T-026{{#if (equals manager 'github-actions')}}, T-038{{/if}}"],
 
+	// The presets turn lockfile maintenance on, in the same window. No package
+	// rule reaches it (it names no package), so its commit is given the same
+	// shape here: build, and a body; the footer is the one above.
+	lockFileMaintenance: {
+		semanticCommitType: "build",
+		semanticCommitScope: null,
+		commitBody: "Renovate's weekly lockfile maintenance: every dependency in pnpm-lock.yaml re-resolved\nwithin the ranges package.json and the catalog allow, landed on main once CI passed on its branch.",
+	},
+
 	packageRules: [
 		{
 			// After config:recommended's rules, which would make these chore or fix.
@@ -57,10 +69,27 @@
 			semanticCommitScope: null,
 		},
 		{
-			// One branch for the npm updates, one for the actions; majors come
-			// apart from the rest in each (separateMajorMinor).
+			// One branch for the npm updates, one for the actions. @types/node is
+			// left to the presets' node group, which a groupName here would override.
 			matchManagers: ["npm"],
+			matchPackageNames: ["!@types/node"],
 			groupName: "npm dependencies",
+		},
+		{
+			// A major comes on a branch of its own, so one that breaks the build
+			// (TypeScript 7, which drops the compiler API tools/ reads) holds back
+			// only itself, not every other major of the week.
+			matchManagers: ["npm"],
+			matchUpdateTypes: ["major"],
+			groupName: null,
+		},
+		{
+			// The toolchain the catalog in pnpm-workspace.yaml pins together moves
+			// together, majors too: vite is vite-plus's core (an alias of
+			// @voidzero-dev/vite-plus-core, the name a rule matches), and vitest
+			// runs under it.
+			matchPackageNames: ["@voidzero-dev/vite-plus-core", "vite-plus", "vitest", "@vitest/**"],
+			groupName: "vite-plus toolchain",
 		},
 		{
 			matchManagers: ["github-actions"],
@@ -75,13 +104,6 @@
 			matchManagers: ["github-actions"],
 			matchDatasources: ["docker"],
 			pinDigests: false,
-		},
-		{
-			// The Node types follow the runtime's major in .node-version, which
-			// nothing here moves: p2-node-types-follow-runtime.
-			matchPackageNames: ["@types/node"],
-			matchUpdateTypes: ["major"],
-			enabled: false,
 		},
 	],
 }
