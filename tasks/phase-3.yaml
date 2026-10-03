@@ -224,7 +224,17 @@
     voidzero-dev/setup-vp v1.21.0 already targets node24. The check resolves
     every action the workflows use at the commit they pin, through GitHub's
     API, and fails on one whose action.yml targets a Node runtime older than
-    24, so the next deprecation is caught the same way.
+    24, so the next deprecation is caught the same way. On 2026-10-03 it
+    found checkout v4.4.0 and upload-artifact v4.6.2 on node20 and passes
+    their v7.0.1 and setup-vp v1.21.0, all node24. The breaking changes
+    between v4 and v7 asked nothing of the workflows: checkout's credentials
+    in a file of their own (v6) and its refusal of a fork's pull request
+    under pull_request_target and workflow_run (v7) meet no step that fetches
+    or pushes and neither event, and upload-artifact's archive input (v7)
+    defaults to the zip it made before, its name, overwrite and hidden-file
+    defaults unchanged, with nothing downloading the artifact. The checkout
+    keeps no credentials (persist-credentials: false), since nothing needs
+    them and the dependency install runs third-party scripts.
   done_when:
     - run: actionlint
     - run: node tools/action-runtimes.ts

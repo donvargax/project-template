@@ -296,9 +296,17 @@ the commands, `itos <command> --help` each one).
   moved to other code: every `uses:` in `ci.yml` and `nightly.yml` names the
   full 40-character SHA of the commit its release tag pointed at, with that
   precise release beside it as a comment
-  (`uses: actions/checkout@<sha> # v4.4.0`), for the reader and the update
+  (`uses: actions/checkout@<sha> # v7.0.1`), for the reader and the update
   bot; an annotated tag is followed to its commit, not the tag object. A move
-  changes the SHA and the comment together. The tools a workflow installs are
+  changes the SHA and the comment together. Every action targets the Node 24
+  runtime or none (composite, docker): `tools/action-runtimes.ts` (T-038,
+  with its unit test) reads each step's remote action's `action.yml` at the
+  commit it pins, through `gh api`, and fails on a `runs.using` older than
+  `node24`, so an action GitHub would force onto a newer runtime is caught
+  before a run warns about it; a composite action's own `uses:` and a
+  reusable workflow's steps are not read. The checkout leaves no credentials
+  behind (`persist-credentials: false`): no step after it fetches or pushes,
+  and the dependency install runs third-party scripts. The tools a workflow installs are
   pinned the same way: actionlint's install script is fetched from its
   release's commit, not the tag, and asked for that release
   (`raw.githubusercontent.com/rhysd/actionlint/<sha>/…`, `1.7.12`), and the
