@@ -615,19 +615,20 @@ items:
       whole CI again, T-011 asks GitHub and needs a token the nightly's run step does not pass, and
       the E2E subsets join the whole run already made.
 
-  - id: p3-renovate-token-expiry
-    title: A reminder or a check before RENOVATE_TOKEN expires
+  - id: p3-typescript-7
+    title: The code design ratchet's comment reader off TypeScript's JavaScript API
     phase: 3
     owner: null
     status: todo
-    depends_on: [T-039]
+    depends_on: [T-040]
     kind: idea
     why: >
-      Renovate runs with RENOVATE_TOKEN, a fine-grained token of the owner's (T-039), and a
-      fine-grained token expires. Once it has, every renovate.yml run fails, and nothing says so
-      but a red run in the Actions tab: no issue is opened, as the nightly opens one, and the
-      dependencies stop moving unseen. A check of the token's expiry (or of the workflow's last
-      run) that opens an issue ahead of time, or a dated reminder, would hold it.
+      TypeScript 7, the compiler rewritten in Go, ships no JavaScript compiler API, and
+      tools/code-design-ratchet.ts reads every script's comments with it (ts.createSourceFile,
+      SyntaxKind, getLeadingCommentRanges): Renovate's branch moving typescript to 7 is red at vp
+      check on seven type errors, and stays so, on a branch of its own, until the reader moves to
+      a parser that is not TypeScript's (oxc's, which vite-plus already carries, is one) or keeps
+      TypeScript 6 under an alias for tools alone.
 
   - id: p3-major-commit-subjects
     title: A major group's commit says it is the majors
