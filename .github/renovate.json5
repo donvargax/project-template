@@ -35,11 +35,19 @@
 	automergeType: "branch",
 
 	// Every commit passes the commit-msg rules CI re-checks (itos verify):
-	// `build: <lowercase subject>`, a body saying what moved, the Task footer
-	// (commitTrailers, in each group's rule below). A pinned action's new commit
-	// follows its version; the Renovate release the workflow runs has none.
+	// `build: <lowercase subject>`, a body saying what moved, the Task footer. A
+	// pinned action's new commit follows its version (github-tags); an npm
+	// package's digest is its lockfile integrity, and the Renovate release the
+	// workflow runs has none, so neither shows one.
 	semanticCommits: "enabled",
-	commitBody: "Renovate's weekly update, landed on main once CI passed on its branch.\n\n{{#each upgrades}}{{#unless @first}}\n{{/unless}}- {{{depName}}} {{{currentVersion}}} to {{{newVersion}}}{{#if newDigestShort}} ({{{newDigestShort}}}){{/if}}{{/each}}",
+	commitBody: "Renovate's weekly update, landed on main once CI passed on its branch.\n\n{{#each upgrades}}{{#unless @first}}\n{{/unless}}- {{{depName}}} {{{currentVersion}}} to {{{newVersion}}}{{#if (equals datasource 'github-tags')}} ({{{newDigestShort}}}){{/if}}{{/each}}",
+	// The actions' commits name T-038 too, so CI runs its check that every
+	// action targets Node 24 on each move. One footer line, as a hand-written
+	// commit naming two tasks has it, chosen by the branch's manager here rather
+	// than in the groups' rules: commitTrailers is merged by concatenation, and
+	// Renovate applies the rules more than once, so a rule's trailer is written
+	// twice.
+	commitTrailers: ["Task: T-026{{#if (equals manager 'github-actions')}}, T-038{{/if}}"],
 
 	packageRules: [
 		{
@@ -53,18 +61,12 @@
 			// apart from the rest in each (separateMajorMinor).
 			matchManagers: ["npm"],
 			groupName: "npm dependencies",
-			commitTrailers: ["Task: T-026"],
 		},
 		{
 			matchManagers: ["github-actions"],
 			groupName: "workflow actions",
 			// uses: <sha> # vX.Y.Z, as T-025 wrote them: the SHA and the comment move together.
 			pinDigests: true,
-			// T-038 too, so CI runs its check that every action targets Node 24 on
-			// each move. One footer line, as a hand-written commit naming two tasks
-			// has it: commitTrailers is merged by concatenation, so the npm rule and
-			// this one each set their own rather than adding to a shared one.
-			commitTrailers: ["Task: T-026, T-038"],
 		},
 		{
 			// The Renovate release renovate.yml runs (renovate-version), which the
