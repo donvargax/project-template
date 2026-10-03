@@ -50,13 +50,14 @@
     a full commit SHA, with its tag beside it as a comment for the reader and
     the update bot, and the actionlint install script is fetched from a
     commit, not a tag: the same rule package.json follows for the itos
-    tarball.
+    tarball. The checks read every workflow, renovate.yml (T-039) among
+    them.
   done_when:
     - fails: >-
         grep -PnH 'uses:\s*[^\s#]+@(?![0-9a-f]{40}(\s|$))'
-        .github/workflows/ci.yml .github/workflows/nightly.yml
+        .github/workflows/*.yml
       cost: static
-    - fails: grep -nE 'raw\.githubusercontent\.com/[^ ]+/v[0-9]' .github/workflows/ci.yml .github/workflows/nightly.yml
+    - fails: grep -nE 'raw\.githubusercontent\.com/[^ ]+/v[0-9]' .github/workflows/*.yml
       cost: static
     - run: actionlint
 

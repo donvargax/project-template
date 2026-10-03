@@ -264,11 +264,15 @@
     and no pull request unless CI goes red on a branch. Majors keep landing
     on green CI as T-026 has them: the owner chose it on 2026-10-03, over
     int128's practice (github.com/int128/renovate-base) of holding majors
-    for a human unless a package is on an allowlist.
+    for a human unless a package is on an allowlist. The last check reads the
+    newest finished run on main: a run still going has no conclusion yet, so
+    a push naming T-039 while Renovate runs, hourly on Mondays, would fail on
+    it, as would CI on a branch Renovate pushes in that run while the range
+    from main's last green run still holds a commit naming T-039.
   done_when:
     - run: npx --yes --package renovate -- renovate-config-validator --strict
     - run: actionlint
     - run: >-
-        gh run list --workflow renovate.yml --branch main --limit 1
+        gh run list --workflow renovate.yml --branch main --status completed --limit 1
         --json conclusion --jq '.[0].conclusion == "success"' | grep -qx true
       after: push
