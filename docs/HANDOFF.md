@@ -46,8 +46,8 @@ Read the newest CI run and the newest nightly on `main` before beginning
    - **Left from the old grouping:** pull request #1 and the
      `renovate/major-npm-dependencies` branch. Renovate should close and
      prune them; if it does not, close them by hand.
-2. **`p3-typescript-7`:** specify it as a task and hand it out, so
-   TypeScript 7 can land.
+2. **T-041, TypeScript 7:** the code design ratchet's comment reader off
+   TypeScript's JavaScript API, then typescript moved to 7 by hand.
 3. **The small ideas that need no decision,** specified as tasks:
    `p2-control-regex-warning`, `p3-disable-says-why`,
    `p2-vuln-scan-negative-proof`, `p2-actionlint-binary-hash`,

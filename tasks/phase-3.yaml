@@ -313,3 +313,25 @@
     - run: >-
         t=$(mktemp) && npx --yes --package renovate -- renovate --platform=local
         --dry-run=extract > "$t" 2>&1; grep -q 'Extracted dependencies' "$t"
+
+- id: T-041
+  type: build
+  title: TypeScript 7
+  why: >
+    TypeScript 7, the compiler rewritten in Go, ships no JavaScript compiler
+    API, and tools/code-design-ratchet.ts read every script's comments with
+    it (ts.createSourceFile, SyntaxKind, getLeadingCommentRanges), the one
+    file in the repository that does: Renovate's branch moving typescript to
+    7 was red at vp check on seven type errors. The comment reader is what
+    refuses a disable comment that turns a code design rule off, or every
+    rule, so the ratchet cannot be bypassed by one; it needs a parser that
+    reports a script's comments and tells them from text that only looks
+    like one, in a string or a template. It moves to a parser that is not
+    TypeScript's (oxc's parser, of the toolchain vite-plus is built on, is
+    the first to weigh), and typescript then moves to 7 in this task, by
+    hand, with whatever TypeScript 7 asks of tsconfig.json and the code, so
+    the move is proven rather than left to Renovate's branch, which then
+    has nothing to do and closes.
+  done_when:
+    - run: node tools/selftest/code-design.ts
+    - run: vp exec tsc --version | grep -q 'Version 7\.'

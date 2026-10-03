@@ -615,20 +615,14 @@ items:
       whole CI again, T-011 asks GitHub and needs a token the nightly's run step does not pass, and
       the E2E subsets join the whole run already made.
 
-  - id: p3-typescript-7
-    title: The code design ratchet's comment reader off TypeScript's JavaScript API
+  - id: T-041
+    title: TypeScript 7
     phase: 3
-    owner: null
+    owner: donvargax
     status: todo
     depends_on: [T-040]
-    kind: idea
-    why: >
-      TypeScript 7, the compiler rewritten in Go, ships no JavaScript compiler API, and
-      tools/code-design-ratchet.ts reads every script's comments with it (ts.createSourceFile,
-      SyntaxKind, getLeadingCommentRanges): Renovate's branch moving typescript to 7 is red at vp
-      check on seven type errors, and stays so, on a branch of its own, until the reader moves to
-      a parser that is not TypeScript's (oxc's, which vite-plus already carries, is one) or keeps
-      TypeScript 6 under an alias for tools alone.
+    kind: task
+    refs: [tasks/phase-3.yaml]
 
   - id: p3-major-commit-subjects
     title: A major group's commit says it is the majors
