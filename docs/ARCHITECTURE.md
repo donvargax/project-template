@@ -314,7 +314,7 @@ the commands, `itos <command> --help` each one).
   release's SHA-256, as is the vulnerability scan's osv-scanner (below).
 - **Dependency updates** arrive through Renovate (`.github/renovate.json5`),
   run by the repository's own workflow, `.github/workflows/renovate.yml`
-  (T-039): no Renovate account, no app installed, no Dependency Dashboard.
+  (T-039): no Renovate account, no app installed.
   The workflow runs only while the secret `RENOVATE_TOKEN` is set. This
   repository's owner runs Renovate centrally instead, from a workflow of
   theirs elsewhere with an app of their own, over every repository with a
@@ -342,7 +342,10 @@ the commands, `itos <command> --help` each one).
   Monday (UTC); a seven-day wait on every release (`minimumReleaseAge`), so a
   hijacked one has time to be pulled before it lands; lockfile maintenance in
   the same window, which re-resolves every transitive dependency within its
-  ranges; automerge; no Dependency Dashboard; and `node` with `@types/node`
+  ranges; automerge; a Dependency Dashboard issue, which Renovate edits on
+  each run with what it holds back and why (the release age, the window, a
+  red branch), what failed and every dependency it found, read when
+  something looks stuck and notifying nobody; and `node` with `@types/node`
   as one update, never past the major the preset's release allows, so the
   types cannot drift from `.node-version`. A new Node major is a new major of
   the preset: Renovate moves the pin, then the runtime and its types, each on
