@@ -135,10 +135,15 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
     lands the week's updates on `main` by itself, each as one `build` commit
     once CI is green on its branch (`.github/renovate.json5`, explained in
     `docs/ARCHITECTURE.md`). It pushes to `main` as everyone else does, so
-    `main` must not require pull requests. Until the secret exists, its runs
-    fail and nothing moves the dependencies. To make the week's branches now
-    rather than in Monday's window:
-    `gh workflow run renovate.yml -f outside-window=true`.
+    `main` must not require pull requests. Until the secret exists, the
+    workflow does nothing and nothing moves the dependencies. To make the
+    week's branches now rather than in Monday's window:
+    `gh workflow run renovate.yml -f outside-window=true`. An owner who runs
+    Renovate centrally for all their repositories, with an app of their own
+    (as donvargax does from a private repository of theirs), leaves the
+    secret unset: the repository's `renovate.json5` is all the central run
+    needs, and the workflow here stays idle so two Renovates never work one
+    repository.
 
 ## A code design rule on code that breaks it
 

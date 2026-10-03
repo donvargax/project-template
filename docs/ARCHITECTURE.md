@@ -314,7 +314,12 @@ the commands, `itos <command> --help` each one).
   release's SHA-256, as is the vulnerability scan's osv-scanner (below).
 - **Dependency updates** arrive through Renovate (`.github/renovate.json5`),
   run by the repository's own workflow, `.github/workflows/renovate.yml`
-  (T-039): no Renovate account, no app installed, no Dependency Dashboard. It
+  (T-039): no Renovate account, no app installed, no Dependency Dashboard.
+  The workflow runs only while the secret `RENOVATE_TOKEN` is set. This
+  repository's owner runs Renovate centrally instead, from a workflow of
+  theirs elsewhere with an app of their own, over every repository with a
+  Renovate config, so the secret is unset here and the workflow idles;
+  `renovate.json5` is read the same either way. It
   runs `renovatebot/github-action`, pinned to a commit like every action, with
   the Renovate release pinned too (`renovate-version`, which Renovate moves
   in the actions group), on a schedule and by hand, never on a push, against
