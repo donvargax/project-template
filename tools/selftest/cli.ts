@@ -1,6 +1,6 @@
 // What the self-tests share: a shell without the caller's git or CI
-// environment, and itos's own answers read from its command line (the
-// package ships no module to import).
+// environment, and itos's own answers read from its command line (itos is a
+// binary on the PATH, with no module to import).
 import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, symlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -85,7 +85,7 @@ export interface Plan {
 
 // `itos ci plan`, running nothing: `[from, to]`, or `--nightly` / `--whole`.
 export function plan(args: string[], cwd?: string): Plan {
-	const run = sh(`tools/bin/itos ci plan ${args.map(word).join(" ")} --json`, { cwd });
+	const run = sh(`itos ci plan ${args.map(word).join(" ")} --json`, { cwd });
 	if (run.status !== 0) throw new Error(`itos ci plan ${args.join(" ")} failed:\n${run.output}`);
 	return JSON.parse(run.stdout) as Plan;
 }

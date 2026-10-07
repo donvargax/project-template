@@ -23,8 +23,8 @@ env:
 jobs:
   # One job, always run, always reported: a prose-only push still gets its
   # green check, it just has less to prove. What each range has to run is
-  # decided by `tools/bin/itos ci run` (itos.yaml's `ci`), so it is the same
-  # decision locally.
+  # decided by `itos ci run` (itos.yaml's `ci`), so it is the same decision
+  # locally.
   ci:
     runs-on: ubuntu-latest
     steps:
@@ -34,28 +34,35 @@ jobs:
           # No step after this one fetches or pushes, so the token is not left on
           # disk for the dependency install's scripts to find.
           persist-credentials: false
+      # The itos launcher on the PATH, the release the action's tag names; it
+      # runs the release itos.yaml's `pin` names, checked against its hash.
+      # Moved with the pin, by `itos upgrade` (README, "itos, pinned").
+      - uses: donvargax/itos@58f7e3f430eec46da415929cd46d2f2ecef46af0 # v6.5.1
+        with:
+          version: 6.5.1 # the action installs the newest release for a ref that is not a tag
       - uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
         with:
           node-version-file: .node-version # the one place the Node version is written
           cache: true
       - run: vp install
       # Where the range starts, computed once for every step below: a pull
-      # request's base, else the last green run on main, else empty (run
-      # everything). See `tools/bin/itos ci range --help`. On a Renovate
-      # branch it is still main's last green run, which the branch is built
-      # on (else empty), so the range is what main would gain by landing it.
+      # request's base, else the head's nearest first parent with a green run
+      # of this workflow, on any branch, else empty (run everything). See
+      # `itos ci range --help`. On a Renovate branch that is the nearest
+      # commit CI proved, on the branch or on main below it, so the range is
+      # what the branch adds since.
       - name: Range
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          range=$(tools/bin/itos ci range --head "$TO" --base "$BASE")
+          range=$(itos ci range --head "$TO" --base "$BASE")
           echo "$range"
           echo "$range" >> "$GITHUB_ENV"
       - id: scope
-        run: tools/bin/itos ci scope "$FROM" "$TO" >> "$GITHUB_OUTPUT"
+        run: itos ci scope "$FROM" "$TO" >> "$GITHUB_OUTPUT"
       # The commit-msg hook's rules again, for commits made without hooks.
-      - run: tools/bin/itos verify "$FROM" "$TO"
+      - run: itos verify "$FROM" "$TO"
       - if: steps.scope.outputs.docs_only != 'true'
         run: vp exec playwright install --with-deps chromium
       # actionlint, for the task checks that lint the workflows: the runners
@@ -70,7 +77,7 @@ jobs:
       # run over the smoke set and the scenarios and task subsets the range
       # names; the whole suite runs in nightly.yml. GH_TOKEN is for the task
       # checks that ask GitHub.
-      - run: tools/bin/itos ci run "$FROM" "$TO"
+      - run: itos ci run "$FROM" "$TO"
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Upload Playwright failure artifacts

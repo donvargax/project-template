@@ -23,9 +23,11 @@
 	// version-only update would leave stale.
 	enabledManagers: ["npm", "github-actions", "nodenv", "renovate-config"],
 
-	// The itos tarball moves by its release notes' upgrading steps, by hand
-	// (README, "itos, pinned").
-	ignoreDeps: ["itos"],
+	// itos moves by hand, with `itos upgrade` and what each release asks
+	// (README, "itos, pinned"): the pin in itos.yaml and the action that
+	// installs the launcher in the workflows, its tag and its version input,
+	// move together.
+	ignoreDeps: ["donvargax/itos"],
 
 	// The presets' window is for making branches; a branch made in it is still
 	// rebased (updateNotScheduled, on by default) and landed after it, on

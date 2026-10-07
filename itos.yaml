@@ -2,12 +2,17 @@
 #
 # One file for every table the task tool reads: the ledger's layout, the
 # commit rules, the named tests, the CI plan, the work routing and the hooks.
-# itos (the release package.json pins, run by tools/bin/itos) loads it and
-# rejects a key it does not know; `ITOS_CONFIG` names another file. `$name` in
-# a path list stands for `commits.path_sets.<name>`. The range, the identity
-# and the people are providers.
+# itos (the global launcher on the PATH, running the release `pin` names)
+# loads it and rejects a key it does not know; `ITOS_CONFIG` names another
+# file. `$name` in a path list stands for `commits.path_sets.<name>`. The
+# range, the identity and the people are providers.
 version: 1
-requires: ">=0.5.0" # the oldest itos that runs the nightly's { tasks: done } step
+# The release every itos launcher runs here, checked against the SHA-256 of its
+# checksums.txt; `itos upgrade` moves it (README, "itos, pinned").
+pin:
+  version: 6.5.1
+  checksums: 1a0ac1e1fdb920668e3cba96cad9ea94d23d2c1b667fe4f60d5d77f1573a8a08
+requires: ">=6.0.0" # the oldest itos whose hooks live in the git config alone, as `hooks` has them
 shell: [sh, -c]
 
 ledger:
@@ -76,7 +81,7 @@ tests: # named tests, each kind behind an adapter
     recognize: # a task check read back as a selection, so CI runs it in the one run
       - { command: "vp run e2e", as: whole }
       - { command: "vp run e2e --grep {pattern}", as: pattern }
-      - { command: "tools/bin/itos tests smoke run scenario", as: smoke }
+      - { command: "itos tests smoke run scenario", as: smoke }
     smoke:
       { file: features/smoke.yaml, every_file: true, add_hint: "add one to features/smoke.yaml" }
     range_checks:
@@ -101,12 +106,12 @@ ci:
     - { run: vp check, cost: static }
     # The code design rules lint cannot hold; a step, not a task check, so every push runs it.
     - { run: node tools/code-design.ts, cost: static }
-    - { run: tools/bin/itos tests smoke check scenario, cost: static }
-    - { run: tools/bin/itos config check, cost: static } # the config, the ledger, the registry, the smoke set
+    - { run: itos tests smoke check scenario, cost: static }
+    - { run: itos config check, cost: static } # the config, the ledger, the registry, the smoke set
     - { run: vp run test:coverage, cost: late }
     - { run: vp build, cost: late }
     - { run: vp run audit, cost: late }
-    - { run: tools/bin/itos task T-007, cost: late } # the commit rules, proven on every push
+    - { run: itos task T-007, cost: late } # the commit rules, proven on every push
     - { tests: scenario } # the one merged run; late, as no pattern matches it
   prose: # a range that touches only these runs only the prose steps
     # The work registry is routing, not code: a push that only takes or closes
@@ -114,7 +119,7 @@ ci:
     paths: ["**/*.md", "docs/**", tasks/work-items.yaml]
     # The code design check too: closing a work item the ratchet still lists
     # is a registry change alone.
-    steps: [vp check, node tools/code-design.ts, tools/bin/itos config check]
+    steps: [vp check, node tools/code-design.ts, itos config check]
   cost:
     # Checks with no `cost:` of their own: static if a pattern matches, else
     # late. Only commands static by what they are: `sh -c` wraps anything, so a
@@ -150,14 +155,9 @@ ci:
   wait_on_status: [todo] # a named task nobody has started waits
   stop_at_first_failure: true
   range:
-    provider: github # or command (with command:, its stdout) or none
+    provider: github # or none
     github:
-      {
-        workflow: ci.yml,
-        branch: main,
-        repository_env: GITHUB_REPOSITORY,
-        token_env: [GITHUB_TOKEN, GH_TOKEN],
-      }
+      { workflow: ci.yml, repository_env: GITHUB_REPOSITORY, token_env: [GITHUB_TOKEN, GH_TOKEN] }
 
 work:
   groups_key: phases
@@ -165,10 +165,11 @@ work:
   # or all-contributorsrc (contributors[].login) or yaml (a list of logins)
   people:
     { source: all-contributors-md, file: CONTRIBUTORS.md, login_from: "https://github.com/{login}" }
-  # gh api user; or command (with command:, its stdout) or none (only --as)
+  # gh api user, or none (only --as)
   identity: { provider: github, hint: "pass --as <handle>" }
 
+# commit-msg and pre-push are declared in the clone's git config, calling the
+# global itos: `itos hook install`, once per clone. pre-commit is vp's
+# (.vite-hooks/pre-commit), which itos does not touch.
 hooks:
-  manager: vp # shims in .vite-hooks/, written by `itos hooks install`
-  bin: tools/bin/itos # what the shims call
   pre_push: { per_base: "vp test run --changed {base}", whole: "vp test run" }

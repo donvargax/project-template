@@ -35,7 +35,7 @@ function touching(paths: string[]): string {
 	return git(`commit-tree ${git("write-tree")} -p HEAD -m 'docs: touch paths'`);
 }
 const docsOnly = (paths: string[]) => {
-	const run = sh(`tools/bin/itos ci scope HEAD ${touching(paths)}`);
+	const run = sh(`itos ci scope HEAD ${touching(paths)}`);
 	assert.equal(run.status, 0, `itos ci scope failed:\n${run.output}`);
 	return run.stdout.trim() === "docs_only=true";
 };

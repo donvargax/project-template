@@ -7,9 +7,9 @@
 //
 //   - verify rejects the history while commits.since is unset;
 //   - the first commit the README describes passes the pre-commit and
-//     commit-msg hooks (run as the scripts they are: a scratch worktree has no
-//     hooks installed), which reject the same change under a header with no
-//     type;
+//     commit-msg hooks (run as the commands they are, vp's script and `itos
+//     hook commit-msg`, whatever the clone's git config declares), which
+//     reject the same change under a header with no type;
 //   - then verify, the config check and the changelog (whole, and filtered by
 //     the commit's task) pass.
 import { strict as assert } from "node:assert";
@@ -50,7 +50,7 @@ try {
 	// The audit's "new" is measured against it.
 	env.FALLOW_AUDIT_BASE = initial;
 
-	let result = run('tools/bin/itos verify "" HEAD');
+	let result = run('itos verify "" HEAD');
 	assert.equal(result.status, 1, `verify passed the squashed commit:\n${result.output}`);
 
 	// The first commit: commits.since names the squashed one, through the hooks.
@@ -69,10 +69,10 @@ try {
 		`pre-commit rejected the README's first commit:\n${result.output}`,
 	);
 	writeFileSync(message, "set commits.since\n");
-	result = run(`sh .vite-hooks/commit-msg ${message}`);
+	result = run(`itos hook commit-msg ${message}`);
 	assert.notEqual(result.status, 0, `commit-msg passed a header with no type:\n${result.output}`);
 	writeFileSync(message, FIRST);
-	result = run(`sh .vite-hooks/commit-msg ${message}`);
+	result = run(`itos hook commit-msg ${message}`);
 	assert.equal(
 		result.status,
 		0,
@@ -81,8 +81,8 @@ try {
 	git(`reset -q --hard ${git(`commit-tree ${git("write-tree")} -p HEAD -F ${message}`)}`);
 
 	for (const command of [
-		'tools/bin/itos verify "" HEAD',
-		"tools/bin/itos config check",
+		'itos verify "" HEAD',
+		"itos config check",
 		"node tools/changelog.ts",
 		"node tools/changelog.ts --task T-018",
 	]) {

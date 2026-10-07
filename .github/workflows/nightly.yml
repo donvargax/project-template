@@ -34,6 +34,10 @@ jobs:
           # No step after this one fetches or pushes, so the token is not left on
           # disk for the dependency install's scripts to find.
           persist-credentials: false
+      # The itos launcher on the PATH, as ci.yml installs it.
+      - uses: donvargax/itos@58f7e3f430eec46da415929cd46d2f2ecef46af0 # v6.5.1
+        with:
+          version: 6.5.1 # the action installs the newest release for a ref that is not a tag
       - uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
         with:
           node-version-file: .node-version # the one place the Node version is written
@@ -50,12 +54,20 @@ jobs:
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       # The output is kept for the issue below: the `✘` lines are the failing
       # scenarios, and a `CI failed at` line names the step or the task check
-      # that failed. pipefail, so tee does not hide the run's exit code.
+      # that failed. pipefail, so tee does not hide the run's exit code, which
+      # the issue reads too: 1 a failing step or check, 75 a failure that may
+      # pass when run again (a release server or GitHub's API out of reach),
+      # 70 an error itos cannot classify, 3 a missing environment (the pinned
+      # release not fetched or not matching its hash), 2 a usage or config
+      # error.
       - name: Nightly
         id: nightly
         run: |
-          set -o pipefail
-          tools/bin/itos ci run --nightly 2>&1 | tee "$RUNNER_TEMP/nightly.log"
+          set +e -o pipefail
+          itos ci run --nightly 2>&1 | tee "$RUNNER_TEMP/nightly.log"
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
       # The dependencies' known vulnerabilities: pnpm-lock.yaml scanned by
       # tools/bin/vuln-scan, the script a contributor runs, which installs its
       # pinned osv-scanner checked against the release's SHA-256. A new
@@ -101,11 +113,14 @@ jobs:
           "$RUNNER_TEMP/bin/gh" --version
       # Red: one open issue labelled nightly-red, opened by the first red run
       # and commented on by every later one, with the failing scenarios, the
-      # failing step or task check (itos's `CI failed at` line: `CI failed at
-      # T-… (<title>), its check: <command>` for a task's), what the
-      # vulnerability scan found, and the run's URL. With neither saved from a
-      # red nightly step, it failed before itos ran, and the issue says so. The
-      # label is created on the first red run.
+      # failing step or task check (itos's `CI failed at` line: `CI failed at:
+      # <step> (it exited <code>)` for a step's, `CI failed at T-… (<title>),
+      # its check: <command>` for a task's), what the vulnerability scan found,
+      # and the run's URL. With neither saved from a red nightly step, the
+      # issue says why by itos's exit code: one to retry (75), an itos bug to
+      # report (70), a missing environment (3) or a usage or config error (2);
+      # with no code, it failed before itos ran. The label is created on the
+      # first red run.
       - name: Open or comment on the Nightly red issue
         if: failure()
         env:
@@ -113,6 +128,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           NIGHTLY: ${{ steps.nightly.outcome }}
+          NIGHTLY_CODE: ${{ steps.nightly.outputs.code }}
           VULN_SCAN: ${{ steps.vuln-scan.outcome }}
         run: |
           log="$RUNNER_TEMP/nightly.log"
@@ -144,7 +160,14 @@ jobs:
             fi
             if [ "$NIGHTLY" != success ] && [ -z "$failing" ] && [ -z "$failed_at" ]; then
               echo
-              echo "No failing scenario and no failing step or task check in the nightly's output: it failed before itos ran. See the run's log."
+              case "$NIGHTLY_CODE" in
+                75) echo "itos exited 75: a release server or GitHub's API could not be reached or failed, so the nightly may pass when run again unchanged. See the run's log." ;;
+                70) echo "itos exited 70: an error it cannot classify, a bug in itos to report on donvargax/itos with the run's log." ;;
+                3) echo "itos exited 3: a missing environment, such as the release itos.yaml pins not fetched or not matching its hash. See the run's log." ;;
+                2) echo "itos exited 2: a usage or config error. See the run's log." ;;
+                "") echo "No failing scenario and no failing step or task check in the nightly's output: it failed before itos ran. See the run's log." ;;
+                *) echo "itos exited $NIGHTLY_CODE with no failing scenario and no failing step or task check in its output. See the run's log." ;;
+              esac
             fi
             if [ "$VULN_SCAN" = failure ]; then
               echo

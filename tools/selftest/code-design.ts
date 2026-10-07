@@ -84,10 +84,10 @@ const gates: Record<Gate, (files: string[]) => Run> = {
 		run(`vp lint --format default ${files.filter((f) => /\.tsx?$/.test(f)).join(" ")}`),
 	static: () => run("node tools/code-design.ts"),
 	"pre-commit": () => run("sh .vite-hooks/pre-commit"),
-	"commit-msg": () => run(`tools/bin/itos hook commit-msg ${word(message)}`),
+	"commit-msg": () => run(`itos hook commit-msg ${word(message)}`),
 	verify: () => {
 		commit(["-F", message]);
-		return run("tools/bin/itos verify HEAD~1 HEAD");
+		return run("itos verify HEAD~1 HEAD");
 	},
 };
 

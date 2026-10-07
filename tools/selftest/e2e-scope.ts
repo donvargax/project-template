@@ -71,20 +71,16 @@ const same = (a: Set<string>, b: Set<string>, what: string) => {
 };
 
 // The commands the scenario kind's `recognize` reads as a run of scenarios.
-const SMOKE_RUN = "tools/bin/itos tests smoke run scenario";
+const SMOKE_RUN = "itos tests smoke run scenario";
 const isScenarioRun = (command: string) => isE2eRun(command) || command === SMOKE_RUN;
 // The task checks a step of this config has just done (`ci.covers`, and the
 // steps themselves).
-const COVERED = [
-	"vp test run",
-	"vp run test:coverage",
-	"tools/bin/itos tests smoke check scenario",
-];
+const COVERED = ["vp test run", "vp run test:coverage", "itos tests smoke check scenario"];
 const GATES = "node tools/selftest/gates.ts";
 
 const scratch = mkdtempSync(join(tmpdir(), "e2e-scope-selftest-"));
 try {
-	const ids = sh("tools/bin/itos tests smoke ids scenario --json", { env });
+	const ids = sh("itos tests smoke ids scenario --json", { env });
 	assert.equal(ids.status, 0, `itos tests smoke ids failed:\n${ids.output}`);
 	const smoke = new Set((JSON.parse(ids.stdout) as { ids: string[] }).ids);
 	const everything = listed("vp run e2e");
@@ -145,7 +141,7 @@ try {
 	}
 
 	// The smoke rule holds today.
-	assert.equal(sh("tools/bin/itos tests smoke check scenario", { env }).status, 0);
+	assert.equal(sh("itos tests smoke check scenario", { env }).status, 0);
 } finally {
 	rmSync(scratch, { recursive: true, force: true });
 }

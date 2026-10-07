@@ -10,7 +10,7 @@
 			"entryPointRole": "test"
 		}
 	],
-	"ignoreDependencies": ["yaml", "git-cliff", "itos"],
+	"ignoreDependencies": ["yaml", "git-cliff"],
 	"health": {
 		"coverage": "coverage/coverage-final.json",
 		"thresholdOverrides": [

@@ -212,9 +212,6 @@ importers:
       git-cliff:
         specifier: 2.14.2
         version: 2.14.2
-      itos:
-        specifier: https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz
-        version: https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz
       playwright:
         specifier: ^1.63.0
         version: 1.63.0
@@ -1512,12 +1509,6 @@ packages:
   istanbul-reports@3.2.0:
     resolution: {integrity: sha512-HGYWWS/ehqTV3xN10i23tkPkpH46MLCIMFNCaaKNavAXTF1RkqxawEPtnjnGZ6XKSInBKkiOA5BKS+aZiY3AvA==}
     engines: {node: '>=8'}
-
-  itos@https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz:
-    resolution: {integrity: sha512-2gikpklpi3XHiqBd/XSVk/msYawqtaT7VYGwxRNPzRVOixNe+ryE7AxNfUXdOLgu6W1KMsbD0gUjXTkJYy0WlA==, tarball: https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz}
-    version: 0.5.0
-    engines: {node: '>=24'}
-    hasBin: true
 
   jiti@2.6.1:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
@@ -2937,8 +2928,6 @@ snapshots:
     dependencies:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
-
-  itos@https://github.com/donvargax/itos/releases/download/v0.5.0/itos-0.5.0.tgz: {}
 
   jiti@2.6.1: {}
 

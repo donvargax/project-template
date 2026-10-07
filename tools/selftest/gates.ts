@@ -6,14 +6,15 @@
 //   - pre-commit runs exactly the unit tests a change reaches, by import or by
 //     vite.config.ts's forceRerunTriggers, and fails on a change that breaks one;
 //   - pre-push does the same against the remote commit it builds on, fails on
-//     that broken change, and passes a prose-only push;
+//     that broken change, and passes a prose-only push; it verifies the
+//     pushed commits first, so each one here is a commit the rules pass;
 //   - pre-commit runs no unit test and no audit for a commit of only docs/,
 //     tasks/, Markdown and feature files;
 //   - pre-push runs neither the scenarios a commit's `Scenarios:` footer names
 //     nor the checks of the tasks its `Task:` footer names; CI reads those
 //     footers from the pushed range and runs them;
-//   - the commit-msg hook, a one-line shim calling `itos hook commit-msg`,
-//     rejects a commit whose type may not touch a staged path, a scenario
+//   - the commit-msg hook, `itos hook commit-msg` (declared in the clone's
+//     git config by `itos hook install`, so run here as that command), rejects a commit whose type may not touch a staged path, a scenario
 //     renamed outside feat and fix, a header commitlint rejects, a footer
 //     itos's footer rules reject (each problem reported once, and beside a
 //     header problem rather than hidden by it), and itos's own data broken as
@@ -111,10 +112,12 @@ const preCommit = (label: string) => {
 	git("add -A");
 	return gate(`pre-commit, ${label}`, "sh .vite-hooks/pre-commit");
 };
+// The pre-push hook, `itos hook pre-push`, as git calls it: the remote, its URL,
+// and a line per pushed ref on stdin.
 const prePush = (label: string, base: string, sha: string) =>
 	gate(
 		`pre-push, ${label}`,
-		"sh .vite-hooks/pre-push upstream git@example.invalid:upstream.git",
+		"itos hook pre-push upstream git@example.invalid:upstream.git",
 		`refs/heads/main ${sha} refs/heads/main ${base}\n`,
 	);
 const messages = mkdtempSync(join(tmpdir(), "gates-selftest-msg-"));
@@ -123,7 +126,7 @@ const commitMsg = (label: string, message: string, stage = true) => {
 	if (stage) git("add -A");
 	const file = join(messages, "COMMIT_EDITMSG");
 	writeFileSync(file, message);
-	return gate(`commit-msg, ${label}`, `sh .vite-hooks/commit-msg ${file}`);
+	return gate(`commit-msg, ${label}`, `itos hook commit-msg ${file}`);
 };
 const show = (files: Set<string>) => [...files].join(", ") || "none";
 
@@ -157,7 +160,7 @@ try {
 		reached(ranFiles(run.output)),
 		`pre-commit should run only the test files that reach ${module}, ran ${ranFiles(run.output)} of ${allTests.length}`,
 	);
-	let sha = commit("refactor: touch the module");
+	let sha = commit("refactor: touch the module\n\nTask: T-007");
 	run = prePush("that change as a refactor", base, sha);
 	expect(run.status === 0, `pre-push failed on a harmless refactor:\n${run.output}`);
 	expect(
@@ -178,7 +181,7 @@ try {
 			failedFiles(run.output).has(moduleTest),
 		`pre-commit should fail in ${moduleTest} alone, failed in ${show(failedFiles(run.output))}`,
 	);
-	sha = commit("refactor: break the module");
+	sha = commit("refactor: break the module\n\nTask: T-007");
 	run = prePush("that change as a refactor", base, sha);
 	expect(run.status !== 0, `pre-push passed a change that breaks ${moduleTest}`);
 	expect(failedFiles(run.output).has(moduleTest), `pre-push did not fail in ${moduleTest}`);
@@ -222,7 +225,7 @@ try {
 	expect(run.status === 0, `pre-push failed on a footed push:\n${run.output}`);
 	expect(!run.output.includes("$ vp run e2e"), "pre-push ran the scenarios a footer names");
 	expect(
-		!/\$ (?:vp run |tools\/bin\/itos )task\b/.test(run.output),
+		!/\$ (?:vp run |itos )task\b/.test(run.output),
 		"pre-push ran the checks of a task a footer names",
 	);
 	// ...and CI finds the task in the pushed range.
@@ -232,7 +235,7 @@ try {
 		`CI did not find T-007 in the pushed range: ${named.join(", ") || "none"}`,
 	);
 
-	// The commit-msg hook, through its shim. A docs commit may not touch src/;
+	// The commit-msg hook, as git config runs it. A docs commit may not touch src/;
 	// a test commit may not rename a live scenario; commitlint rejects a header
 	// without a type; itos's footer rules reject a missing footer and an
 	// unknown task, once each, the second beside commitlint's report; a docs
@@ -326,7 +329,7 @@ try {
 	edit("src/main.ts", '"h1"', '"h2"');
 	run = preCommit("a refactor that breaks every scenario");
 	expect(run.status === 0, `pre-commit should not see a broken scenario:\n${run.output}`);
-	sha = commit("refactor: change the heading");
+	sha = commit("refactor: change the heading\n\nTask: T-007");
 	run = prePush("that refactor", base, sha);
 	expect(run.status === 0, `pre-push should leave the scenarios to CI:\n${run.output}`);
 	// ...and fails a push's E2E step, the smoke set among it.
