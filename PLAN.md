@@ -40,14 +40,14 @@ was built; this section records what was decided and why.>
   features/   the scenarios: the specification, in Gherkin
   e2e/        the harness that runs them: steps and page objects
   tasks/      the ledger: non-feature work and its checks
-  tools/      itos and the project's own tools
+  tools/      the project's own tools and the gates' self-tests
 ```
 
 ## 4. Phases
 
 Each phase ends with something a user can open and use while the next is
 being built. A phase is done when all its scenarios pass without `@wip` and
-`tools/bin/itos task --phase <n>` reports every task done.
+`itos task --phase <n>` reports every task done.
 
 ### Phase 0: scaffold
 
@@ -95,7 +95,10 @@ ratchet for adopting a code design rule on code that breaks it; and a
 slice's logic never touches the browser, which lives only in the files a
 project names as its edge (the composition root, its framework's view files,
 infrastructure slices that each wrap one browser API), so the template stays
-framework-neutral. No scenario changes.
+framework-neutral. And itos moves from an npm tarball run through a wrapper
+to v6, the global launcher on the `PATH` running the release `itos.yaml`
+pins, its commit-msg and pre-push hooks declared in each clone's git config
+(T-042). No scenario changes.
 
 - **Usable:** the page opens, as in phase 0.
 

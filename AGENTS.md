@@ -39,13 +39,13 @@ history: `vp run changelog` writes it from the commits into
 `-- --scenario <id>` prints one task's or one scenario's commits.
 `docs/ARCHITECTURE.md` says how the code is put together.
 
-The rules come in two halves. **itos** (`tools/bin/itos`, which runs the
-release `package.json` pins; its policy in `itos.yaml`) holds every rule a
-command can decide: commit shape and footers,
+The rules come in two halves. **itos** (the global launcher on the `PATH`,
+which runs the release `itos.yaml`'s `pin` names; its policy in the same
+file) holds every rule a command can decide: commit shape and footers,
 the paths each commit type may touch, which checks prove a task, what CI runs
 and in what order, who may take which work. The hooks and CI enforce those on
 every commit, whoever made it. Every itos command is run as
-`tools/bin/itos <command>` (`--help` lists them); no `package.json` script
+`itos <command>` (`--help` lists them); no `package.json` script or wrapper
 wraps one. This file holds what no command can check.
 Where a rule has a gate, this file names the gate and does not restate it.
 
@@ -61,13 +61,13 @@ subagent.**
 
 **Who works what.** `CONTRIBUTORS.md` lists who works on the project, by
 GitHub login; `tasks/work-items.yaml` says who owns each phase and each work
-item, and what each waits on; `docs/PHASES.md` explains it. Run `tools/bin/itos work`
+item, and what each waits on; `docs/PHASES.md` explains it. Run `itos work`
 to see what the person you work for (the account `gh` is signed in as, or
 `--as <handle>`) is doing and can start next. **Don't take an item someone
 else owns, or one whose dependencies are not done**: two sessions building
 the same thing waste both. Take one by setting its `owner` and
 `status: doing` in a `docs` commit, and mark it `done` when it lands.
-`tools/bin/itos work check` validates the file.
+`itos work check` validates the file.
 
 ## What drives a change
 
@@ -84,7 +84,8 @@ the same thing waste both. Take one by setting its `owner` and
 
 - **Everything else** (`refactor`, `perf`, `test`, `build`, `ci`, `chore`,
   `docs`, `revert`): a task in `tasks/` (read its README). Commit with a
-  `Task: T-…` footer. `tools/bin/itos task <id>` tells you when it's done. A `docs`
+  `Task: T-…` footer (`itos commit --task T-…` writes it).
+  `itos task <id>` tells you when it's done. A `docs`
   commit may leave the footer out for a typo-level edit; when it carries one,
   the task must exist.
 - **Conventional Commits.** `type: subject` in the imperative, no capital, no
@@ -124,7 +125,7 @@ the same thing waste both. Take one by setting its `owner` and
     `features/smoke.yaml`. Comment lines are not compared, so a scenario's reason
     may be written beside it in any commit.
 - **Check a split without committing.**
-  `tools/bin/itos commit check-paths --type <type> <path>…` applies the path
+  `itos commit check-paths --type <type> <path>…` applies the path
   rules to any list of files and prints what it would reject. Use it when you
   are unsure. Don't learn the rule by having a commit rejected, and **never
   relabel a commit to slip past one — split it**: a commit's type is what the
@@ -233,13 +234,13 @@ Every commit and every push runs the checks for you. **Don't run them by hand
 first, and don't add verification rounds of your own.** Write the code,
 commit, and read what the gate says.
 
-| Gate           | What it runs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **pre-commit** | `vp staged` (formats and lints the staged files by `staged` in `vite.config.ts`, fixing in place and re-staging them), then `node tools/code-design.ts` (the code design rules lint cannot hold, and the ratchet), then `vp test run --changed HEAD` (the unit tests the change reaches by import; all of them when the config, the lockfile or `itos.yaml` changes; coverage collected for the audit, no thresholds), then `fallow audit` on what is new against HEAD. The tests and the audit are skipped when every staged file is Markdown, under `docs/` or `tasks/`, or a feature file (`.vite-hooks/pre-commit`).                                                                                                                                                                                                                                                                                              |
-| **commit-msg** | `tools/bin/itos hook commit-msg`: the type's path rules (`commits.scopes`), then outside `feat` and `fix` the scenario moving rule, and for every type the code design ratchet's joining rule (both `tests.scenario.range_checks`), then commitlint (`config-conventional`) and itos's footer rules (`commits.footers`: the footer is there, and every ID it names exists at the commit, a scenario live), both reported, then the static checks of each task the `Task:` footer names, up to its first late one: a failure rejects the commit when the task is `done`, and is only printed otherwise. When `itos.yaml`, a ledger file, `tasks/work-items.yaml` or `features/smoke.yaml` is staged, it first runs `itos config check`'s problems over the index (what is staged, not the working tree) and rejects the commit with them.                                                                              |
-| **pre-push**   | `tools/bin/itos hook pre-push`: the unit tests the pushed commits reach (`vp test run --changed <remote sha>`; the whole unit suite when there is no remote commit to compare with), and nothing slow. The scenarios and task checks your commits name are CI's.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **CI**         | `.github/workflows/ci.yml`, on every push to `main`. Its range starts at the last green run on `main` (`itos ci range`); `itos verify` re-checks every commit in it against the commit-msg rules, the range checks included; then `tools/bin/itos ci run` runs the plan `itos.yaml`'s `ci` states, in cost order, stopping at the first failure: `vp check`, `node tools/code-design.ts`, the smoke rule, `itos config check`, the static checks of the tasks the commits name, the whole unit suite with the coverage thresholds, `vp build`, the audit, T-007 (the commit rules), one E2E run over the smoke set (`features/smoke.yaml`) and the scenarios and task subsets the commits name, then the named tasks' other checks. A range of only Markdown, `docs/**` and the work registry runs `vp check`, `node tools/code-design.ts`, `itos config check` and the named tasks' static and `prose: true` checks. |
-| **nightly**    | `.github/workflows/nightly.yml`, on `main` at 11:44 UTC or by hand: the whole E2E suite, then the gates and code design self-tests (`tools/selftest/gates.ts`, `tools/selftest/code-design.ts`), then every done task's static checks (`{ tasks: done, cost: static }` in `ci.nightly.steps`), then, whatever their result, the vulnerability scan of `pnpm-lock.yaml` (`tools/bin/vuln-scan`). A red run opens one "Nightly red" issue, or comments on the open one, naming the failing scenarios or the step or task check itos stopped at; a green run closes it.                                                                                                                                                                                                                                                                                                                                                  |
+| Gate           | What it runs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **pre-commit** | `vp staged` (formats and lints the staged files by `staged` in `vite.config.ts`, fixing in place and re-staging them), then `node tools/code-design.ts` (the code design rules lint cannot hold, and the ratchet), then `vp test run --changed HEAD` (the unit tests the change reaches by import; all of them when the config, the lockfile or `itos.yaml` changes; coverage collected for the audit, no thresholds), then `fallow audit` on what is new against HEAD. The tests and the audit are skipped when every staged file is Markdown, under `docs/` or `tasks/`, or a feature file (`.vite-hooks/pre-commit`).                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **commit-msg** | `itos hook commit-msg`, declared in the clone's git config by `itos hook install`: the type's path rules (`commits.scopes`), then outside `feat` and `fix` the scenario moving rule, and for every type the code design ratchet's joining rule (both `tests.scenario.range_checks`), then commitlint (`config-conventional`) and itos's footer rules (`commits.footers`: the footer is there, and every ID it names exists at the commit, a scenario live), both reported, then the static checks of each task the `Task:` footer names, up to its first late one: a failure rejects the commit when the task is `done`, and is only printed otherwise. When `itos.yaml`, a ledger file, `tasks/work-items.yaml` or `features/smoke.yaml` is staged, it first runs `itos config check`'s problems over the index (what is staged, not the working tree) and rejects the commit with them.                                                                                                                                    |
+| **pre-push**   | `itos hook pre-push`, declared beside it: first the commit-msg rules over every commit the push adds, as `itos verify` does, refusing the push with how to fix them; then the unit tests the pushed commits reach (`vp test run --changed <remote sha>`; the whole unit suite when there is no remote commit to compare with), and nothing slow. The scenarios and task checks your commits name are CI's.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **CI**         | `.github/workflows/ci.yml`, on every push to `main`. It installs the itos launcher (the `donvargax/itos` action), which runs `itos.yaml`'s pin. Its range starts at the nearest commit below the head with a green run (`itos ci range`); `itos verify` re-checks every commit in it against the commit-msg rules, the range checks included; then `itos ci run` runs the plan `itos.yaml`'s `ci` states, in cost order, stopping at the first failure: `vp check`, `node tools/code-design.ts`, the smoke rule, `itos config check`, the static checks of the tasks the commits name, the whole unit suite with the coverage thresholds, `vp build`, the audit, T-007 (the commit rules), one E2E run over the smoke set (`features/smoke.yaml`) and the scenarios and task subsets the commits name, then the named tasks' other checks. A range of only Markdown, `docs/**` and the work registry runs `vp check`, `node tools/code-design.ts`, `itos config check` and the named tasks' static and `prose: true` checks. |
+| **nightly**    | `.github/workflows/nightly.yml`, on `main` at 11:44 UTC or by hand: the whole E2E suite, then the gates and code design self-tests (`tools/selftest/gates.ts`, `tools/selftest/code-design.ts`), then every done task's static checks (`{ tasks: done, cost: static }` in `ci.nightly.steps`), then, whatever their result, the vulnerability scan of `pnpm-lock.yaml` (`tools/bin/vuln-scan`). A red run opens one "Nightly red" issue, or comments on the open one, naming the failing scenarios or the step or task check itos stopped at; a green run closes it.                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 So: formatting, lint, types, the unit tests your change reaches, the audit,
 commit shape and the scenarios you named are **not your job to verify**. The
@@ -276,12 +277,16 @@ Run these yourself when they apply:
 - `vp install` after pulling, when the lockfile came down changed.
 - `tools/bin/vuln-scan` after adding or moving a dependency: the push does not
   scan the lockfile, the nightly does, and a red scan there is yours.
-- `tools/bin/itos task <id>` while working a task, to see what its checks still want.
+- `itos hook install` once in a clone that has not run it (its worktrees
+  share it): git runs no commit-msg or pre-push hook of itos's until it has,
+  and `itos commit` and `itos push` refuse. It needs git 2.54 or later and
+  the itos launcher on the `PATH` (README, first steps).
+- `itos task <id>` while working a task, to see what its checks still want.
   CI runs the checks of every task your commits name; the commit-msg hook runs
   only their static ones, and the push none.
-  `tools/bin/itos task --phase <n>` shows the phase's non-feature work. A check
+  `itos task --phase <n>` shows the phase's non-feature work. A check
   marked `after: push` stays pending until the commit is on the remote.
-- `tools/bin/itos config check` after editing `itos.yaml`, the ledger
+- `itos config check` after editing `itos.yaml`, the ledger
   (`tasks/`), `tasks/work-items.yaml` or `features/smoke.yaml`, before you
   stage them. The commit-msg hook runs its problems over what is staged when
   one is, and CI on every push, so a mistake costs a rejected commit at best.
@@ -351,7 +356,9 @@ push to `main` too, so expect the remote to have moved while you worked.
    stops, resolve it, check that `git rebase --continue` succeeded, then
    push. **Never force**, whatever the rejection says, and read a rejection
    before diagnosing it: the pre-push hook failing is as likely as the remote
-   having moved.
+   having moved. `itos push` is this routine as one command: it rebases onto
+   the remote with `--no-autostash`, leaves a stopped rebase to you and pushes
+   nothing, then pushes in a separate step, and never forces.
 3. Watch CI on your last commit with a `Monitor` over
    `gh run watch <run id> --exit-status` (`gh run list --commit <sha>` gives
    the id, and needs the full 40-character SHA), and carry on with something

@@ -55,8 +55,8 @@
     Playwright's own listing. The checks name no scenario, so they hold
     whatever scenarios a project has.
   done_when:
-    - run: tools/bin/itos tests smoke check scenario
-    - run: tools/bin/itos tests smoke run scenario
+    - run: itos tests smoke check scenario
+    - run: itos tests smoke run scenario
     - run: node tools/selftest/e2e-scope.ts
 
 - id: T-006
@@ -65,18 +65,20 @@
   why: >
     The ledger, the commit rules, CI's plan and the work routing are one tool
     read from one config (itos.yaml), so the policy is data and a project
-    changes it without forking code. itos is a dev dependency pinned to a
-    release (README, Install), and tools/bin/itos runs it; what itos does is
-    proven in its own repository. These checks prove the pin in this project:
+    changes it without forking code. itos was a dev dependency pinned to a
+    release, run by a wrapper script in tools/bin; since T-042 the pin is
+    itos.yaml's (pin.version and pin.checksums) and the global launcher on the
+    PATH runs it. What itos does is proven in its own repository. These
+    checks prove the pin in this project:
     the installed itos satisfies the config's `requires` and accepts the
     project's policy. The checks that it refused a synthetic config with a
     misspelt key, the ledger with every task twice, a registry whose items
     wait on each other and an unknown task went with T-032: they proved itos,
     which its conformance suite does.
   done_when:
-    - run: tools/bin/itos version --check
+    - run: itos version --check
       cost: static
-    - run: tools/bin/itos config check
+    - run: itos config check
 
 - id: T-007
   type: build
@@ -104,23 +106,23 @@
   done_when:
     - fails: "printf 'update things\\n' | vp exec commitlint"
     - run: "printf 'build: scaffold\\n\\nTask: T-001\\n' | vp exec commitlint"
-    - fails: "printf 'build: scaffold\\n' | tools/bin/itos commit check-message -"
+    - fails: "printf 'build: scaffold\\n' | itos commit check-message -"
       cost: static
-    - fails: "printf 'feat: x\\n\\nScenarios: @ID-NOPE-01\\n' | tools/bin/itos commit check-message -"
+    - fails: "printf 'feat: x\\n\\nScenarios: @ID-NOPE-01\\n' | itos commit check-message -"
       cost: static
-    - run: "printf 'docs: x\\n\\nTask: T-007\\n' | tools/bin/itos commit check-message -"
+    - run: "printf 'docs: x\\n\\nTask: T-007\\n' | itos commit check-message -"
       cost: static
-    - fails: tools/bin/itos commit check-paths --type build tasks/phase-0.yaml
-    - fails: tools/bin/itos commit check-paths --type docs itos.yaml
-    - run: tools/bin/itos commit check-paths --type docs README.md tasks/phase-0.yaml
-    - run: tools/bin/itos commit check-paths --type build itos.yaml package.json
+    - fails: itos commit check-paths --type build tasks/phase-0.yaml
+    - fails: itos commit check-paths --type docs itos.yaml
+    - run: itos commit check-paths --type docs README.md tasks/phase-0.yaml
+    - run: itos commit check-paths --type build itos.yaml package.json
 
 - id: T-008
   type: ci
   title: GitHub Actions CI
   why: >
     Every push runs the same gates as local development, through one local
-    command (`tools/bin/itos ci run`), so the workflow is a thin wrapper:
+    command (`itos ci run`), so the workflow is a thin wrapper:
     the range from the last green run, the named tasks' checks in cost order,
     one E2E run over the smoke set and what the range names, a prose-only
     shortcut. It re-checks every pushed commit with the commit-msg rules, so a
@@ -131,7 +133,7 @@
   done_when:
     - run: actionlint
     - run: node tools/selftest/ci-scope.ts
-    - run: tools/bin/itos ci run
+    - run: itos ci run
 
 - id: T-009
   type: ci

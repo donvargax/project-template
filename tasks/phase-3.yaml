@@ -194,19 +194,23 @@
     always joins a run. Of the known issues, p1-nightly-past-first-failure
     does (stop_at_first_failure is true), hence the step last; a range start
     beyond a shallow clone is met by ci.yml's fetch-depth: 0, and the
-    nightly reads no range; the patterns spell out tools/bin/itos; the
+    nightly reads no range; the patterns spelled out the wrapper's path; the
     ledger's pattern does not reach the registry; nothing passes --data-at.
+    T-042 moved the pin into itos.yaml, run by the global launcher, so the
+    checksum check holds that pin's hash to the release's checksums.txt, and
+    actionlint says cost: late, which written order already made it.
   done_when:
-    - run: tools/bin/itos version --check
+    - run: itos version --check
       cost: static
-    - run: tools/bin/itos config check
+    - run: itos config check
     - run: vp install --frozen-lockfile
     - run: actionlint
-    - run: tools/bin/itos task T-007
+      cost: late
+    - run: itos task T-007
     - run: >-
-        u=$(node -p 'require("./package.json").devDependencies.itos') &&
-        d=$(mktemp -d) && cd "$d" && curl -fsSLO "$u" &&
-        curl -fsSLO "${u%/*}/checksums.txt" && sha256sum -c checksums.txt
+        v=$(itos config get pin.version) && s=$(itos config get pin.checksums) &&
+        curl -fsSL "https://github.com/donvargax/itos/releases/download/v$v/checksums.txt" |
+        sha256sum | grep -qx "$s  -"
 
 - id: T-038
   type: ci
@@ -272,6 +276,7 @@
   done_when:
     - run: npx --yes --package renovate -- renovate-config-validator --strict
     - run: actionlint
+      cost: late
     - run: >-
         gh run list --workflow renovate.yml --branch main --status completed --limit 1
         --json conclusion --jq '.[0].conclusion == "success"' | grep -qx true
@@ -381,6 +386,7 @@
     reruns them.
   done_when:
     - run: itos version | grep -qx 'itos 6\.5\.1'
+      cost: static
     - run: itos config check
     - run: test ! -e tools/bin/[i]tos && ! git grep -q 'tools/bin/[i]tos'
       prose: true

@@ -35,10 +35,10 @@ shows up the next morning. A red nightly is the first item, a `fix` handed to
 an agent before any new slice; it is not left for whoever looks next.
 
 1. Pick the next slice from `docs/HANDOFF.md` ("Next"), among what
-   `tools/bin/itos work` proposes for the person you work for: an item another person
+   `itos work` proposes for the person you work for: an item another person
    owns in `tasks/work-items.yaml` is theirs, and one whose dependencies are not
    done waits. If it is not specified in `@wip` scenarios or a task yet,
-   specify it first. An idea (`kind: idea`, listed apart by `tools/bin/itos work`) is
+   specify it first. An idea (`kind: idea`, listed apart by `itos work`) is
    such an item: specify it, then change its kind to `slice` or `task` in the
    same `docs` commit (and its id, once it is a numbered slice or a T- ID).
    An item with `deferred:` waits until its reason goes; the user lifts it,
@@ -108,7 +108,7 @@ the rest.
 > Read `AGENTS.md`, `PLAN.md` (<the sections this slice rests on>), the
 > earlier slices' commits (<which; `vp run changelog -- --scenario <id>` or
 > `git log --grep` finds them>), what the last one left missing (<the ideas
-> and `todo` items in `tasks/work-items.yaml`, from `tools/bin/itos work`>),
+> and `todo` items in `tasks/work-items.yaml`, from `itos work`>),
 > `docs/ARCHITECTURE.md`, `features/README.md` and `tasks/README.md`
 > first, and follow `AGENTS.md` — in particular "The gates run themselves":
 > just commit and react to what a gate reports.
@@ -258,7 +258,8 @@ working tree, with the same index**, so:
 The gates already cover most of it (`AGENTS.md`, "The gates run
 themselves"): the commit hooks enforce format, lint, types, the unit tests the
 change reaches, the audit, and commit footers and scope; the pre-push hook
-runs the unit tests the pushed commits reach; CI re-checks every pushed
+re-checks the pushed commits against the commit rules and runs the unit tests
+they reach; CI re-checks every pushed
 commit against the commit rules, so a commit that skipped the hooks turns it
 red, and runs the plan `itos.yaml`'s `ci` states (the whole unit suite with
 coverage, the build, the audit, the checks of every task the pushed commits

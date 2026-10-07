@@ -13,9 +13,9 @@
     corpus beside it. It is now a dev dependency pinned to a release:
     package.json names the release tarball's URL and the lockfile its
     integrity, so a tarball replaced under the same URL fails every later
-    install, and a version bump is the README's Install steps again.
-    tools/bin/itos runs the installed package's bin, so the hooks, CI and the
-    ledger keep one command whatever implements itos. The corpus and the
+    install, and a version bump is the README's Install steps again. A
+    wrapper script in tools/bin ran the installed package's bin, so the hooks,
+    CI and the ledger kept one command whatever implemented itos. The corpus and the
     fixtures are itos's, proven in its own repository. What the config needs
     and the package does not ship stays as the project's own: the scenario
     moving rule (tools/scenario-moves.ts, the scenario kind's range check),
@@ -27,19 +27,23 @@
     read what they prove from the command line (ci plan --json, ci scope,
     tests smoke ids) instead of importing the tool's modules; which run the
     github range provider picks is itos's to prove. The checksum check
-    downloads the tarball package.json pins and holds it to the release's
-    checksums.txt.
+    downloaded the tarball package.json pinned and held it to the release's
+    checksums.txt. T-042 moved the pin into itos.yaml (pin.version and
+    pin.checksums, the SHA-256 of the release's checksums.txt), run by the
+    global launcher on the PATH, and the itos dev dependency and the wrapper
+    went; the checksum check now holds the pin's hash to the checksums.txt
+    the release publishes.
   done_when:
-    - run: tools/bin/itos version --check
+    - run: itos version --check
       cost: static
     - run: node tools/selftest/ci-scope.ts
     - run: vp install --frozen-lockfile
     - run: vp test run tools/scenario-moves.test.ts
     - run: node tools/selftest/e2e-scope.ts
     - run: >-
-        u=$(node -p 'require("./package.json").devDependencies.itos') &&
-        d=$(mktemp -d) && cd "$d" && curl -fsSLO "$u" &&
-        curl -fsSLO "${u%/*}/checksums.txt" && sha256sum -c checksums.txt
+        v=$(itos config get pin.version) && s=$(itos config get pin.checksums) &&
+        curl -fsSL "https://github.com/donvargax/itos/releases/download/v$v/checksums.txt" |
+        sha256sum | grep -qx "$s  -"
 
 - id: T-015
   type: chore
@@ -58,11 +62,11 @@
     reads each tree's scenario root from that tree's own itos.yaml, so it sees
     the scenarios unchanged.
   done_when:
-    - run: tools/bin/itos config check
-    - run: tools/bin/itos tests smoke check scenario
-    - fails: tools/bin/itos commit check-paths --type refactor features/any.feature
-    - run: tools/bin/itos commit check-paths --type docs features/any.feature
-    - run: tools/bin/itos tests smoke run scenario
+    - run: itos config check
+    - run: itos tests smoke check scenario
+    - fails: itos commit check-paths --type refactor features/any.feature
+    - run: itos commit check-paths --type docs features/any.feature
+    - run: itos tests smoke run scenario
     - run: node tools/selftest/e2e-scope.ts
 
 - id: T-016
@@ -77,8 +81,8 @@
     CI step and a prose step, so a registry broken on a prose-only push fails
     CI.
   done_when:
-    - run: tools/bin/itos work check
-    - run: tools/bin/itos config check
+    - run: itos work check
+    - run: itos config check
     - run: node tools/selftest/ci-scope.ts
 
 - id: T-017
@@ -117,7 +121,7 @@
     commit the README describes) and proves that verify and the changelog
     pass, and that verify fails without commits.since.
   done_when:
-    - run: tools/bin/itos config check
+    - run: itos config check
     - run: vp run changelog
     - run: node tools/selftest/new-project.ts
 
@@ -140,7 +144,7 @@
     README's first steps: the gates self-test edits the demo's module and
     scenario, and a project that drops the demo points it at its own.
   done_when:
-    - run: tools/bin/itos task T-006 T-007
+    - run: itos task T-006 T-007
     - run: >-
         gh api 'repos/{owner}/{repo}/license' --jq .license.spdx_id |
         grep -qxF "$(node -p 'require("./package.json").license')"
@@ -150,15 +154,16 @@
   type: build
   title: One way to run itos
   why: >
-    package.json held scripts that only wrapped tools/bin/itos (itos, task,
-    work, ci, e2e:smoke), so the docs named two ways to run one command. They
-    go, and the docs, the ledger and the CI plan call tools/bin/itos, which
-    stays the same command whatever implements itos. The scripts that do more
+    package.json held scripts that only wrapped the itos wrapper in tools/bin
+    (itos, task, work, ci, e2e:smoke), so the docs named two ways to run one
+    command. They go, and the docs, the ledger and the CI plan call that
+    wrapper, which stays the same command whatever implements itos; since
+    T-042 they call plain itos, the global launcher on the PATH. The scripts that do more
     than call itos stay: e2e and e2e:generate (playwright-bdd generates the
     specs, then Playwright runs them), test, test:coverage, audit and
     changelog, and Vite+'s dev, build, preview and prepare.
   done_when:
-    - run: tools/bin/itos config check
+    - run: itos config check
     - fails: vp run task T-020
     - run: node tools/selftest/e2e-scope.ts
 
@@ -187,12 +192,12 @@
     docs/ and tasks/ still runs no unit test and no audit. The docs that
     said the pre-commit hook runs these checks say the commit-msg hook does.
   done_when:
-    - run: tools/bin/itos version --check
+    - run: itos version --check
       cost: static
-    - run: tools/bin/itos config check
+    - run: itos config check
     - fails: grep -Eq 'itos (config|work) check' .vite-hooks/pre-commit
     - run: vp install --frozen-lockfile
-    - run: tools/bin/itos task T-014
+    - run: itos task T-014
     - run: node tools/selftest/gates.ts
 
 - id: T-022
@@ -217,11 +222,11 @@
     first commit under the new rules. The gates self-test proves
     the footer rules through the hook as before, each problem reported once.
   done_when:
-    - run: tools/bin/itos version --check
+    - run: itos version --check
       cost: static
-    - run: tools/bin/itos config check
+    - run: itos config check
     - fails: grep -q 'check-message' commitlint.config.ts
       cost: static
     - run: vp install --frozen-lockfile
-    - run: tools/bin/itos task T-014
+    - run: itos task T-014
     - run: node tools/selftest/gates.ts

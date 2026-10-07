@@ -184,15 +184,22 @@ rules: the black-box boundary, the tags, the smoke set, the moving rule.
 
 **itos** is the task tooling: the ledger and its checks, the commit rules,
 named tests and the smoke set, the CI plan and its driver, the work registry
-and the hooks, behind one command line, `tools/bin/itos` (`itos --help` lists
-the commands, `itos <command> --help` each one).
+and the hooks, behind one command line, `itos` (`itos --help` lists the
+commands, `itos <command> --help` each one).
 
-- **A pinned release.** itos is a dev dependency: `package.json` names one
-  release's tarball by URL, the lockfile holds its integrity, and
-  `tools/bin/itos` runs the installed bin, or says to run `vp install` when
-  it is missing. Its code, its licence (AGPL-3.0) and the proof of what it
-  does live in its own repository; a version bump is the README's "itos,
-  pinned" steps, then the release notes' upgrading steps.
+- **A pinned release, run by a global launcher.** itos is a Go binary that
+  each contributor installs once on the `PATH`, and CI with the
+  `donvargax/itos` action (T-042). The binary is a launcher: `itos.yaml`'s
+  `pin` names the release that runs here (`pin.version`) and the SHA-256 of
+  that release's `checksums.txt` (`pin.checksums`), and the launcher fetches
+  that release into its cache, checks the list against the pin and the
+  archive against its line, and runs it with the same arguments and exit
+  code; a release that cannot be fetched or does not match exits 3 and
+  nothing runs in its place. So whichever itos a person installed, the
+  repository's runs, and nothing of it is in `package.json` or the lockfile.
+  Its code, its licence (AGPL-3.0) and the proof of what it does live in its
+  own repository; a version bump is `itos upgrade`, which moves the pin and
+  lists what each release since asks (README, "itos, pinned").
 - **One policy file.** `itos.yaml` at the root holds every table the tool
   reads: the ledger's layout (`ledger`), the commit types, footers, path sets
   and scopes (`commits`), the named tests and their adapters (`tests`), CI's
@@ -207,8 +214,13 @@ the commands, `itos <command> --help` each one).
   CI step; the commit-msg hook runs its problems over the index when one of
   them, or `itos.yaml`, is staged.
 - **One command line**: exit 0 on success, 1 for a policy failure (a check
-  failed, a commit rejected, an unknown task), 2 for a usage or config error,
-  3 for a missing environment. `--json` prints one object with
+  failed, a commit rejected, an unknown task, a failing step of `ci run`), 2
+  for a usage or config error (a flag a command does not take among them),
+  3 for a missing environment (the pinned release not fetched or not
+  matching, no hook of itos's declared where it commits or pushes), 75 for a
+  failure that may pass when run again unchanged (a release server or
+  GitHub's API out of reach), and 70 for an error itos cannot classify, a
+  bug to report on its repository. `--json` prints one object with
   `"schema": 1`, logs on stderr; each problem in it has a sentence, a `rule`
   id and, where one exists, a `fix`. The self-tests read what they prove
   from it (`ci plan --json`, `ci scope`, `tests smoke ids`), never from its
@@ -253,16 +265,22 @@ the commands, `itos <command> --help` each one).
   `tools/selftest/new-project.ts` makes a new project's history in a scratch
   worktree and proves the README's first commit turns it green.
 - **The world outside the repository** is three providers: where a push's
-  range starts (`ci.range`: the last green run on GitHub, a command, or
-  none), who a session works for (`work.identity`: `gh api user`, a command,
-  or only `--as`), and who works on the project (`work.people`).
+  range starts (`ci.range`: the head's nearest first parent with a green run
+  of `ci.yml` on GitHub, on any branch, or none), who a session works for
+  (`work.identity`: `gh api user`, or only `--as`), and who works on the
+  project (`work.people`).
 
 ## The gates and CI
 
-- **The hooks** (`.vite-hooks/`): `commit-msg` and `pre-push` are one-line
-  shims `itos hooks install` writes, calling `itos hook commit-msg` and
-  `itos hook pre-push`; `pre-commit` is the project's own. `vp config`
-  (`prepare`, on `vp install`) points git at the folder.
+- **The hooks**: `commit-msg` and `pre-push` are itos's, declared in the
+  clone's own git config (`hook.itos-commit-msg` and `hook.itos-pre-push`,
+  never committed, shared by the clone's worktrees) by `itos hook install`,
+  once per clone, each calling `itos hook <event>` through the launcher; git
+  2.54 or later runs them beside the hooks folder's. `pre-commit` is the
+  project's own, in `.vite-hooks/`, where `vp config` (`prepare`, on
+  `vp install`) points git; the folder holds no itos hook, so none runs
+  twice. `itos commit` and `itos push` refuse, exit 3, in a clone whose git
+  config declares no hook of itos's.
   - **pre-commit** runs `vp staged` (each path's command in `vite.config.ts`'s
     `staged`), then the code design check (`tools/code-design.ts`, under
     "The application": what `src/` holds, where a unit test sits, the
@@ -291,10 +309,12 @@ the commands, `itos <command> --help` each one).
     rejects the commit when the task's work item is `done`, since a finished
     task that fails has regressed, and is only printed otherwise. It stops at
     the first rule that fails.
-  - **pre-push** runs `hooks.pre_push`: `vp test run --changed <remote sha>`
-    for each pushed ref, or the whole unit suite when there is no remote
-    commit to compare with. Nothing else: the scenarios and the task checks
-    are CI's.
+  - **pre-push** first re-checks every commit each pushed ref adds, as
+    `itos verify` does (messages, paths, range checks), and refuses the push
+    with how to fix them; then it runs `hooks.pre_push`:
+    `vp test run --changed <remote sha>` for each pushed ref, or the whole
+    unit suite when there is no remote commit to compare with. Nothing else:
+    the scenarios and the task checks are CI's.
 - **The Node version** is written once, in `.node-version`: Vite+ reads it
   first when it resolves a project's Node, and CI and the nightly hand it to
   setup-vp (`node-version-file`), which runs `vp env use` with it and keys
@@ -389,9 +409,9 @@ the commands, `itos <command> --help` each one).
   CI runs T-038's runtime check on every action Renovate moves. The trailer
   is one top-level template that picks T-038 by the branch's manager, not a
   group rule's: the option is merged by concatenation and Renovate applies
-  the rules more than once, so a rule's trailer is written twice. Left out: the itos
-  tarball (`ignoreDeps`), which moves by hand ("itos, pinned" in the
-  README); and the versions pinned inside `run:` steps and
+  the rules more than once, so a rule's trailer is written twice. Left out: the
+  `donvargax/itos` action (`ignoreDeps`), which moves by hand with the pin in
+  `itos.yaml` ("itos, pinned" in the README); and the versions pinned inside `run:` steps and
   `tools/bin/vuln-scan`, each with a hash beside it that a version-only
   update would leave stale (`p2-run-step-pins-updated`). What is pending is the
   `renovate/**` branches, and a red one's pull request.
@@ -407,13 +427,17 @@ the commands, `itos <command> --help` each one).
   absent, not undefined; one that may be handed on undefined says
   `| undefined`) and `noImplicitOverride`.
 - **CI** (`.github/workflows/ci.yml`) is one job, a thin wrapper around
-  `itos ci run`, so everything it does runs locally too. A newer push
-  replaces a run still waiting for the runner; a running one finishes, and
-  the newest run checks every commit since the last green one. The range starts at the last
-  green run on `main` (`itos ci range`, the `ci.range` provider), or at a pull
-  request's base; empty means run everything. On a Renovate branch it is
-  still `main`'s last green run, an ancestor of a branch built on `main`, so
-  the branch is checked for what it would add. It is written to the job's
+  `itos ci run`, so everything it does runs locally too. It installs the itos
+  launcher first, with the `donvargax/itos` action pinned to a release's
+  commit and given that release as its `version` (at a commit ref the action
+  would install the newest), and the launcher runs `itos.yaml`'s pin. A newer
+  push replaces a run still waiting for the runner; a running one finishes,
+  and the newest run checks every commit since the last green one. The range
+  starts at the head's nearest first parent with a green run of `ci.yml`, on
+  any branch (`itos ci range`, the `ci.range` provider, 100 commits back at
+  most), or at a pull request's base; empty means run everything. On a
+  Renovate branch that is the nearest commit CI proved, on the branch or on
+  `main` below it, so the branch is checked for what it adds. It is written to the job's
   environment once, so the scope, the commit re-check and the plan read the
   same range. `itos verify` re-checks every commit of the range with the
   commit-msg rules, so a commit made with the hooks bypassed fails CI.
@@ -435,7 +459,8 @@ the commands, `itos <command> --help` each one).
   among them because closing a work item the ratchet still lists is a
   registry change alone.
 - **The nightly** (`.github/workflows/nightly.yml`, at 11:44 UTC on `main` or
-  by hand) runs `itos ci run --nightly`: the whole E2E suite, then the gates
+  by hand) installs the itos launcher as `ci.yml` does and runs
+  `itos ci run --nightly`: the whole E2E suite, then the gates
   self-test, then the code design self-test, which a push runs only when it
   names a task that checks it, so a vite-plus release that leaves the lint
   plugin loaded but silent shows the next morning (it is in
@@ -451,9 +476,11 @@ the commands, `itos <command> --help` each one).
   actionlint, installed as `ci.yml` installs it. Then, in a step of its own,
   the vulnerability scan, whatever their result. A red run opens one issue
   labelled `nightly-red`, or comments on the open one with the failing
-  scenarios, itos's `CI failed at` lines (the failing step, or
-  `T-… (<title>), its check: <command>`) and what the scan found; a green
-  run closes it.
+  scenarios, itos's `CI failed at` lines (`: <step> (it exited <code>)`, or
+  `T-… (<title>), its check: <command>`) and what the scan found; when itos
+  named neither, it says what itos's exit code means (75 to run again, 70 an
+  itos bug to report, 3 a missing environment, 2 a usage or config error). A
+  green run closes it.
 - **The vulnerability scan** (`tools/bin/vuln-scan`) checks `pnpm-lock.yaml`,
   both its documents (pnpm's own and the project's), against the OSV
   database with osv-scanner, and exits 1 on a finding. The nightly and a
@@ -472,8 +499,10 @@ the commands, `itos <command> --help` each one).
   `reason` and an `ignoreUntil` date), which osv-scanner reads beside the
   lockfile.
 - **The self-tests** (`tools/selftest/`) prove the gates rather than the code:
-  `gates.ts` runs the real hooks in a scratch worktree and shows that they run
-  only what a change reaches and that CI's steps catch what they leave out;
+  `gates.ts` runs the real hooks in a scratch worktree (vp's pre-commit
+  script, and `itos hook commit-msg` and `itos hook pre-push`, the commands
+  the git config declares) and shows that they run only what a change
+  reaches and that CI's steps catch what they leave out;
   `ci-scope.ts` and `e2e-scope.ts` prove that the project's prose paths hold
   only prose and that the plan's E2E command selects exactly what it claims,
   against Playwright's own listing; `code-design.ts` writes slices of its own

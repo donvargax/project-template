@@ -4,8 +4,8 @@ A starting point for a project that works by its tasks, its scenarios and its
 gates: a small [Vite+](https://viteplus.dev) app with unit tests and
 Gherkin scenarios, a task ledger whose every task is proven by commands, and
 commit rules, git hooks and CI that hold every commit to them. The rules live
-in one file, `itos.yaml`, read by **itos**, the task tool, a dev dependency
-pinned to a release and run as `tools/bin/itos`.
+in one file, `itos.yaml`, read by **itos**, the task tool: a global launcher
+on the `PATH` that runs the release `itos.yaml` pins.
 
 What it gives a new project from its first commit:
 
@@ -15,15 +15,16 @@ What it gives a new project from its first commit:
   paths. The commit-msg hook enforces it, and CI re-checks every pushed
   commit.
 - **A ledger of tasks with executable checks** (`tasks/`): a task is done when
-  its `done_when` commands pass, `tools/bin/itos task <id>` says so.
+  its `done_when` commands pass, `itos task <id>` says so.
 - **Gates that run themselves.** pre-commit formats, lints, runs the unit
-  tests the change reaches and the audit; pre-push runs the unit tests the
-  pushed commits reach; CI runs everything from the last green run, in cost
+  tests the change reaches and the audit; commit-msg holds the commit rules;
+  pre-push re-checks the pushed commits by them and runs the unit tests they
+  reach; CI runs everything from the last green run, in cost
   order, with one E2E run over the smoke set and what the commits name; a
   nightly runs every scenario, the gates' self-tests and every done task's
   static checks, scans the lockfile for known vulnerabilities, and opens an
   issue when it goes red.
-- **Work routing** (`tasks/work-items.yaml`, `CONTRIBUTORS.md`): `tools/bin/itos work`
+- **Work routing** (`tasks/work-items.yaml`, `CONTRIBUTORS.md`): `itos work`
   says what the person a session works for can start next.
 - **A changelog from the commits**: `vp run changelog`.
 - **Agent instructions for what no command can check.** `AGENTS.md` is the
@@ -33,7 +34,7 @@ What it gives a new project from its first commit:
   subagents, the brief, a slice that fails, checking a result.
 
 `tasks/README.md` and `features/README.md` state the rules;
-`tools/bin/itos --help` lists the tool's commands.
+`itos --help` lists the tool's commands.
 
 ## Where things are
 
@@ -65,8 +66,30 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
 1. **Install.** Node is the version `.node-version` holds (24), which Vite+
    picks up on its own and CI installs from the same file. `vp install`
    installs the dependencies and, through
-   `prepare`, the git hooks (`vp config`). Install the browser for the
-   scenarios once: `vp exec playwright install chromium`.
+   `prepare`, the pre-commit hook (`vp config`). Install the browser for the
+   scenarios once: `vp exec playwright install chromium`. itos is not a
+   dependency: install its launcher once per machine, into a folder on your
+   `PATH` (any release will do, since the pin in `itos.yaml` picks the one
+   that runs), with Go:
+
+   ```sh
+   go install github.com/donvargax/itos/v6/cmd/itos@v6.5.1
+   ```
+
+   or with the script CI's action runs, which checks the archive against the
+   release's `checksums.txt`:
+
+   ```sh
+   curl -fsSL -o install-launcher https://raw.githubusercontent.com/donvargax/itos/58f7e3f430eec46da415929cd46d2f2ecef46af0/tools/bin/install-launcher
+   sh install-launcher "$HOME/.local/bin" 6.5.1
+   ```
+
+   Then, once in each clone, declare itos's commit-msg and pre-push hooks in
+   its git config: `itos hook install`. It needs git 2.54 or later, the
+   first that runs the hooks its config declares; until it has run, no
+   commit-msg or pre-push hook of itos's runs, and `itos commit` and
+   `itos push` refuse.
+
 2. **Start verification after GitHub's commit, in the first commit.** GitHub
    creates the repository as one squashed commit, "Initial commit", which no
    commit rule passes, so until `itos.yaml` says where verification starts,
@@ -124,7 +147,7 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
    (`AGENTS.md`, `docs/ORCHESTRATING.md`) are written for any project and
    need no change to start; add a project's own rules to them as it finds
    them, each with its reason.
-9. **Check.** `tools/bin/itos task --phase 0` runs every setup task's checks; push to
+9. **Check.** `itos task --phase 0` runs every setup task's checks; push to
    `main` and CI runs on GitHub Actions with no secrets to configure.
 10. **Dependency updates.** Renovate runs from the repository's own workflow
     (`.github/workflows/renovate.yml`), with no Renovate account or app. Create
@@ -165,26 +188,28 @@ is a debt to list.
 
 ## itos, pinned
 
-itos is a dev dependency pinned to one release: `package.json` names the
-release tarball's URL and the lockfile holds its integrity, so a tarball
-replaced under that URL fails every later install. `tools/bin/itos` runs the
-installed bin; the hooks, CI and the ledger call that path, whatever
-implements itos. To move to another release, check its tarball against the
-hash its `checksums.txt` lists, then add its URL, as itos's README says
-under "Install":
+itos is pinned to one release in `itos.yaml`: `pin.version`, and
+`pin.checksums`, the SHA-256 of that release's `checksums.txt`. The itos on
+the `PATH`, whatever its version, is a launcher: it fetches the pinned
+release into its cache, checks the list against the pin and the archive
+against its line, and runs it, so a release replaced under its URL runs
+nowhere. The hooks, CI and the ledger call plain `itos`. CI and the nightly
+install the launcher with the `donvargax/itos` action, pinned to a release's
+commit with the tag beside it and given that release as its `version`.
+
+To move to another release:
 
 ```sh
-version=<the release>
-url="https://github.com/donvargax/itos/releases/download/v$version/itos-$version.tgz"
-curl -fsSLO "$url"
-echo "<the hash in the release's checksums.txt>  itos-$version.tgz" | sha256sum -c -
-vp add -D "$url"
+itos upgrade <the release>   # or none, for the newest
 ```
 
-Then follow the release notes' upgrading steps, and run
-`tools/bin/itos version --check` and `tools/bin/itos config check`.
-Renovate leaves it alone (`ignoreDeps` in `.github/renovate.json5`), so a
-move is always this one.
+It moves the pin and lists, release by release, what each one since asks:
+its breaking changes, its upgrading steps and the config keys it changes.
+Do what they ask, move the action in `.github/workflows/ci.yml` and
+`nightly.yml` to the release's commit (its SHA, the tag beside it, and its
+`version` input), and run `itos version --check` and `itos config check`.
+Renovate leaves the action alone (`ignoreDeps` in `.github/renovate.json5`),
+so a move is always this one.
 
 ## Vulnerability scan
 

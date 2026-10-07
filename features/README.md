@@ -64,7 +64,7 @@ Actions tab.
 
 The smoke set is the list in `smoke.yaml`, not a tag, so that live
 scenarios need not change to join it and each can say why it is there.
-`tools/bin/itos tests smoke run scenario` runs exactly the list. The rule:
+`itos tests smoke run scenario` runs exactly the list. The rule:
 
 - **Every feature file with a live scenario has at least one smoke
   scenario**, listed under the file with the reason it was chosen. A file has
@@ -73,7 +73,7 @@ scenarios need not change to join it and each can say why it is there.
 - A smoke scenario is fast and central to its file. Slow, narrow or
   timing-heavy ones stay in the nightly.
 
-`tools/bin/itos tests smoke check scenario` checks the first two, and CI runs
+`itos tests smoke check scenario` checks the first two, and CI runs
 that check among its first steps. So a `feat` that adds a feature file, or
 makes a `@wip` one live, picks its smoke scenario in the same push, and a
 commit that removes or renumbers a smoke scenario updates the list.

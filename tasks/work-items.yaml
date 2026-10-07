@@ -1,5 +1,5 @@
 # Who works what, and what waits on what. A session reads this through
-# `tools/bin/itos work`, which says who it is working for (the account `gh api user`
+# `itos work`, which says who it is working for (the account `gh api user`
 # is signed in as, or `--as <handle>`) and proposes the next items that person
 # can take: `todo`, every dependency `done`, owned by them or by nobody. Who
 # works on the project is CONTRIBUTORS.md.
@@ -26,7 +26,7 @@
 # This file is the one list of open work: no TODO or ROADMAP file sits beside
 # it. A gap a slice leaves goes in as a `kind: idea` item, with a title, a
 # short `why`, its owner or null and its `depends_on`, in the slice's last
-# `docs` commit; `tools/bin/itos work` lists the open ideas apart from what can start
+# `docs` commit; `itos work` lists the open ideas apart from what can start
 # now. A coordinator who picks an idea up specifies it (`@wip` scenarios, or a
 # task in tasks/) and changes its kind to `slice` or `task`, and its id if it
 # becomes a slice or a T- ID.
@@ -264,6 +264,9 @@ items:
       commit that moves the feature files with their root passes; itos's footer rules read the
       working tree's root instead, and find a moved commit's scenarios only by falling back to the
       working tree. If an itos release ships the rule as a built-in range check, the script goes.
+      itos 0.6.0 does (`builtin: moves` in range_checks, its renames in `allowed_renames`), and
+      T-042 left the script in place: what is left is proving the built-in reads a moved root as
+      the script does, with the gates self-test's renamed-scenario case and a root move.
 
   - id: p1-actionlint-at-commit
     title: actionlint where the commit-msg hook runs it
@@ -646,3 +649,18 @@ items:
       cannot tell a major update from its subject; only the pull request's title, opened when CI is
       red, adds "(major)". A commitMessageSuffix for major updates in .github/renovate.json5 would
       say it, its message checked against the commit rules as T-039's were.
+
+  - id: p3-builtin-header-lint
+    title: itos's built-in header lint in place of commitlint
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: [T-042]
+    kind: idea
+    why: >
+      commits.header_lint runs commitlint (config-conventional alone) through vp exec, three dev
+      dependencies and commitlint.config.ts for a lint itos has built in since 2.0.0 (`use:
+      builtin`, config-conventional's rules over commits.types). The built-in prints the same
+      `[rule]` lines, on stderr, so T-007's commitlint checks and the gates self-test's
+      `[type-empty]` case would move to itos commit check-message and stay true; whether the
+      project wants commitlint's own rules kept is the decision to make first.

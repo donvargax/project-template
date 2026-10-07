@@ -73,7 +73,9 @@
     automerge lands an update on main with no pull request, as a build
     commit whose body says what moved and carries the Task footer every
     commit needs, and CI checks it as it checks any push. The itos tarball is
-    left out: it moves by its release notes' upgrading steps, by hand.
+    left out: it moves by its release notes' upgrading steps, by hand. Since
+    T-042 what is left out is the donvargax/itos action, which moves by hand
+    with itos.yaml's pin, by itos upgrade.
     Renovate runs from the repository's own scheduled workflow, with a token
     of the owner's (T-039); the Renovate app this task first meant, installed
     by the owner, was dropped on 2026-10-03 with its account and Dependency
@@ -94,7 +96,7 @@
     which opens or comments on its issue, so a new advisory is one morning's
     work rather than a surprise on some later push.
   done_when:
-    - run: tools/bin/itos config check
+    - run: itos config check
     - run: tools/bin/vuln-scan
 
 - id: T-028
@@ -149,7 +151,7 @@
       cost: static
     - run: vp check
     - run: node tools/selftest/code-design.ts
-    - run: tools/bin/itos tests smoke run scenario
+    - run: itos tests smoke run scenario
 
 - id: T-030
   type: build
