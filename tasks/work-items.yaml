@@ -631,7 +631,7 @@ items:
     title: itos 6, called from the PATH
     phase: 3
     owner: donvargax
-    status: doing
+    status: done
     depends_on: []
     kind: task
     refs: [tasks/phase-3.yaml]
