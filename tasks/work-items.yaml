@@ -624,6 +624,15 @@ items:
     kind: task
     refs: [tasks/phase-3.yaml]
 
+  - id: T-042
+    title: itos 6, called from the PATH
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: []
+    kind: task
+    refs: [tasks/phase-3.yaml]
+
   - id: p3-major-commit-subjects
     title: A major group's commit says it is the majors
     phase: 3

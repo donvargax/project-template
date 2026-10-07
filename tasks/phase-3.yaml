@@ -348,3 +348,42 @@
   done_when:
     - run: node tools/selftest/code-design.ts
     - run: vp exec tsc --version | grep -q 'Version 7\.'
+
+- id: T-042
+  type: build
+  title: itos 6, called from the PATH
+  why: >
+    itos is pinned at v0.5.0, an npm tarball run through the wrapper in tools/bin,
+    while the newest release is v6.5.1 (2026-10-07), and the global itos
+    the owner's sessions and the itos Claude Code plugin call cannot read
+    this itos.yaml: v5 removed ci.range.github.branch and v6 refuses
+    hooks.manager. The plugin's guard runs only under a pin at v6 or later.
+    v1.0.0 was the last release published as an npm tarball; from v2 itos
+    is a Go binary, and the pin lives in itos.yaml (pin.version and
+    pin.checksums, which itos pin and itos upgrade write), run by the global
+    launcher on the PATH, which CI installs with the donvargax/itos action.
+    v4 makes the hooks call the global itos; v6 declares them in the git
+    config alone (itos hook install, once per clone, git 2.54 or later), so
+    the .vite-hooks commit-msg and pre-push shims go, and changes exit codes
+    (75 to retry, 70 for a bug, 1 for a failing ci step), which the
+    nightly's issue script and any wrapper reading them must follow. What
+    each release from v3.4.0 on asks is listed by itos upgrade (or its
+    --json); the releases from v0.6.0 to v3.3.2 have no upgrading.json, so
+    their notes are read by hand.
+
+    Settled by the owner (2026-10-07): that wrapper goes, and every hook,
+    workflow, script, self-test, ledger check and doc calls plain itos from
+    the PATH, as itos's own documentation does; the itos devDependency goes
+    too. A contributor installs the launcher and runs itos hook install
+    once per clone, which README's setup and a new project's first steps
+    say. The move goes straight to v6.5.1, every pushed commit green on the
+    way, and the done tasks' checks keep passing under it, as the nightly
+    reruns them.
+  done_when:
+    - run: itos version | grep -qx 'itos 6\.5\.1'
+    - run: itos config check
+    - run: test ! -e tools/bin/[i]tos && ! git grep -q 'tools/bin/[i]tos'
+      prose: true
+    - run: test -z "$(node -p "require('./package.json').devDependencies?.itos ?? ''")"
+    - run: node tools/selftest/new-project.ts
+    - run: node tools/selftest/gates.ts
