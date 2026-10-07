@@ -1,6 +1,8 @@
 // The scenario kind's range check (itos.yaml's `tests.scenario.range_checks`),
-// the project's own: the itos package ships its command line, not this rule,
-// so the template keeps it here.
+// the project's own: itos shipped no such rule when it was written, and its
+// built-in one (`builtin: moves`, since 0.6.0) is not yet proven to read a
+// moved root as this does (p1-scenario-moves-in-itos), so the template keeps
+// it here.
 //
 // The rule for a commit outside feat and fix (the check's `except_types`): it
 // may move scenarios between feature files, create feature files and delete

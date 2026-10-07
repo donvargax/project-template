@@ -86,7 +86,7 @@ tests: # named tests, each kind behind an adapter
       { file: features/smoke.yaml, every_file: true, add_hint: "add one to features/smoke.yaml" }
     range_checks:
       # Outside feat and fix, live scenarios only move, unchanged. The project's
-      # own script: the itos package does not ship the rule.
+      # own script, kept beside itos's built-in moves rule (p1-scenario-moves-in-itos).
       - name: scenario-moves
         except_types: [feat, fix]
         staged: "node tools/scenario-moves.ts --type {type}"
@@ -126,7 +126,7 @@ ci:
     # static sh -c check says `cost: static` in the ledger.
     static:
       - "^vp check$"
-      - "^(tools/bin/)?itos (tests smoke check|commit|verify|ci (plan|scope|range)|work|config check)\\b"
+      - "^itos (tests smoke check|commit|verify|ci (plan|scope|range)|work|config check)\\b"
       - "^actionlint\\b"
       - "^git ls-remote "
       - "\\| vp exec commitlint$"
