@@ -636,6 +636,15 @@ items:
     kind: task
     refs: [tasks/phase-3.yaml]
 
+  - id: T-043
+    title: A week's wait in pnpm too
+    phase: 3
+    owner: null
+    status: todo
+    depends_on: [T-042]
+    kind: task
+    refs: [tasks/phase-3.yaml]
+
   - id: p3-major-commit-subjects
     title: A major group's commit says it is the majors
     phase: 3

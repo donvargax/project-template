@@ -393,3 +393,37 @@
     - run: test -z "$(node -p "require('./package.json').devDependencies?.itos ?? ''")"
     - run: node tools/selftest/new-project.ts
     - run: node tools/selftest/gates.ts
+
+- id: T-043
+  type: build
+  title: A week's wait in pnpm too
+  why: >
+    Renovate holds every update a week (minimumReleaseAge in the owner's
+    presets), but only the ones it proposes: lockfile maintenance
+    re-resolves every transitive dependency to whatever is newest, and so
+    does any pnpm install that resolves, in CI or a contributor's clone. The
+    owner's machine already waits (minimumReleaseAge: 10080 in the user's
+    global pnpm config), so a clone there could refuse a lockfile that CI and
+    Renovate accepted. pnpm-workspace.yaml now sets minimumReleaseAge: 10080
+    (a week, in minutes), so the wait is the repository's, the same for
+    everyone and for the transitive dependencies too. A frozen install
+    refuses a locked version younger than the wait too (T-042 met it on the
+    owner's machine with @types/node 24.19.1, locked on 2026-10-03 by the
+    repository's own Renovate, before the presets' wait), so CI holds the
+    rule against a version that reaches the lockfile any other way.
+
+    It holds Renovate's security fixes back no further: Renovate drops its
+    own wait for a fix to a vulnerable dependency (vulnerabilityAlerts sets
+    minimumReleaseAge null, and the presets turn osvVulnerabilityAlerts on
+    from v1.2.0), and when pnpm-workspace.yaml sets minimumReleaseAge it
+    writes the fixed package@version into minimumReleaseAgeExclude on the
+    same branch, with a comment naming the fix, so pnpm takes that one
+    version early. Those entries stay once the fix lands: each names one
+    exact version, which a later update moves past. A vulnerable transitive
+    dependency, which Renovate cannot fix in pnpm-lock.yaml, waits for
+    lockfile maintenance; when its fix is younger than a week, a build
+    commit adds its exclude entry and runs pnpm update for it by hand.
+  done_when:
+    - run: >-
+        h=$(mktemp -d) && HOME=$h XDG_CONFIG_HOME=$h/.config
+        vp exec pnpm config get minimumReleaseAge | grep -qx 10080
