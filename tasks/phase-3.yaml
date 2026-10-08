@@ -423,6 +423,16 @@
     dependency, which Renovate cannot fix in pnpm-lock.yaml, waits for
     lockfile maintenance; when its fix is younger than a week, a build
     commit adds its exclude entry and runs pnpm update for it by hand.
+
+    The setting landed with pnpm-lock.yaml re-resolved under it, in the
+    same build commit, rather than waiting for @types/node 24.19.1 to age
+    (it stepped back to 24.19.0, and source-map-js moved to 1.2.2, the
+    nightly's vulnerability fix). Waiting was a chase: Renovate's lockfile
+    maintenance, resolved without pnpm's wait, already held versions
+    published on 2026-10-05, so landing it first would have pushed the
+    setting back to 2026-10-12, and each maintenance before the setting
+    landed would bring younger versions again. With the setting on main,
+    Renovate rebases its lockfile branch and re-resolves it under the rule.
   done_when:
     - run: >-
         h=$(mktemp -d) && HOME=$h XDG_CONFIG_HOME=$h/.config
