@@ -12,8 +12,8 @@
 	// the preset's release allows. Pinned by tag: the renovate-config manager
 	// moves the pin, and a new Node major arrives as a new major of the preset.
 	extends: [
-		"github>donvargax/renovate-config#v1.1.0",
-		"github>donvargax/renovate-config:vite-plus#v1.1.0",
+		"github>donvargax/renovate-config#v1.3.0",
+		"github>donvargax/renovate-config:vite-plus#v1.3.0",
 	],
 
 	// npm covers package.json, packageManager and the catalog in
