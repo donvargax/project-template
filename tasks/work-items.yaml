@@ -640,7 +640,7 @@ items:
     title: A week's wait in pnpm too
     phase: 3
     owner: donvargax
-    status: doing
+    status: done
     depends_on: [T-042]
     kind: task
     refs: [tasks/phase-3.yaml]
