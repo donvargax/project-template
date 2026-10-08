@@ -66,7 +66,11 @@ gh repo create <owner>/<name> --template donvargax/project-template --private --
 1. **Install.** Node is the version `.node-version` holds (24), which Vite+
    picks up on its own and CI installs from the same file. `vp install`
    installs the dependencies and, through
-   `prepare`, the pre-commit hook (`vp config`). Install the browser for the
+   `prepare`, the pre-commit hook (`vp config`). It takes no release younger
+   than a week, a locked one included (`minimumReleaseAge` in
+   `pnpm-workspace.yaml`; docs/ARCHITECTURE.md, "Dependency updates"), so an
+   install that refuses a lockfile names the version and when it was
+   published: wait for it, rather than loosening the setting. Install the browser for the
    scenarios once: `vp exec playwright install chromium`. itos is not a
    dependency: install its launcher once per machine, into a folder on your
    `PATH` (any release will do, since the pin in `itos.yaml` picks the one

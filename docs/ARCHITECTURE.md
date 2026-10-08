@@ -415,6 +415,27 @@ commands, `itos <command> --help` each one).
   `tools/bin/vuln-scan`, each with a hash beside it that a version-only
   update would leave stale (`p2-run-step-pins-updated`). What is pending is the
   `renovate/**` branches, and a red one's pull request.
+  Renovate's wait covers only the updates it proposes: lockfile maintenance
+  and any install that resolves take whatever is newest for a transitive
+  dependency. So the wait is pnpm's too (T-043): `pnpm-workspace.yaml` sets
+  `minimumReleaseAge: 10080`, a week in minutes, the same for CI, Renovate's
+  branches and every clone, whatever a person's own pnpm config says. pnpm
+  resolves no release younger than that, and a frozen install, CI's among
+  them, refuses a lockfile that locks one (`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`,
+  naming the version and when it was published), so a version that reached
+  the lockfile some other way, by hand or before the wait, turns CI red until
+  its week has passed. Renovate's security fixes still pass at once: it drops
+  its own wait for a fix to a vulnerable dependency (`vulnerabilityAlerts`,
+  and the presets' `osvVulnerabilityAlerts`) and, because the workspace sets
+  the wait, writes the fixed `package@version` into
+  `minimumReleaseAgeExclude` in `pnpm-workspace.yaml` on the fix's branch,
+  with a comment naming the fix, so pnpm takes that one version early. Those
+  entries stay once the fix lands: each names one exact version, which a later
+  update moves past. A vulnerable transitive dependency, which Renovate cannot
+  fix in `pnpm-lock.yaml`, waits for lockfile maintenance; when its fix is
+  younger than a week, a `build` commit adds its `minimumReleaseAgeExclude`
+  entry by hand, with the same kind of comment, and runs `pnpm update` for
+  that package.
 - **The type check** is `vp check`'s, over one `tsconfig.json` that covers
   `src/`, `e2e/`, `tools/` and the root `*.config.ts` alike. It runs through
   tsgolint on TypeScript 7, the compiler rewritten in Go (`typeCheck` in
