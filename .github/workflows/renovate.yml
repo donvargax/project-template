@@ -74,7 +74,7 @@ jobs:
           # The Renovate release the action runs, pinned rather than the action's
           # default (a major tag, so whatever release is newest on the day).
           # Renovate moves it itself, in the workflow actions group.
-          renovate-version: 44.132.4
+          renovate-version: 44.148.3
         env:
           # This repository alone; autodiscover stays off (its default).
           RENOVATE_REPOSITORIES: ${{ github.repository }}
