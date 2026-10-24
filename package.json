@@ -23,7 +23,7 @@
 		"@playwright/test": "^1.63.0",
 		"@types/node": "^24.13.4",
 		"@vitest/coverage-v8": "catalog:",
-		"fallow": "3.33.1",
+		"fallow": "3.34.0",
 		"fast-check": "^4.10.2",
 		"git-cliff": "2.14.2",
 		"playwright": "^1.63.0",
