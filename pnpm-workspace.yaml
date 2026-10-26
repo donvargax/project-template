@@ -20,3 +20,6 @@ peerDependencyRules:
   allowedVersions:
     vite: "*"
     vitest: "*"
+minimumReleaseAgeExclude:
+  # Renovate security update: fallow@3.34.0
+  - fallow@3.34.0
