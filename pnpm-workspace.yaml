@@ -1,14 +1,8 @@
-# A week's wait (in minutes) before pnpm takes any release, transitive
-# dependencies included, on every install that resolves and every frozen one
-# alike: the seven days Renovate's presets hold its own updates to, made the
-# repository's (T-043; docs/ARCHITECTURE.md, "Dependency updates"). A security
-# fix Renovate lands early is written below as minimumReleaseAgeExclude, one
-# exact package@version, on the fix's own branch.
 minimumReleaseAge: 10080
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.3.3
   vitest: 4.1.11
-  vite-plus: 0.3.3
+  vite-plus: 1.1.0
   "@vitest/coverage-v8": 4.1.11
 overrides:
   vite@*: "catalog:"
@@ -23,3 +17,5 @@ peerDependencyRules:
 minimumReleaseAgeExclude:
   # Renovate security update: fallow@3.34.0
   - fallow@3.34.0
+  # Renovate security update: vite-plus@1.1.0
+  - vite-plus@1.1.0
